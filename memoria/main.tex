@@ -1,0 +1,227 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% The Legrand Orange Book
+% LaTeX Template
+% Version 2.3 (8/8/17)
+%
+% This template has been downloaded from:
+% http://www.LaTeXTemplates.com
+%
+% Original author:
+% Mathias Legrand (legrand.mathias@gmail.com) with modifications by:
+% Vel (vel@latextemplates.com)
+%
+% License:
+% CC BY-NC-SA 3.0 (http://creativecommons.org/licenses/by-nc-sa/3.0/)
+%
+% Compiling this template:
+% This template uses biber for its bibliography and makeindex for its index.
+% When you first open the template, compile it from the command line with the 
+% commands below to make sure your LaTeX distribution is configured correctly:
+%
+% 1) pdflatex main
+% 2) makeindex main.idx -s StyleInd.ist
+% 3) biber main
+% 4) pdflatex main x 2
+%
+% After this, when you wish to update the bibliography/index use the appropriate
+% command above and make sure to compile with pdflatex several times 
+% afterwards to propagate your changes to the document.
+%
+% This template also uses a number of packages which may need to be
+% updated to the newest versions for the template to compile. It is strongly
+% recommended you update your LaTeX distribution if you have any
+% compilation errors.
+%
+% Important note:
+% Chapter heading images should have a 2:1 width:height ratio,
+% e.g. 920px width and 460px height.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%----------------------------------------------------------------------------------------
+%	PACKAGES AND OTHER DOCUMENT CONFIGURATIONS
+%----------------------------------------------------------------------------------------
+
+\documentclass[11pt,fleqn]{book} % Default font size and left-justified equations
+
+%----------------------------------------------------------------------------------------
+
+\input{structure} % Insert the commands.tex file which contains the majority of the structure behind the template
+
+%IMPORTS MAPA MENTAL
+\usepackage{tikz,times}
+\usepackage{verbatim}
+
+%\usepackage[paperwidth=25cm,paperheight=22cm,left=1cm,top=1cm]{geometry}
+
+\usetikzlibrary{mindmap,trees,backgrounds}
+ 
+\definecolor{color_mate}{RGB}{255,255,128}
+\definecolor{color_petr}{RGB}{255,192,192}
+\definecolor{color_made}{RGB}{192,255,192}
+\definecolor{color_meta}{RGB}{192,192,255}
+\definecolor{color_text}{RGB}{255,150,150}
+\definecolor{color_plas}{RGB}{150,150,255}
+
+\begin{document}
+
+%----------------------------------------------------------------------------------------
+%	TITLE PAGE
+%----------------------------------------------------------------------------------------
+\begingroup
+\thispagestyle{empty}
+\begin{tikzpicture}[remember picture,overlay]
+\node[inner sep=0pt] (background) at (current page.center) {\includegraphics[width=\paperwidth]{background}};
+\draw (current page.center) node [fill=ocre!30!white,fill opacity=0.6,text opacity=1,inner sep=1cm]
+{\Huge\centering\bfseries\sffamily\parbox[c][][t]{\paperwidth}
+{\centering MEMORIA TRABAJO FINAL DE GRADO\\[15pt] % Book title
+{\huge Grado en Inteligencia Robótica\\Universidad Jaume I de Castellón}\\[12pt] % Subtitle
+{\huge Título:}\\[14pt] % Subtitle
+{\huge XXXXXXXXXXXXXXXXXX}\\[14pt] % Subtitle
+{\Large Estudiante: ...
+ \\Tutor: ...
+ \\CURSO 2024/2025
+ \\}}}; % Author name
+
+\end{tikzpicture}
+\vfill
+\endgroup
+
+%----------------------------------------------------------------------------------------
+%	COPYRIGHT PAGE
+%----------------------------------------------------------------------------------------
+
+\newpage
+~\vfill
+\thispagestyle{empty}
+
+\noindent \textit{Agradecimientos:
+\\
+\\} % 
+
+\noindent \textit{Palabras clave:
+\\
+\\} % 
+
+\noindent \textit{CASTELLÓN, a XX de XXXXXXX de 2025} % Printing/edition date
+
+\noindent {Todos los derechos reservados}\\ % License information
+
+%----------------------------------------------------------------------------------------
+%	TABLE OF CONTENTS
+%----------------------------------------------------------------------------------------
+
+\usechapterimagefalse % If you don't want to include a chapter image, use this to toggle images off - it can be enabled later with \usechapterimagetrue
+
+%\chapterimage{chapter_head_1.pdf} % Table of contents heading image
+
+\pagestyle{empty} % No headers
+
+\renewcommand{\contentsname}{TABLA DE CONTENIDOS}
+\tableofcontents % Print the table of contents itself
+
+\cleardoublepage % Forces the first chapter to start on an odd page so it's on the right
+
+\pagestyle{fancy} % Print headers again
+
+\chapter{Introducción}
+
+\section{Motivaciones}
+
+En caso de que haya motivo(s) concreto(s() para la realización del proyecto.
+
+\section{Objetivos}
+
+Objetivos que se espera alcanzar al inicio del proyecto.
+
+\section{Planificación}
+
+Lista de tareas, relación entre ellas y duración estimada
+Posibles desviaciones de la polanificación
+Diagrama de Gantt
+
+\section{Estimación de costes}
+
+Estimación del coste económico que supondría la adquisición del material necesario (hardware y software) para la realización del proyecto, los salarios involucrados y otros aspectos como alquileres de espacios y energía.
+
+\chapter{Análisis}
+
+Dependiendo de la índole y contenidos del proyecto realizado, en esta sección se deberá incluir alguno o todos de los siguientes apartados:
+
+Diseño operacional del sistema a desarrollar. Es posible tener que hacer uso de algunos de los siguientes tipos de diagramas:
+\begin{itemize}
+    \item Diagramas de casos de uso
+    \item Diagramas de clases
+    \item Diagramas de actividades
+    \item Diagramas de interacciones
+\end{itemize}
+
+Arquitectura del sistema
+
+Diseño de interfaces
+
+\chapter{Implementación}
+
+Explicación de las actividades realizadas durante el desarrollo del proyecto. Se puede exponer en orden cronológico o por grupos de tareas. Hay que indicar los hitos alcanzados.
+
+En esta sección solamente hay que aportar la información técnica estrictamente necesaria para comprender el trabajo realizado. Esta información debe, además, estar presentada de forma que sea inteligible por cualquiera no familiarizado con los aspectos técnicos del trabajo realizado. La información técnica puede ubicarse en los apéndices para ser consultada si se desea.
+
+\chapter{Resultados}
+
+Se trata de indicar el grado de consecución de los objetivos iniciales, así como las posibles desviaciones respecto de la planificación inicial que, de ser signifgicativas, deben justificarse.
+
+\chapter{Conclusiones y posible trabajo futuro}
+
+Conclusiones personales sobre el proyecto realizado y posible continuidad del mismo.
+
+
+%---------------
+%	PART
+%---------------
+
+%\part{Part One}
+
+
+%----------------------------------------------------------------------------------------
+%	BIBLIOGRAPHY
+%----------------------------------------------------------------------------------------
+%\bibliographystyle{apalike}
+
+
+\chapter*{Bibliografía}
+\addcontentsline{toc}{chapter}{\textcolor{ocre}{Bibliografía}}
+
+%------------------------------------------------
+
+%\section*{Artículos}
+%\addcontentsline{toc}{section}{Artículos}
+%\printbibliography[heading=bibempty,type=article]
+
+%------------------------------------------------
+
+%\section*{Libros}
+%\addcontentsline{toc}{section}{Libros}
+\printbibliography[heading=bibempty,type=book]
+
+%\section*{Noticias}
+%\addcontentsline{toc}{section}%{Noticias}
+\printbibliography[heading=bibempty,type=misc]
+
+%----------------------------------------------------------------------------------------
+%	INDEX
+%----------------------------------------------------------------------------------------
+
+%\cleardoublepage
+%\phantomsection
+%\setlength{\columnsep}{0.75cm}
+%\addcontentsline{toc}{chapter}{\textcolor{ocre}{Index}}
+%\printindex
+
+%----------------------------------------------------------------------------------------
+
+\chapter{Apéndices}
+
+Colocar aquí cualquier tipo de información susceptible de ser consultada para la correcta comprensión del documento y el proyecto que describe.
+
+\end{document}
