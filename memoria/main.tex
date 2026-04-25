@@ -68,25 +68,74 @@
 
 %----------------------------------------------------------------------------------------
 %	TITLE PAGE
-%----------------------------------------------------------------------------------------
+%----------------------------------------------------------------------------------------	
 \begingroup
 \thispagestyle{empty}
+% Usamos TikZ para posicionamiento absoluto en la página
 \begin{tikzpicture}[remember picture,overlay]
-\node[inner sep=0pt] (background) at (current page.center) {\includegraphics[width=\paperwidth]{background}};
-\draw (current page.center) node [fill=ocre!30!white,fill opacity=0.6,text opacity=1,inner sep=1cm]
-{\Huge\centering\bfseries\sffamily\parbox[c][][t]{\paperwidth}
-{\centering MEMORIA TRABAJO FINAL DE GRADO\\[15pt] % Book title
-{\huge Grado en Inteligencia Robótica\\Universidad Jaume I de Castellón}\\[12pt] % Subtitle
-{\huge Título:}\\[14pt] % Subtitle
-{\huge XXXXXXXXXXXXXXXXXX}\\[14pt] % Subtitle
-{\Large Estudiante: ...
- \\Tutor: ...
- \\CURSO 2024/2025
- \\}}}; % Author name
-
+	
+	% --- 1. LOGO DE LA UJI ---
+	% Mantenemos la posición del logo original
+	\node[anchor=north, yshift=-2.5cm] at (current page.north) {
+		\includegraphics[height=5cm]{Pictures/logo_uji.png} % Ajusta la altura si es necesario
+	};
+	
+	% --- 2. HEADER TEXT (NUEVO ESTILO) ---
+	% Text nodes for the structured header
+	\node[anchor=center, yshift=6cm] at (current page.center) {
+		{\huge\sffamily\scshape TRABAJO DE FINAL DE GRADO}
+	};
+	\node[anchor=center, yshift=4cm] at (current page.center) {
+		{\large\sffamily GRADO EN INTELIGENCIA ROBÓTICA}
+	};
+	
+	% --- 3. MAIN TITLE WITH LINES --
+	% Upper Line
+	\draw[thick] ([xshift=-0.425\paperwidth, yshift=2cm]current page.center) -- ([xshift=0.425\paperwidth, yshift=2cm]current page.center);
+	
+	% Actual Title Text
+	\node[anchor=center, yshift=0cm] at (current page.center) {
+		\parbox{0.85\paperwidth}{
+			\centering
+			\fontsize{24pt}{28pt}\selectfont 
+			\bfseries\sffamily
+			Estudio e implementación del control de péndulo invertido sobre carro en un sistema de tiempo real
+		}
+	};
+	% Lower Line
+	\draw[thick] ([xshift=-0.425\paperwidth, yshift=-2cm]current page.center) -- ([xshift=0.425\paperwidth, yshift=-2cm]current page.center);
+	
+	% --- 4. STUDENT AND TUTOR INFO SPLIT (NUEVO ESTILO) ---
+	% Left info (right-aligned text within the parbox)
+	\node[anchor=north, xshift=-7cm, yshift=-5cm] at (current page.center) {
+		\parbox{0.45\paperwidth}{
+			\raggedleft % Alineado a la derecha dentro de la caja
+			{\normalsize\sffamily Estudiante:}\\[5pt]
+			{\Large\sffamily\bfseries Miguel Porcar Vicent}\\
+		}
+	};
+	
+	% Right info (right-aligned text within the parbox)
+	\node[anchor=north, xshift=3cm, yshift=-5cm] at (current page.center) {
+		\parbox{0.45\paperwidth}{
+			\raggedleft % Alineado a la derecha dentro de la caja
+			{\normalsize\sffamily Tutor:}\\[5pt]
+			{\Large\sffamily\bfseries Ignacio Peñarrocha Alós}
+		}
+	};
+	
+	% --- 5. COURSE AND DATE (NUEVO ESTILO, DISCRETO AL FINAL) ---
+	\node[anchor=south, yshift=4cm] at (current page.south) {
+		\parbox{0.8\paperwidth}{
+			\centering
+			{\large\sffamily Fecha de presentación: Junio de 2026}\\[5pt]
+			{\large\sffamily Curso académico: 2025/2026}
+		}
+	};
 \end{tikzpicture}
 \vfill
 \endgroup
+
 
 %----------------------------------------------------------------------------------------
 %	COPYRIGHT PAGE
