@@ -1,0 +1,15 @@
+### --- LaTeX (Memoria) ---
+*.aux
+*.log
+*.toc
+*.out
+*.bbl
+*.blg
+*.synctex.gz
+*.fdb_latexmk
+*.fls
+*.run.xml
+*.bcf
+*.idx
+*.ilg
+*.ind
