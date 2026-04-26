@@ -52,7 +52,7 @@
 %IMPORTS MAPA MENTAL
 \usepackage{tikz,times}
 \usepackage{verbatim}
-
+\usetikzlibrary{positioning, arrows.meta, shapes.geometric}
 %\usepackage[paperwidth=25cm,paperheight=22cm,left=1cm,top=1cm]{geometry}
 
 \usetikzlibrary{mindmap,trees,backgrounds}
@@ -233,9 +233,76 @@ Los requisitos no funcionales, describen como debe comportarse el sistema y son 
 \end{itemize}
 
 \section{Arquitectura del sistema}
-Aquí interesa hacer un bucle de control con imágenes de la DSP (controlador), periféricos (pwm como acción de control, encoders como sensor para captar la medición) y una imagen de la unidad mecánica del laboratorio (unidad mecánica de feedback).
-
-También interesa otro diagrama que muestre de forma funcional las acciones que debe realizar la DSP dentro de su código para ejecutar el bucle de control (medirencoder, calculoerror, aplica -kx, atacamotor con pwm)
+\begin{figure}[htbp]
+	\centering
+	\resizebox{\textwidth}{!}{
+		\begin{tikzpicture}[
+			node distance=1.5cm and 1.2cm,
+			% Estilo para electrónica/control
+			elec_block/.style={draw=blue!70!black, thick, rectangle, minimum height=1.6cm, minimum width=2.8cm, align=center, rounded corners, fill=blue!5},
+			% Estilo para mecánica/física
+			mech_block/.style={draw=orange!80!black, thick, rectangle, minimum height=1.6cm, minimum width=2.8cm, align=center, rounded corners, fill=orange!5},
+			% Estilo del sumador
+			sum/.style={draw, circle, thick, minimum size=0.8cm},
+			input/.style={coordinate},
+			output/.style={coordinate},
+			% Estilo de las flechas
+			arrow/.style={-{Stealth[scale=1.1]}, thick, rounded corners}
+			]
+			
+			% --- Nodos del Bucle Directo ---
+			\node [input, name=input] {};
+			
+			\node [sum, right=of input] (sum) {\Large $+$};
+			
+			\node [elec_block, right=of sum] (dsp) {
+				\textbf{Controlador (DSP)}\\ 
+				\textit{FC280049C}
+			};
+			
+			\node [elec_block, right=of dsp] (driver) {
+				\textbf{Driver}\\
+				\textit{AQMH2407ND}
+			};
+			
+			\node [mech_block, right=of driver] (motor) {
+				\textbf{Motor DC (24V)}\\
+				\textit{Crouzet 827600}
+			};
+			
+			\node [mech_block, right=of motor] (planta) {
+				\textbf{Planta}\\
+				\textit{Unidad Mecánica}
+			};
+			
+			\node [output, right=of planta] (out) {};
+			
+			% --- Nodo de Realimentación ---
+			% Posicionado en el centro del sistema para mayor simetría
+			\node [elec_block, below=1.5cm of driver] (sensor) {
+				\textbf{Sensores}\\
+				\textit{Encoders HEDS-9140}
+			};
+			
+			% --- Conexiones (Flechas) ---
+			\draw [arrow] (input) -- node [above] {$\theta_r(t)$} (sum);
+			\draw [arrow] (sum) -- node [above] {$e(t)$} (dsp);
+			\draw [arrow] (dsp) -- node [above] {PWM} (driver);
+			\draw [arrow] (driver) -- node [above] {V} (motor);
+			\draw [arrow] (motor) -- node [above] {$\tau$} (planta);
+			
+			% Salida
+			\draw [thick] (planta) -- (out) node [near end, above] {$\theta(t)$};
+			
+			% Realimentación
+			\draw [arrow] (planta.east) ++(0.5,0) |- (sensor.east);
+			\draw [arrow] (sensor.west) -| node [pos=0.9, left] {$-\theta_m(t)$} (sum.south);
+			
+		\end{tikzpicture}
+	}
+	\caption{Arquitectura funcional del bucle de control cerrado para el péndulo invertido.}
+	\label{fig:arquitectura_bucle_cerrado}
+\end{figure}
 
 \section{Modelado matemático}
 \subsection{Dinámica del sistema}
