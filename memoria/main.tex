@@ -197,11 +197,27 @@ Estimación del coste económico que supondría la adquisición del material nec
 \chapter{Análisis}
 
 \section{Requisitos}
+
+Para mejorar la comprensión de los requisitos que requiere el proyecto se han dividido en requisitos funcionales y requisitos no funcionales. 
 Para la parte de simulación es disponer de un entorno de simulación (Ejemplo Simulink) que nos permita modelar y modificar parámetros de nuestro sistema para implementar las técnicas de control.  
 
 Para la parte de implementación física, requerimos de sensores (encoders) y actuadores (motor dc 24 V) así como un microcontrolador. Son las bases para poder imlementar algoritmos de control en tiempo real. 
 
 Imporante: Divide en requisitos funcionales (qué debe hacer el sistema) y no funcionales (tiempo real, precisión).
+
+\subsection{Requisitos funcionales}
+Los requisitos funcionales describen las acciones, funciones y comportamientos específicos que el sistema debe realizar para cumplir su propósito. Para el control de un péndulo invertido sobre carro se definen: 
+\begin{itemize}
+	\item \textbf{Modelado y simulación:} El entorno de simulación (Matlab/Simulink) debe ser un entorno de prueba y desarrollo de algoritmos de control como paso previo a su implementación en hardware real. Se debe permitir el modelado de la dinámica no lineal y la introducción de los parámetros (masas, inercias, rozamientos...) que caracterizan el sistema real. 
+
+	\item \textbf{Control de inyección de energía (Swing-up):} El sistema de control debe ser capaz de aplicar técnicas no lineales para conmutar la posición del péndulo hasta la región de estabilización (completamente invertido).
+	
+	\item \textbf{Control de estabilización (Realimentación del estado):} Una vez el péndulo se encuentre en la región lineal cercana a la vertical, el sistema debe conmutar a un controlador por realimentación del estado para mantener la posición del péndulo y ubicar el carro en el centro del riel.
+	
+	\item \textbf{Adquisición de señales y actuación:} El microcontrolador del prototipo físico debe ser capaz de leer las señales de entrada (encoders), calcular la velocidad y la posición de ambas articulaciones así como aplicar acciones de control mediante señales PWM (Pulse Width Modulation).  
+	
+\end{itemize}
+\subsection{Requisitos no funcionales}
 
 \section{Arquitectura del sistema}
 Aquí interesa hacer un bucle de control con imágenes de la DSP (controlador), periféricos (pwm como acción de control, encoders como sensor para captar la medición) y una imagen de la unidad mecánica del laboratorio (unidad mecánica de feedback).
