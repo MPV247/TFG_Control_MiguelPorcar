@@ -196,19 +196,33 @@ Estimación del coste económico que supondría la adquisición del material nec
 
 \chapter{Análisis}
 
-Dependiendo de la índole y contenidos del proyecto realizado, en esta sección se deberá incluir alguno o todos de los siguientes apartados:
+\section{Requisitos}
+Para la parte de simulación es disponer de un entorno de simulación (Ejemplo Simulink) que nos permita modelar y modificar parámetros de nuestro sistema para implementar las técnicas de control.  
 
-Diseño operacional del sistema a desarrollar. Es posible tener que hacer uso de algunos de los siguientes tipos de diagramas:
-\begin{itemize}
-    \item Diagramas de casos de uso
-    \item Diagramas de clases
-    \item Diagramas de actividades
-    \item Diagramas de interacciones
-\end{itemize}
+Para la parte de implementación física, requerimos de sensores (encoders) y actuadores (motor dc 24 V) así como un microcontrolador. Son las bases para poder imlementar algoritmos de control en tiempo real. 
 
-Arquitectura del sistema
+Imporante: Divide en requisitos funcionales (qué debe hacer el sistema) y no funcionales (tiempo real, precisión).
 
-Diseño de interfaces
+\section{Arquitectura del sistema}
+Aquí interesa hacer un bucle de control con imágenes de la DSP (controlador), periféricos (pwm como acción de control, encoders como sensor para captar la medición) y una imagen de la unidad mecánica del laboratorio (unidad mecánica de feedback).
+
+También interesa otro diagrama que muestre de forma funcional las acciones que debe realizar la DSP dentro de su código para ejecutar el bucle de control (medirencoder, calculoerror, aplica -kx, atacamotor con pwm)
+
+\section{Modelado matemático}
+\subsection{Dinámica del sistema}
+Aquí el desarrollo de las ecuaciones de movimiento y el encapsulado en las matrices M, G, C y B. 
+\subsection{Linealización}
+Explicar el porque se debe linealizar el sistema y como se hace. 
+
+\subsection{Representación en el espacio de estados}
+Utilizar la técnica de linealización para obtener los estados del sistema a partir de las ecuaciones de movimiento.  Matrcies A, B, C, D.
+
+\subsection{Diseño del controlador} 
+\subsubsection{Control de energía, Swing up}
+Explicar las bases matemáticas de la inyeccón de energía en un sistema para levantarlo a una posición. Comentar como en el libro underactuated utilizan PFL para el swing up de péndulo invertido sobre carro. 
+
+\subsubsection{Control de posición}
+Explicar como se ha obtenido un controlador por realimentación del estado mediante el uso del algoritmo LQR, comentar la relación entre Q y R (son matrices que dan más peso a la convergencia o al uso del actuador)
 
 \chapter{Implementación}
 
@@ -216,13 +230,36 @@ Explicación de las actividades realizadas durante el desarrollo del proyecto. S
 
 En esta sección solamente hay que aportar la información técnica estrictamente necesaria para comprender el trabajo realizado. Esta información debe, además, estar presentada de forma que sea inteligible por cualquiera no familiarizado con los aspectos técnicos del trabajo realizado. La información técnica puede ubicarse en los apéndices para ser consultada si se desea.
 
+\section{Simulación}
+
+1)Uso de parámetros proporcionados por el fabricante (rozamiento, inercias, etc.) para modelado del sistema en Matlab/Simulink.
+
+2) Conexión exitosa entre ROS y Matlab mediante la herramienta ROS Toolbox, hay que comentar como se tubo que cambiar el DDS al cyclone para funcionar, la lógica de publicador subscriptor, el diseño de un archivo URDF para la visualización de la unidad mecánica desde RViz. (Posibles vías de estudio como la migración de la simulación completamente a ROS)
+
+3)Explicar también como mediante simulación se pudo obtener las ganancias necesarias para poder hacer control swin-up con PFL. Muy importante poner los diagramas de bloques de nuestro simulink (El de publicación de tópicos, el de dinámica del sistema y el de conmutación de control (Swing-Up to LQR))
+
+4)Finalmente explicar como se acabo implementando una simulación discreta del sistema (uso de bucle for y mida de paso con el método de Euler o1). Sirve como puente a la implementación de algoritmos de control en microcontroladores. 
+
+\section{Sistema físico}
+
+1)Selección de microcontrolador, Pte H y encoders. Explicar un poco la tecnología detrás de cada componente (Ejemplo: Sabemos que los encoders son HEDS-9140-A00, también sabemos que el PTE H tiene aislamiento galvánico mediante optoacopladores).
+
+2)Firmware, comentar como se programa una DSP de texas instruments mediante el uso del IDE CCS y la capa de HAL C2000-ware. Utilizar el datashet del fabricante para justificar la configuración de ciertos registros. Módulos Epwm y Eqep muy interesante ver como liberan a la CPU de estas tareas.
+
+3)Explicar como se programo la DSP con timers para ejecutar el bucel de control en una rutina de interrupción periódica (implica determinismo, nada del loop de Arduino)
+
+4)(Lo que hay que acabar de hacer este més) Razonar experimentos de identificación de parámetros del sistema. La justificación es que los parámetros del fabricante no sabemos si son del todo ciertos al ser una máquina de hace 25 años. Algunos experimentos: Conversión de voltios a fuerza horizontal (encontrar la constante que relaciona ambas magnitudes), Identificación del rozamiento horizontal del carro, identificación del rozamiento y la inercia del péndulo. 
+
+5)Simular de nuevo con los parámetros obtenidos mediante identificación. 
+
 \chapter{Resultados}
 
-Se trata de indicar el grado de consecución de los objetivos iniciales, así como las posibles desviaciones respecto de la planificación inicial que, de ser signifgicativas, deben justificarse.
+\section{Resultados en simulación}
+\section{Resultados en sistema físico}
 
 \chapter{Conclusiones y posible trabajo futuro}
 
-Conclusiones personales sobre el proyecto realizado y posible continuidad del mismo.
+Trabajo a futuro --> Implementación en HAL, uso de algoritmos no basados en modelo (Reinformemnt Learning)
 
 
 %---------------
