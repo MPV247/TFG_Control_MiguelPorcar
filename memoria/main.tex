@@ -240,6 +240,12 @@ Los requisitos no funcionales, describen como debe comportarse el sistema y son 
 \end{itemize}
 
 \section{Arquitectura del sistema}
+
+El desarrollo de un sistema robótico de equilibrio inestable requiere una visión multidisciplinar. Por ello, la arquitectura de este proyecto se ha estructurado en tres niveles de abstracción complementarios: el diseño lógico del control, el entorno de validación virtual y la implementación física del hardware.
+
+\subsection{A1. Arquitectura de control}
+Este nivel describe la lógica del algoritmo de control. Se  define la interacción entre el observador de estados y las dos leyes de control implementadas: el control no lineal de energía (\textit{Swing-up}) y la estabilización mediante realimentación del estado. El elemento crítico en esta arquitectura es la lógica de conmutación basada en la región de atracción del equilibrio inestable.
+
 \begin{figure}[htbp]
 	\centering
 	\resizebox{\textwidth}{!}{
@@ -310,6 +316,13 @@ Los requisitos no funcionales, describen como debe comportarse el sistema y son 
 	\caption{Arquitectura funcional del bucle de control cerrado para el péndulo invertido.}
 	\label{fig:arquitectura_bucle_cerrado}
 \end{figure}
+
+\subsection{A2. Arquitectura de la simulación}
+La arquitectura de simulación establece el puente entre la ingeniería de control más tradicional y la metodología de trabajo del grado. Se detalla la integración de \textit{Matlab/Simulink} como motor de cálculo de las ecuaciones diferenciales y \textit{ROS (Robot Operating System)} como infraestructura de visualización. Este esquema permite monitorizar la telemetría del sistema mediante el uso de nodos publicadores y visualización 3D en \textit{Rviz}.
+
+\subsection{A3. Arquitectura del sistema real}
+Finalmente, se describe la infraestructura física que compone el prototipo. Esta sección detalla la interconexión entre la unidad de procesamiento (DSP FC280049C), la etapa de potencia y los sensores de posición. 
+
 
 \section{Modelado matemático}
 \subsection{Dinámica del sistema}
