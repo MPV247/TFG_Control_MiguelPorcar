@@ -207,6 +207,17 @@ Estimación del coste económico que supondría la adquisición del material nec
 
 \chapter{Análisis}
 
+En este capítulo se realiza un estudio detallado de los pilares que sustentan el desarrollo del sistema de control para el péndulo invertido. El análisis se articula en tres ejes fundamentales:
+
+\begin{itemize}
+	\item \textbf{Análisis de requisitos:} Donde se formalizan las capacidades operativas (funcionales) y las restricciones técnicas, de seguridad y rendimiento (no funcionales) que debe satisfacer el sistema.
+	
+	\item \textbf{Diseño del sistema:} Se describe la estrategia lógica y matemática adoptada, detallando el modelo dinámico, las leyes de control híbridas y la lógica de conmutación necesaria para el \textit{swing-up} y la estabilización.
+	
+	\item \textbf{Arquitectura del sistema:} Se define la infraestructura tanto de simulación como de implementación real, especificando el flujo de datos, la integración con ROS y la selección de los componentes de hardware que garantizan la viabilidad del proyecto.
+	 
+\end{itemize}
+\newpage
 \section{Requisitos funcionales}
 Los requisitos funcionales describen las acciones, cálculos y manipulaciones de datos específicos que el sistema debe realizar para cumplir su propósito. Para el control del péndulo invertido sobre carro se definen mediante sus entradas, comportamiento y salidas:
 
@@ -277,8 +288,6 @@ Los requisitos no funcionales imponen condiciones y restricciones a la implement
 
 La estructura de control propuesta en la Figura \ref{fig:arquitectura_control} se aplica sobre un sistema subactuado de tipo SIMO (Single Input Multiple Output). Para la etapa de realimentación, se implementa un observador del estado por inversión. Mediante este enfoque, los estados del sistema se obtienen exclusivamente a partir de las mediciones de salida, dado que, en el caso de sistemas robóticos, el estado coincide con las salidas ($q, \dot{q}, \ddot{q}$).
 
-En las siguientes secciones se aborda de forma individual cada elemento del esquema, empezando por el modelado del sistema hasta explicar la lógica de conmutación entre ambos controles. 
-
 \subsection{Modelado cinemático y dinámico}
 
 El objetivo de esta sección es compactar las ecuaciones de movimiento del péndulo invertido sobre carro en la expresión Euler - Lagrange. Buscar un libro que haga el desarrollo. 
@@ -313,7 +322,7 @@ Finalmente, la lógica de conmutación atiende a un umbral angular. Este bloque 
 		\EndLoop
 	\end{algorithmic}
 \end{algorithm}
-
+\newpage
 \section{Arquitectura del sistema}
 
 Para definir la arquitectura del sistema se ha hecho una división entre la parte de simulación y la implementación en un sistema real. 
@@ -346,7 +355,7 @@ La Figura \ref{fig:arquitectura_sim} detalla la arquitectura de software diseña
 	\end{itemize}
 \end{itemize}
 
-
+\newpage
 \subsection{Arquitectura del sistema real}
 
 \begin{figure}[ht]
@@ -373,7 +382,7 @@ Finalmente la interacción entre el mundo digital y el mundo físico es posible 
 	\item \textbf{Sensores: } La respuesta del sistema ($y_p(t)$) es captada por los Sensores (en este caso, encoders). La señal $y(t)$ es procesada por un bloque de muestreo, gobernado por el periodo $T$, y enviada al periférico\textit{ eQEP}.Este último actúa como un equivalente a un ADC (convertidor analógico-digital), transformando los pulsos del encoder en una señal digital $y_k$ interpretable por el controlador.
 \end{itemize}
 
-\section{Especificación de componentes de hardware}
+\subsection{Especificación de componentes de hardware}
  
 Aquí poner el microcontrolador que tenemos con sus características, el puente H y los encoders. 
 
