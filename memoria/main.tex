@@ -207,47 +207,64 @@ Estimación del coste económico que supondría la adquisición del material nec
 
 \chapter{Análisis}
 
-\section{Requisitos}
-Para dotar de rigor metodológico al proyecto, los requisitos se han dividido en funcionales (comportamiento del sistema) y no funcionales (restricciones y criterios de calidad). Esta clasificación permitirá, en capítulos posteriores, validar el grado de consecución de los objetivos planteados.
-
-\subsection{Requisitos funcionales}
-Los requisitos funcionales describen las acciones, funciones y comportamientos específicos que el sistema debe realizar para cumplir su propósito. Para el control de un péndulo invertido sobre carro se definen: 
-\begin{itemize}
-	\item \textbf{RF1. Modelado y simulación:} El sistema debe integrarse en un entorno simulación (Matlab/Simulink) para el desarrollo de algoritmos de control como paso previo a su implementación en hardware real. Se requiere el modelado de la dinámica no lineal y la introducción de los parámetros (masas, inercias, rozamientos...) que caracterizan el sistema real. 
-	
-	\item \textbf{RF2. Visualización y telemetría en ROS:} Se requiere establecer un puente de comunicación (ROS Toolbox) que publique el estado del sistema (\textit{joint states}) para su visualización en tiempo real mediante un modelo URDF en Rviz.  
-
-	\item \textbf{RF3. Control de inyección de energía (Swing-up):} El control debe ser capaz de balancear el péndulo desde su posición estable ($q = \pi rad$) hasta su extremo opuesto ($ q = 0 rad$) mediante técnicas de inyección de energía. 
-	
-	\item \textbf{RF4. Control de estabilización (Realimentación del estado):} El sistema debe conmutar automáticamente a un control por realimentación del estado para mantener el péndulo en la vertical y posicionar el carro en un punto del riel. 
-	
-	\item \textbf{RF5. Adquisición de señales:} El firmware debe procesar las señales de los encoders en cuadratura y ejecutar la ley de control con una frecuencia de muestreo suficiente para garantizar la estabilidad del sistema inestable.  
-	
-\end{itemize}
-
-\subsection{Requisitos no funcionales}
-Los requisitos no funcionales, describen como debe comportarse el sistema y son esenciales para determinar su calidad. Para el caso en concreto: 
+\section{Requisitos funcionales}
+Los requisitos funcionales describen las acciones, cálculos y manipulaciones de datos específicos que el sistema debe realizar para cumplir su propósito. Para el control del péndulo invertido sobre carro se definen mediante sus entradas, comportamiento y salidas:
 
 \begin{itemize}
-	\item \textbf{RNF1. Determinismo y tiempo real estricto:} El bucle de control debe ejecutarse dentro de una rutina de interrupción (ISR) de prioridad máxima en la DSP, garantizando un periodo de muestreo constante y un \textit{jitter} despreciable.
-	
-	\item \textbf{RNF2. Robustez y márgenes de estabilidad:} El sistema debe ser capaz de rechazar perturbaciones externas moderadas y ser tolerante a las discrepancias producidas por las dinámicas no modeladas (fricciones no lineales y holguras mecánicas).
-	
-	\item \textbf{RNF3. Seguridad y gestión de fallos:} 
+	\item \textbf{RF1. Modelado y simulación de la dinámica:} 
 	\begin{itemize}
-		\item \textit{Mecánica:} El software debe implementar una parada de emergencia si el carro excede los límites de seguridad del riel.
-		\item \textit{Eléctrica:} Se debe asegurar el aislamiento galvánico mediante optoacopladores entre la etapa de potencia (24V) y la etapa de control (3.3V).
+		\item \textit{Entradas:} Parámetros físicos del sistema (masas, inercias, coeficientes de fricción) y señal de control simulada.
+		\item \textit{Comportamiento:} Resolución matemática de las Ecuaciones Diferenciales Ordinarias (EDO) que rigen la dinámica no lineal del mecanismo en el entorno MATLAB/Simulink.
+		\item \textit{Salidas:} Estado cinemático simulado del sistema (posiciones y velocidades articulares).
 	\end{itemize}
 	
-	\item \textbf{RNF4. Abstracción de hardware (HAL):} Se debe emplear las librerías de bajo nivel ofrecidas por el fabircante de la DSP para asegurar su correcta programación, portabilidad y estandarización del código. 
+	\item \textbf{RF2. Visualización y telemetría en ROS:}
+	\begin{itemize}
+		\item \textit{Entradas:} Estado cinemático del sistema (proveniente de la simulación o del hardware real) y archivo de descripción geométrica URDF.
+		\item \textit{Comportamiento:} Traducción y publicación de los datos mediante el puente de comunicación de ROS Toolbox para actualizar el árbol de transformadas (TF) del robot.
+		\item \textit{Salidas:} Visualización 3D actualizada en tiempo real mediante la interfaz RViz (tópico \textit{/joint\_states}).
+	\end{itemize}
 	
+	\item \textbf{RF3. Control de inyección de energía (Swing-up):} 
+	\begin{itemize}
+		\item \textit{Entradas:} Posición y velocidad angular actual del péndulo ($q, \dot{q}$).
+		\item \textit{Comportamiento:} Cálculo y ejecución de una ley de control basada en energía para balancear el péndulo desde su posición estable ($q = \pi \text{ rad}$) hasta el punto de linealización del sistema ($q = 0 \text{ rad}$).
+		\item \textit{Salidas:} Acción de control ($u$).
+	\end{itemize}
+	
+	\item \textbf{RF4. Control de estabilización (Realimentación del estado):} 
+	\begin{itemize}
+		\item \textit{Entradas:} Vector de estado completo del sistema ($x = [p, \dot{p}, q, \dot{q}]^T$). 
+		\item \textit{Comportamiento:} Estabilización del sistema sobre el punto de linealización utilizando control por realimentación del estado. 
+		\item \textit{Salidas:}  Acción de control ($u$).
+	\end{itemize}
+	
+	\item \textbf{RF5. Adquisición y decodificación de señales:} 
+	\begin{itemize}
+		\item \textit{Entradas:} Señales eléctricas de pulsos en cuadratura (A y B) provenientes de los encoders del motor y del péndulo.
+		\item \textit{Comportamiento:} Procesamiento y conteo de los pulsos digitales mediante el hardware específico.
+		\item \textit{Salidas:} Valores digitales discretos de posición y velocidad interpretables por la ley de control.
+	\end{itemize}
 \end{itemize}
 
-\section{Arquitectura del sistema}
+\section{Requisitos no funcionales}
+Los requisitos no funcionales imponen condiciones y restricciones a la implementación del diseño:
 
-El desarrollo de un sistema robótico de equilibrio inestable requiere una visión multidisciplinar. Por ello, la arquitectura de este proyecto se ha estructurado en tres niveles de abstracción complementarios: el diseño lógico del control, el entorno de validación virtual y la implementación física del hardware.
+\begin{itemize}
+	\item \textbf{RNF1. Restricciones de rendimiento (Determinismo y tiempo real):} El bucle de control debe ejecutarse dentro de una rutina de interrupción periódica dentro de un microcontrolador, garantizando un periodo de muestreo constante y un \textit{jitter} despreciable para la viabilidad del control discreto.
+	
+	\item \textbf{RNF2. Restricciones de fiabilidad (Robustez):} El sistema debe rechazar perturbaciones externas moderadas y ser tolerante a las discrepancias producidas por dinámicas no modeladas (fricciones no lineales y holguras mecánicas).
+	
+	\item \textbf{RNF3. Restricciones de seguridad (Gestión de fallos):} 
+	\begin{itemize}
+		\item \textit{Seguridad mecánica:} El software debe implementar una parada de emergencia si las lecturas de posición indican que el carro excede los límites físicos del riel. En caso de fallo en el software de parada se debe disponer de finales de carrera para cortar la alimentación. 
+		\item \textit{Seguridad eléctrica:} Se debe garantizar el aislamiento galvánico mediante optoacopladores para proteger la etapa de control (3.3V) frente a derivaciones de la etapa de potencia (24V).
+	\end{itemize}
+	
+	\item \textbf{RNF4. Condiciones de implementación (Abstracción HAL):} El código desarrollado debe hacer uso de la capa de abstracción de hardware (HAL) ofrecida por el fabricante del microcontrolador, asegurando la portabilidad, estandarización y eficiencia del firmware.
+\end{itemize}
 
-\subsection{A1. Arquitectura de control}
+\section{Diseño del sistema}
 
 \begin{figure}[ht]
 	\centering
@@ -258,9 +275,25 @@ El desarrollo de un sistema robótico de equilibrio inestable requiere una visi�
 
 \FloatBarrier
 
-La arquitectura de control propuesta en la Figura \ref{fig:arquitectura_control} se aplica sobre un sistema subactuado de tipo SIMO (Single Input Multiple Output). Para la etapa de realimentación, se implementa un observador del estado por inversión. Mediante este enfoque, los estados del sistema se obtienen exclusivamente a partir de las mediciones de salida, dado que, en el caso de sistemas robóticos, el estado coincide con las salidas ($q, \dot{q}, \ddot{q}$).
+La estructura de control propuesta en la Figura \ref{fig:arquitectura_control} se aplica sobre un sistema subactuado de tipo SIMO (Single Input Multiple Output). Para la etapa de realimentación, se implementa un observador del estado por inversión. Mediante este enfoque, los estados del sistema se obtienen exclusivamente a partir de las mediciones de salida, dado que, en el caso de sistemas robóticos, el estado coincide con las salidas ($q, \dot{q}, \ddot{q}$).
 
-Finalmente, lógica de conmutación atiende a un umbral angular. Este bloque de decisión monitoriza de forma continua la posición angular estimada del péndulo ($\hat{\theta}$). Si el péndulo ingresa dentro de una vecindad acotada en torno a la vertical absoluta (\textit{el punto de linealización del sistema}), la lógica conmuta al control por realimentación del estado En caso contrario, el sistema mantiene activo el controlador de swing-up para elevar el mecanismo. Este comportamiento híbrido se formaliza en el siguiente pseudocódigo:
+En las siguientes secciones se aborda de forma individual cada elemento del esquema, empezando por el modelado del sistema hasta explicar la lógica de conmutación entre ambos controles. 
+
+\subsection{Modelado cinemático y dinámico}
+
+El objetivo de esta sección es compactar las ecuaciones de movimiento del péndulo invertido sobre carro en la expresión Euler - Lagrange. Buscar un libro que haga el desarrollo. 
+
+\subsection{Estrategia de control Swing-up}
+
+Aquí tenemos que explicar en que consiste el control de energía (podemos poner el símil del columpio que es muy visual. )
+
+\subsection{Estabilización por realimentación del estado}
+
+Aquí interesa linealizar las ecuaciones de Euler - Lagrange y definir los estados del sistema. 
+
+\subsection{Lógica de conmutación}
+
+Finalmente, la lógica de conmutación atiende a un umbral angular. Este bloque de decisión monitoriza de forma continua la posición angular estimada del péndulo ($\hat{\theta}$). Si el péndulo ingresa dentro de una vecindad acotada en torno a la vertical absoluta (\textit{el punto de linealización del sistema}), la lógica conmuta al control por realimentación del estado En caso contrario, el sistema mantiene activo el controlador de swing-up para elevar el mecanismo. Este comportamiento híbrido se formaliza en el siguiente pseudocódigo:
 
 \begin{algorithm}[H]
 	\caption{Lógica de Conmutación}
@@ -281,8 +314,13 @@ Finalmente, lógica de conmutación atiende a un umbral angular. Este bloque de 
 	\end{algorithmic}
 \end{algorithm}
 
+\section{Arquitectura del sistema}
 
-\subsection{A2. Arquitectura de la simulación}
+Para definir la arquitectura del sistema se ha hecho una división entre la parte de simulación y la implementación en un sistema real. 
+
+La arquitectura del sistema de simulación permite obtener una vista general del flujo de trabajo para el modelado y la validación antes de la implementación real. Por otro lado, la arquitectura del sistema real se centra en los periféricos involucrados en el control así como el proceso de discretización que se debe aplicar para controlar un sistema real haciendo uso de un microcontrolador. 
+
+\subsection{Arquitectura de la simulación}
 
 \begin{figure}[ht]
 	\centering
@@ -298,7 +336,7 @@ Finalmente, lógica de conmutación atiende a un umbral angular. Este bloque de 
 La Figura \ref{fig:arquitectura_sim} detalla la arquitectura de software diseñada para la simulación del sistema. A continuación se desglosa cada elemento del esquema para conocer su función y como se conecta con el resto de la arquitectura: 
 
 \begin{itemize}[]
-	\item \textbf{Cálculo de EDOs (Motor de Física):} Implementado en el entorno MATLAB/Simulink, este bloque se encarga de resolver las Ecuaciones Diferenciales Ordinarias (EDO) que describen la dinámica del sistema. Simulink actúa como el motor de física, calculando en cada paso de tiempo los estados del robot (posiciones en radianes y metros). Estos datos se transmiten al ecosistema ROS mediante el ROS Toolbox, publicando la información en el tópico $/joint\_states$.
+	\item \textbf{Cálculo de EDOs (Motor de Física):} Implementado en el entorno MATLAB/Simulink, este bloque se encarga de resolver las Ecuaciones Diferenciales Ordinarias (EDO) que describen la dinámica del sistema. Simulink actúa como el motor de física, calculando en cada paso de tiempo los estados del robot (posiciones en radianes y metros). Estos datos se transmiten al ecosistema ROS mediante ROS Toolbox, publicando la información en el tópico $/joint\_states$.
 	
 	\item \textbf{Visualización, gemelo digital:} Este bloque recibe la información cinemática para representar el comportamiento del sistema en tiempo real. Está totalmente integrado en el entorno de ROS y se compone de varias piezas: 
 	\begin{itemize}[]
@@ -309,7 +347,7 @@ La Figura \ref{fig:arquitectura_sim} detalla la arquitectura de software diseña
 \end{itemize}
 
 
-\subsection{A3. Arquitectura del sistema real}
+\subsection{Arquitectura del sistema real}
 
 \begin{figure}[ht]
 	\centering
@@ -334,24 +372,12 @@ Finalmente la interacción entre el mundo digital y el mundo físico es posible 
 	
 	\item \textbf{Sensores: } La respuesta del sistema ($y_p(t)$) es captada por los Sensores (en este caso, encoders). La señal $y(t)$ es procesada por un bloque de muestreo, gobernado por el periodo $T$, y enviada al periférico\textit{ eQEP}.Este último actúa como un equivalente a un ADC (convertidor analógico-digital), transformando los pulsos del encoder en una señal digital $y_k$ interpretable por el controlador.
 \end{itemize}
+
+\section{Especificación de componentes de hardware}
  
-\section{Modelado matemático}
-\subsection{Dinámica del sistema}
-Aquí el desarrollo de las ecuaciones de movimiento y el encapsulado en las matrices M, G, C y B. 
-\subsection{Linealización}
-Explicar el porque se debe linealizar el sistema y como se hace. 
+Aquí poner el microcontrolador que tenemos con sus características, el puente H y los encoders. 
 
-\subsection{Representación en el espacio de estados}
-Utilizar la técnica de linealización para obtener los estados del sistema a partir de las ecuaciones de movimiento.  Matrcies A, B, C, D.
-
-\subsection{Diseño del controlador} 
-\subsubsection{Control de energía, Swing up}
-Explicar las bases matemáticas de la inyeccón de energía en un sistema para levantarlo a una posición. Comentar como en el libro underactuated utilizan PFL para el swing up de péndulo invertido sobre carro. 
-
-\subsubsection{Control de posición}
-Explicar como se ha obtenido un controlador por realimentación del estado mediante el uso del algoritmo LQR, comentar la relación entre Q y R (son matrices que dan más peso a la convergencia o al uso del actuador)
-
-\chapter{Implementación}
+\chapter{Desarrollo}
 
 Explicación de las actividades realizadas durante el desarrollo del proyecto. Se puede exponer en orden cronológico o por grupos de tareas. Hay que indicar los hitos alcanzados.
 
