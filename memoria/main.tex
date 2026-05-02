@@ -52,7 +52,13 @@
 %IMPORTS MAPA MENTAL
 \usepackage{tikz,times}
 \usepackage{verbatim}
-\usetikzlibrary{positioning, arrows.meta, shapes.geometric}
+\usepackage{standalone}
+\usepackage{placeins}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\floatname{algorithm}{Algoritmo}
+\usetikzlibrary{positioning, arrows, arrows.meta, shapes, shapes.geometric, calc}
+\usetikzlibrary{mindmap, trees, backgrounds}
 %\usepackage[paperwidth=25cm,paperheight=22cm,left=1cm,top=1cm]{geometry}
 
 \usetikzlibrary{mindmap,trees,backgrounds}
@@ -244,78 +250,38 @@ Los requisitos no funcionales, describen como debe comportarse el sistema y son 
 El desarrollo de un sistema robótico de equilibrio inestable requiere una visión multidisciplinar. Por ello, la arquitectura de este proyecto se ha estructurado en tres niveles de abstracción complementarios: el diseño lógico del control, el entorno de validación virtual y la implementación física del hardware.
 
 \subsection{A1. Arquitectura de control}
-Este nivel describe la lógica del algoritmo de control. Se  define la interacción entre el observador de estados y las dos leyes de control implementadas: el control no lineal de energía (\textit{Swing-up}) y la estabilización mediante realimentación del estado. El elemento crítico en esta arquitectura es la lógica de conmutación basada en la región de atracción del equilibrio inestable.
 
-\begin{figure}[htbp]
+\begin{figure}[ht]
 	\centering
-	\resizebox{\textwidth}{!}{
-		\begin{tikzpicture}[
-			node distance=1.5cm and 1.2cm,
-			% Estilo para electrónica/control
-			elec_block/.style={draw=blue!70!black, thick, rectangle, minimum height=1.6cm, minimum width=2.8cm, align=center, rounded corners, fill=blue!5},
-			% Estilo para mecánica/física
-			mech_block/.style={draw=orange!80!black, thick, rectangle, minimum height=1.6cm, minimum width=2.8cm, align=center, rounded corners, fill=orange!5},
-			% Estilo del sumador
-			sum/.style={draw, circle, thick, minimum size=0.8cm},
-			input/.style={coordinate},
-			output/.style={coordinate},
-			% Estilo de las flechas
-			arrow/.style={-{Stealth[scale=1.1]}, thick, rounded corners}
-			]
-			
-			% --- Nodos del Bucle Directo ---
-			\node [input, name=input] {};
-			
-			\node [sum, right=of input] (sum) {\Large $+$};
-			
-			\node [elec_block, right=of sum] (dsp) {
-				\textbf{Controlador (DSP)}\\ 
-				\textit{FC280049C}
-			};
-			
-			\node [elec_block, right=of dsp] (driver) {
-				\textbf{Driver}\\
-				\textit{AQMH2407ND}
-			};
-			
-			\node [mech_block, right=of driver] (motor) {
-				\textbf{Motor DC (24V)}\\
-				\textit{Crouzet 827600}
-			};
-			
-			\node [mech_block, right=of motor] (planta) {
-				\textbf{Planta}\\
-				\textit{Unidad Mecánica}
-			};
-			
-			\node [output, right=of planta] (out) {};
-			
-			% --- Nodo de Realimentación ---
-			% Posicionado en el centro del sistema para mayor simetría
-			\node [elec_block, below=1.5cm of driver] (sensor) {
-				\textbf{Sensores}\\
-				\textit{Encoders HEDS-9140}
-			};
-			
-			% --- Conexiones (Flechas) ---
-			\draw [arrow] (input) -- node [above] {$\theta_r(t)$} (sum);
-			\draw [arrow] (sum) -- node [above] {$e(t)$} (dsp);
-			\draw [arrow] (dsp) -- node [above] {PWM} (driver);
-			\draw [arrow] (driver) -- node [above] {V} (motor);
-			\draw [arrow] (motor) -- node [above] {$\tau$} (planta);
-			
-			% Salida
-			\draw [thick] (planta) -- (out) node [near end, above] {$\theta(t)$};
-			
-			% Realimentación
-			\draw [arrow] (planta.east) ++(0.5,0) |- (sensor.east);
-			\draw [arrow] (sensor.west) -| node [pos=0.9, left] {$-\theta_m(t)$} (sum.south);
-			
-		\end{tikzpicture}
-	}
-	\caption{Arquitectura funcional del bucle de control cerrado para el péndulo invertido.}
-	\label{fig:arquitectura_bucle_cerrado}
+	\input{Pictures/figuras/arquitectura_control.tex}
+	\caption{Arquitectura de control}
 \end{figure}
+
+\FloatBarrier
+
+La arquitectura de control propuesta se aplica sobre un sistema subactuado de tipo SIMO (Single Input Multiple Output). Para la etapa de realimentación, se implementa un observador del estado por inversión. Mediante este enfoque, los estados del sistema se obtienen exclusivamente a partir de las mediciones de salida, dado que, en el caso de sistemas robóticos, el estado coincide con las salidas ($q, \dot{q}, \ddot{q}$).
+
+Finalmente, lógica de conmutación atiende a un umbral angular. Este bloque de decisión monitoriza de forma continua la posición angular estimada del péndulo ($\hat{\theta}$). Si el péndulo ingresa dentro de una vecindad acotada en torno a la vertical absoluta (\textit{el punto de linealización del sistema}), la lógica conmuta al control por realimentación del estado En caso contrario, el sistema mantiene activo el controlador de swing-up para elevar el mecanismo. Este comportamiento híbrido se formaliza en el siguiente pseudocódigo:
+
+\begin{algorithm}[H]
+	\caption{Lógica de Conmutación}
+	\label{alg:conmutacion}
+	\begin{algorithmic}[1]
+		\Require Vector de estados estimado $\hat{x} = [\hat{x}_c, \dot{\hat{x}}_c, \hat{\theta}, \dot{\hat{\theta}}]^T$, umbral angular $\theta_{\text{th}}$
+		\Ensure Señal de control $u$ a aplicar a la planta
+		\Statex
+		\Loop
+		\State $\hat{\theta} \gets \hat{x}(3)$ \Comment{Obtener posición angular actual}
+		\If{$|\hat{\theta}| \leq \theta_{\text{th}}$} 
+		\State $u \gets -K \hat{x}$ \Comment{Control de posición}
+		\Else 
+		\State $u \gets f_{\text{swing}}(\hat{x})$ \Comment{Control de energía}
+		\EndIf
+		\State 
+		\EndLoop
+	\end{algorithmic}
+\end{algorithm}
+
 
 \subsection{A2. Arquitectura de la simulación}
 La arquitectura de simulación establece el puente entre la ingeniería de control más tradicional y la metodología de trabajo del grado. Se detalla la integración de \textit{Matlab/Simulink} como motor de cálculo de las ecuaciones diferenciales y \textit{ROS (Robot Operating System)} como infraestructura de visualización. Este esquema permite monitorizar la telemetría del sistema mediante el uso de nodos publicadores y visualización 3D en \textit{Rviz}.
