@@ -70,7 +70,6 @@
 \definecolor{color_plas}{RGB}{150,150,255}
 
 \begin{document}
-
 %----------------------------------------------------------------------------------------
 %	TITLE PAGE
 %----------------------------------------------------------------------------------------	
@@ -204,7 +203,7 @@ Diagrama de Gantt
 
 \section{Estimación de costes}
 
-Estimación del coste económico que supondría la adquisición del material necesario (hardware y software) para la realización del proyecto, los salarios involucrados y otros aspectos como alquileres de espacios y energía.
+Estimación del coste económico que supondría la adquisición del material necesario (hardware y software) para la realización del proyecto, los salarios involucrados y otros aspectos como alquileres de espacios y energía. 
 
 \chapter{Análisis}
 
@@ -254,11 +253,12 @@ El desarrollo de un sistema robótico de equilibrio inestable requiere una visi�
 	\centering
 	\input{Pictures/figuras/arquitectura_control.tex}
 	\caption{Arquitectura de control}
+	\label{fig:arquitectura_control}
 \end{figure}
 
 \FloatBarrier
 
-La arquitectura de control propuesta se aplica sobre un sistema subactuado de tipo SIMO (Single Input Multiple Output). Para la etapa de realimentación, se implementa un observador del estado por inversión. Mediante este enfoque, los estados del sistema se obtienen exclusivamente a partir de las mediciones de salida, dado que, en el caso de sistemas robóticos, el estado coincide con las salidas ($q, \dot{q}, \ddot{q}$).
+La arquitectura de control propuesta en la Figura \ref{fig:arquitectura_control} se aplica sobre un sistema subactuado de tipo SIMO (Single Input Multiple Output). Para la etapa de realimentación, se implementa un observador del estado por inversión. Mediante este enfoque, los estados del sistema se obtienen exclusivamente a partir de las mediciones de salida, dado que, en el caso de sistemas robóticos, el estado coincide con las salidas ($q, \dot{q}, \ddot{q}$).
 
 Finalmente, lógica de conmutación atiende a un umbral angular. Este bloque de decisión monitoriza de forma continua la posición angular estimada del péndulo ($\hat{\theta}$). Si el péndulo ingresa dentro de una vecindad acotada en torno a la vertical absoluta (\textit{el punto de linealización del sistema}), la lógica conmuta al control por realimentación del estado En caso contrario, el sistema mantiene activo el controlador de swing-up para elevar el mecanismo. Este comportamiento híbrido se formaliza en el siguiente pseudocódigo:
 
@@ -283,9 +283,6 @@ Finalmente, lógica de conmutación atiende a un umbral angular. Este bloque de 
 
 
 \subsection{A2. Arquitectura de la simulación}
-La arquitectura de simulación establece el puente entre la ingeniería de control más tradicional y la metodología de trabajo del grado. Se detalla la integración de \textit{Matlab/Simulink} como motor de cálculo de las ecuaciones diferenciales ordinarias (EDOs) y \textit{ROS (Robot Operating System)} como infraestructura de visualización. Este esquema permite monitorizar la telemetría del sistema mediante el uso de nodos publicadores y visualización 3D en \textit{Rviz}.
-
-El enfoque de simulación híbrida facilita la validación de controladores y la sintonización de parámetros del modelo en el entorno de Matlab, permitiendo un desarrollo iterativo de forma aislada. Una vez alcanzado un desempeño satisfactorio en la respuesta del sistema, se integra con RViz para una visualización tridimensional intuitiva. Esta transición no solo permite verificar el comportamiento cinemático y dinámico en un entorno realista, sino que también actúa como una herramienta de comunicación efectiva para presentar los resultados a perfiles no especializados en teoría de control.
 
 \begin{figure}[ht]
 	\centering
@@ -293,9 +290,24 @@ El enfoque de simulación híbrida facilita la validación de controladores y la
 		\input{Pictures/figuras/arquitectura_simulacion.tex}%
 	}
 	\caption{Arquitectura de la simulación}
+	\label{fig:arquitectura_sim}
 \end{figure}
 
 \FloatBarrier
+
+La Figura \ref{fig:arquitectura_sim} detalla la arquitectura de software diseñada para la simulación del sistema. A continuación se desglosa cada elemento del esquema para conocer su función y como se conecta con el resto de la arquitectura: 
+
+\begin{itemize}[]
+	\item \textbf{Cálculo de EDOs (Motor de Física):} Implementado en el entorno MATLAB/Simulink, este bloque se encarga de resolver las Ecuaciones Diferenciales Ordinarias (EDO) que describen la dinámica del sistema. Simulink actúa como el motor de física, calculando en cada paso de tiempo los estados del robot (posiciones en radianes y metros). Estos datos se transmiten al ecosistema ROS mediante el ROS Toolbox, publicando la información en el tópico $/joint\_states$.
+	
+	\item \textbf{Visualización, gemelo digital:} Este bloque recibe la información cinemática para representar el comportamiento del sistema en tiempo real. Está totalmente integrado en el entorno de ROS y se compone de varias piezas: 
+	\begin{itemize}[]
+		\item \textbf{Archivo URDF (Unified Robot Description Format):} Es un archivo XML que describe como es el robot o mecanismo que se quiere simular. Se especifican las visuales, las restricciones cinemáticas y los marcos de referencia de las articulaciones.  
+		\item \textbf{Robot State Publisher:} Es el nodo de ROS que permite representar el movimiento del robot. Se suscribe al tópico $/joint\_states$ y actualiza el árbol de transformadas de nuestro archivo URDF. 
+		\item \textbf{RViz:} La última pieza de la arquitectura software, es la interfaz que permite visualizar de forma gráfica e intuitiva todo el flujo de datos en un modelo 3D del mecanismo. 
+	\end{itemize}
+\end{itemize}
+
 
 \subsection{A3. Arquitectura del sistema real}
 
@@ -305,10 +317,24 @@ El enfoque de simulación híbrida facilita la validación de controladores y la
 		\input{Pictures/figuras/arquitectura_control_sistema_real.tex}%
 	}
 	\caption{Arquitectura del sistema real}
+	\label{fig:arquitectura_sim_fis}
 \end{figure}
 
 \FloatBarrier
 
+La Figura \ref{fig:arquitectura_sim_fis} presenta de forma esquemática la implementación del bucle de control en un microcontrolador. 
+
+Esta estructura permite observar la interacción entre el entorno digital (discreto) y el proceso físico (continuo). El núcleo del sistema es el \textbf{Controlador Digital}. Este procesador se encarga de ejecutar el algoritmo de control que procesa la señal de error entre la referencia ($r_k$) y la realimentación ($y_k$). 
+
+El concepto fundamental que rige esta arquitectura es el \textbf{periodo de muestreo} ($T$). Este parámetro determina la periodicidad de la rutina de control, permitiendo sincronizar las etapas de medida, cálculo y actuación sobre la planta de manera precisa. Durante el desarrollo del proyecto se determinará el periodo de muestreo atendiendo a factores como la dinámica del sistema en bucle cerrado o la frecuencia de la señal PWM. 
+
+Finalmente la interacción entre el mundo digital y el mundo físico es posible mediante el uso de periféricos que nos permiten medir el estado del sistema o modificarlo. Diferenciamos en dos clases de periféricos: 
+\begin{itemize}[]
+	\item \textbf{Actuadores:} La señal de control digital ($u_k$) se convierte en una señal analógica o cuasi-analógica mediante el módulo \textit{ePWM} (DAC, convertidor digital-analógico). Posteriormente, un bloque \textit{Retenedor de orden cero} (ZOH) mantiene la señal constante durante el intervalo de muestreo, transformándola en la señal continua $u(t)$ que excita al Proceso Continuo (compuesto por el driver, el motor y el péndulo).
+	
+	\item \textbf{Sensores: } La respuesta del sistema ($y_p(t)$) es captada por los Sensores (en este caso, encoders). La señal $y(t)$ es procesada por un bloque de muestreo, gobernado por el periodo $T$, y enviada al periférico\textit{ eQEP}.Este último actúa como un equivalente a un ADC (convertidor analógico-digital), transformando los pulsos del encoder en una señal digital $y_k$ interpretable por el controlador.
+\end{itemize}
+ 
 \section{Modelado matemático}
 \subsection{Dinámica del sistema}
 Aquí el desarrollo de las ecuaciones de movimiento y el encapsulado en las matrices M, G, C y B. 
@@ -379,21 +405,9 @@ Trabajo a futuro --> Implementación en HAL, uso de algoritmos no basados en mod
 \chapter*{Bibliografía}
 \addcontentsline{toc}{chapter}{\textcolor{ocre}{Bibliografía}}
 
-%------------------------------------------------
+\printbibliography[heading=bibempty]
 
-%\section*{Artículos}
-%\addcontentsline{toc}{section}{Artículos}
-%\printbibliography[heading=bibempty,type=article]
 
-%------------------------------------------------
-
-%\section*{Libros}
-%\addcontentsline{toc}{section}{Libros}
-\printbibliography[heading=bibempty,type=book]
-
-%\section*{Noticias}
-%\addcontentsline{toc}{section}%{Noticias}
-\printbibliography[heading=bibempty,type=misc]
 
 %----------------------------------------------------------------------------------------
 %	INDEX
