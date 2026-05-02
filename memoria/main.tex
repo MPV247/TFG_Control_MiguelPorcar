@@ -57,8 +57,7 @@
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 \floatname{algorithm}{Algoritmo}
-\usetikzlibrary{positioning, arrows, arrows.meta, shapes, shapes.geometric, calc}
-\usetikzlibrary{mindmap, trees, backgrounds}
+\usetikzlibrary{positioning, arrows, arrows.meta, shapes, shapes.geometric, calc, fit, backgrounds, mindmap, trees}
 %\usepackage[paperwidth=25cm,paperheight=22cm,left=1cm,top=1cm]{geometry}
 
 \usetikzlibrary{mindmap,trees,backgrounds}
@@ -284,7 +283,19 @@ Finalmente, lógica de conmutación atiende a un umbral angular. Este bloque de 
 
 
 \subsection{A2. Arquitectura de la simulación}
-La arquitectura de simulación establece el puente entre la ingeniería de control más tradicional y la metodología de trabajo del grado. Se detalla la integración de \textit{Matlab/Simulink} como motor de cálculo de las ecuaciones diferenciales y \textit{ROS (Robot Operating System)} como infraestructura de visualización. Este esquema permite monitorizar la telemetría del sistema mediante el uso de nodos publicadores y visualización 3D en \textit{Rviz}.
+La arquitectura de simulación establece el puente entre la ingeniería de control más tradicional y la metodología de trabajo del grado. Se detalla la integración de \textit{Matlab/Simulink} como motor de cálculo de las ecuaciones diferenciales ordinarias (EDOs) y \textit{ROS (Robot Operating System)} como infraestructura de visualización. Este esquema permite monitorizar la telemetría del sistema mediante el uso de nodos publicadores y visualización 3D en \textit{Rviz}.
+
+El enfoque de simulación híbrida facilita la validación de controladores y la sintonización de parámetros del modelo en el entorno de Matlab, permitiendo un desarrollo iterativo de forma aislada. Una vez alcanzado un desempeño satisfactorio en la respuesta del sistema, se integra con RViz para una visualización tridimensional intuitiva. Esta transición no solo permite verificar el comportamiento cinemático y dinámico en un entorno realista, sino que también actúa como una herramienta de comunicación efectiva para presentar los resultados a perfiles no especializados en teoría de control.
+
+\begin{figure}[ht]
+	\centering
+	\resizebox{\textwidth}{!}{%
+		\input{Pictures/figuras/arquitectura_simulacion.tex}%
+	}
+	\caption{Arquitectura de la simulación}
+\end{figure}
+
+\FloatBarrier
 
 \subsection{A3. Arquitectura del sistema real}
 Finalmente, se describe la infraestructura física que compone el prototipo. Esta sección detalla la interconexión entre la unidad de procesamiento (DSP FC280049C), la etapa de potencia y los sensores de posición. 
