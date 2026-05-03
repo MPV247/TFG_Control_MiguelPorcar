@@ -4,58 +4,70 @@
 \begin{document}
 	
 	\begin{tikzpicture}[
-		node distance=1cm and 1.5cm,
-		% Estilos
-		bloque/.style={draw, thick, rectangle, minimum height=1.2cm, minimum width=2cm, align=center, font=\sffamily},
-		periferico/.style={draw, thick, rectangle, minimum height=1cm, minimum width=1.5cm, align=center, font=\scriptsize\sffamily, fill=gray!10},
-		planta/.style={draw, thick, rectangle, minimum height=1.2cm, minimum width=2.5cm, align=center, font=\sffamily, fill=green!5},
-		flecha/.style={-{Stealth[scale=1.2]}, thick},
-		etiqueta/.style={font=\tiny\sffamily}
+		node distance=1.2cm and 1.8cm,
+		% Estilos base
+		bloque/.style={draw=black!50, fill=white, thick, rectangle, rounded corners, minimum height=1.5cm, minimum width=2.6cm, align=center, font=\sffamily},
+		periferico/.style={draw=black!50, fill=white, thick, rectangle, rounded corners, minimum height=1cm, minimum width=1.8cm, align=center, font=\scriptsize\sffamily},
+		planta/.style={draw=black!50, fill=white, thick, rectangle, rounded corners, minimum height=1.5cm, minimum width=3.5cm, align=center, font=\sffamily},
+		env_box/.style={draw, thick, rounded corners=10pt, inner sep=15pt, fill opacity=0.05},
+		flecha/.style={-{Stealth[scale=1.2]}, thick, draw=gray!80!black},
+		etiqueta/.style={align=center, font=\scriptsize\sffamily, fill=white, inner sep=1.5pt}
 		]
 		
-		% --- PROCESADOR (Controlador Digital) ---
-		\node[bloque] (control) {Controlador Digital};
-		\draw[flecha] ([xshift=-1.5cm]control.west) -- node[etiqueta, above] {$r_k$} (control.west);
+		% --- BLOQUES DEL PROCESADOR ---
+		\node[bloque] (control) {\textbf{Controlador}\\\textbf{Digital}};
 		
-		% --- PERIFÉRICOS DE SALIDA (Digital to Analog / PWM) ---
-		\node[periferico, right=of control] (pwm) {ePWM \\ (DAC)};
+		% r_k: Flecha de entrada
+		\draw[flecha] ([xshift=-1.8cm]control.west) -- node[etiqueta, above, pos=0.1, fill=none] {$r_k$} (control.west);
+		
+		% --- PERIFÉRICOS ---
+		% Forzamos 1.8cm de separación para que la brecha entre cajas sea idéntica
+		\node[periferico, right=1.8cm of control] (pwm) {ePWM \\ (DAC)};
 		\node[periferico, right=1.2cm of pwm] (retenedor) {Retenedor \\ (ZOH)};
 		
-		% --- PROCESO CONTINUO (Planta y Driver) ---
-		\node[planta, right=1.2cm of retenedor] (proceso) {Proceso Continuo \\ \scriptsize (Driver + Motor + Péndulo)};
+		% --- SISTEMA FÍSICO ---
+		% Forzamos 1.8cm de separación igual que antes
+		\node[planta, right=1.8cm of retenedor] (proceso) {\textbf{Proceso Continuo} \\ \scriptsize (Driver + Motor + Péndulo)};
+		\node[bloque, below=1.8cm of proceso, minimum width=3.5cm] (sensor) {\textbf{Sensores} \\ \scriptsize (Encoders)};
 		
-		% --- SENSOR Y FEEDBACK ---
-		\node[bloque, below=1.5cm of proceso, minimum width=2.5cm] (sensor) {Sensores \\ \scriptsize (Encoders)};
-		
-		% --- PERIFÉRICOS DE ENTRADA (Sampling / eQEP) ---
-		\node[periferico, left=of sensor] (muestreo) {Muestreo};
-		\node[periferico, left=of muestreo] (eqep) {eQEP \\ (ADC)};
+		% --- PERIFÉRICOS ENTRADA ---
+		% Mantenemos la cuadrícula alineando a 1.8cm del sensor
+		\node[periferico, left=1.8cm of sensor] (muestreo) {\textbf{Muestreo} \\ $T$};
+		\node[periferico, left=1.2cm of muestreo] (eqep) {eQEP \\ (ADC)};
 		
 		% --- CONEXIONES ---
-		
-		% Camino de ida
 		\draw[flecha] (control.east) -- node[etiqueta, above] {$u_k$} (pwm.west);
 		\draw[flecha] (pwm.east) -- node[etiqueta, above] {$u^*(kT)$} (retenedor.west);
-		\draw[flecha] (retenedor.east) -- node[etiqueta, above] {$u(t)$} (proceso.west);
+		\draw[flecha] (retenedor.east) -- node[etiqueta, above, pos=0.5] {$u(t)$} (proceso.west);
 		
-		% Camino de vuelta
-		\draw[flecha] (proceso.east) -- ++(0.5,0) |- node[etiqueta, pos=0.25, right] {$y_p(t)$} (sensor.east);
-		\draw[flecha] (sensor.west) -- node[etiqueta, above] {$y(t)$} (muestreo.east);
+		% y_p(t): Creamos un punto de giro y trazamos la flecha
+		\coordinate (giro_yp) at ($(proceso.east) + (0.8,0)$);
+		\draw[flecha] (proceso.east) -- (giro_yp) node[etiqueta, above, pos=0.5, fill=none] {$y_p(t)$} |- (sensor.east);
+		
+		\draw[flecha] (sensor.west) -- node[etiqueta, above, pos=0.5] {$y(t)$} (muestreo.east);
 		\draw[flecha] (muestreo.west) -- node[etiqueta, above] {$y^*(kT)$} (eqep.east);
-		\draw[flecha] (eqep.west) -| node[etiqueta, pos=0.8, left] {$y_k$} (control.south);
+		\draw[flecha] (eqep.west) -| node[etiqueta, pos=0.8, left, fill=none] {$y_k$} (control.south);
 		
-		% --- CAJAS DE AGRUPACIÓN ---
+		% --- CAPAS DE FONDO ---
 		\begin{scope}[on background layer]
-			% Caja Procesador
-			\node[draw, dashed, gray, fit=(control), inner sep=10pt, label={[gray, font=\sffamily]above:Procesador}] (caja_proc) {};
+			\coordinate (alt_top) at ($(control.north)+(0,0.6)$);
 			
-			% Caja Periféricos
-			\node[draw, dashed, gray, fit=(pwm) (retenedor) (muestreo) (eqep), inner sep=16pt, label={[gray, font=\sffamily]above:Periféricos}] (caja_perif) {};
+			% Caja 1
+			\node[env_box, draw=blue!70, fill=blue, fit=(control) (alt_top)] (caja_proc) {};
+			\node[above=0.1cm of caja_proc.north, font=\sffamily\bfseries\color{blue!70!black}] {Procesador};
+			
+			% Caja 2
+			\node[env_box, draw=green!60!black, fill=green, fit=(pwm) (retenedor) (muestreo) (eqep) (pwm |- alt_top)] (caja_perif) {};
+			\node[above=0.1cm of caja_perif.north, font=\sffamily\bfseries\color{green!60!black}] {Periféricos};
+			
+			% Caja 3: Añadimos (giro_yp) al comando fit para que la caja envuelva la flecha entera
+			\node[env_box, draw=gray!70, fill=gray!20, fit=(proceso) (sensor) (proceso |- alt_top) (giro_yp)] (caja_planta) {};
+			\node[above=0.1cm of caja_planta.north, font=\sffamily\bfseries\color{gray!70!black}] {Planta / Sistema Físico};
 		\end{scope}
 		
-		% Dibujo del interruptor en el muestreo
-		\draw[thick] ([xshift=-0.2cm, yshift=0.2cm]muestreo.north) -- ([xshift=0.2cm, yshift=0.1cm]muestreo.north);
-		\node[etiqueta] at ([yshift=0.35cm]muestreo.north) {$T$};
+		% Dibujo del interruptor
+		\draw[thick] ([xshift=-0.2cm, yshift=0.3cm]muestreo.north) -- ([xshift=0.2cm, yshift=0.5cm]muestreo.north);
+		\node[etiqueta, fill=none] at ([yshift=0.7cm]muestreo.north) {$T$};
 		
 	\end{tikzpicture}
 	
