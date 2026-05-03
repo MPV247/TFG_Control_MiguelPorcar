@@ -1,0 +1,85 @@
+\documentclass[tikz, border=5mm]{standalone}
+\usetikzlibrary{positioning, arrows.meta, calc, fit, backgrounds, shapes.geometric, patterns, decorations.pathreplacing}
+
+\begin{document}
+	
+	\begin{tikzpicture}[>=stealth, scale=1.2]
+		
+		% Definición de parámetros
+		\def\W{3}       % Ancho del carro
+		\def\H{1.5}     % Alto del carro
+		\def\x{3}       % Posición actual x del carro
+		\def\L{2}       % Longitud del péndulo al CM
+		\def\Ltotal{3.5}  % Longitud física de la barra
+		\def\ang{30}    % Ángulo theta en grados
+		\def\Rrueda{0.25} % Radio de las ruedas
+		
+		% --- 1. SUELO Y REFERENCIA FIJA ---
+		\draw[thick] (-2, 0) -- (6, 0);
+		\fill[pattern=north east lines] (-2, -0.25) rectangle (6, 0);
+		
+		\draw[->, thick] (0, 2) -- (0.8, 2) node[right] {$X$};
+		\draw[->, thick] (0, 2) -- (0, 2.8) node[above] {$Y$};
+		
+		% --- 2. EL CARRO ---
+		\coordinate (CentroCarro) at (\x, \Rrueda);
+		
+		% Ruedas
+		\draw[thick, fill=gray!40] (\x - \W/2 + 0.5, \Rrueda) circle (\Rrueda);
+		\draw[thick, fill=gray!40] (\x + \W/2 - 0.5, \Rrueda) circle (\Rrueda);
+		
+		% Cuerpo del carro
+		\draw[thick, fill=cyan!10] (\x - \W/2, 2*\Rrueda) rectangle (\x + \W/2, 2*\Rrueda + \H);
+		\node at (\x+0.5, 2*\Rrueda + \H/2) {\Large $M$}; % Desplazado ligeramente para que no pise la línea
+		
+		% --- 3. EL PÉNDULO ---
+		% Pivote
+		\coordinate (Pivote) at (\x, 2*\Rrueda + \H);
+		
+		% Centro de Masas (CM)
+		\coordinate (CM) at ({\x + \L*sin(\ang)}, {2*\Rrueda + \H + \L*cos(\ang)});
+		
+		% Barra del péndulo
+		\draw[thick, fill=cyan!10, rotate around={-\ang:(Pivote)}] (\x-0.12, 2*\Rrueda + \H) rectangle (\x+0.12, 2*\Rrueda + \H + \Ltotal);
+		
+		% Eje central del pivote
+		\draw[thick, fill=black] (Pivote) circle (0.1);
+		
+		% Punto del Centro de Masas
+		\begin{scope}[shift={(CM)}]
+			\fill[black] (0,0) -- ++(0.15,0) arc (0:90:0.15) -- cycle;
+			\fill[black] (0,0) -- ++(-0.15,0) arc (180:270:0.15) -- cycle;
+			\draw[thick] (0,0) circle (0.15);
+		\end{scope}
+		
+		% --- 4. VECTORES DE FUERZA (Diagrama de Sólido Libre) ---
+		
+		% Acción de control u (Negro, grueso)
+		\draw[->, line width=1.5pt] (\x + \W/2, 2*\Rrueda + \H/2) -- ++(1.5, 0) node[above] {\large $u$};
+		
+		% Fuerzas de Gravedad y Normales (Azul)
+		% Gravedad Péndulo
+		\draw[->, very thick, blue!80!black] (CM) -- ++(0, -1.5) node[right] {\large $mg$};
+		% Gravedad Carro
+		\draw[->, very thick, blue!80!black] (\x, 2*\Rrueda) -- ++(0, -1) node[right] {\large $Mg$};
+		% Normales de las ruedas
+		\draw[->, very thick, blue!80!black] (\x - \W/2 + 0.5, 0) -- ++(0, 1.2) node[left] {$N_1$};
+		\draw[->, very thick, blue!80!black] (\x + \W/2 - 0.5, 0) -- ++(0, 1.2) node[right] {$N_2$};
+		
+		% Fuerzas de Fricción (Rojo)
+		% Fricción del carro (asumiendo vel. x positiva)
+		\draw[->, very thick, red!80!black] (\x - \W/2, 2*\Rrueda + \H/4) -- ++(-1.5, 0) node[above] {\large $c_x \dot{x}$};
+		
+		% Fricción viscosa del péndulo (Par en el pivote)
+		% Como theta positivo es horario, el par de fricción se dibuja antihorario
+		\draw[<-, very thick, red!80!black] (\x, 2*\Rrueda + \H) ++(45:0.8) arc (45:150:0.8) node[above left, xshift=5pt] {\large $c_\theta \dot{\theta}$};
+		
+		% --- 5. INDICADORES DE MOVIMIENTO (Opcional, para dar contexto) ---
+		% Ángulo theta original en gris clarito para no saturar
+		\draw[->, thick, gray] (\x, 2*\Rrueda + \H + 1.5) arc[start angle=90, end angle={90-\ang}, radius=1.5];
+		\node[gray] at ({\x + 0.6*sin(\ang/2)}, {2*\Rrueda + \H + 1.5*cos(\ang/2) + 0.3}) {\large $\theta$};
+		\draw[dashed, thick, gray] (Pivote) -- ++(0, \L + 0.5);
+		
+	\end{tikzpicture}
+	
+\end{document}

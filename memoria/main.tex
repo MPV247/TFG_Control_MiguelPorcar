@@ -287,7 +287,7 @@ Los requisitos no funcionales imponen condiciones y restricciones a la implement
 
 \FloatBarrier
 
-La arquitectura de control propuesta en la Figura \ref{fig:arquitectura_control} se aplica sobre un sistema subactuado tipo SIMO (Single Input Multiple Output). Para la etapa de realimentación, se implementa un observador del estado por inversión. Mediante este enfoque, los estados del sistema se obtienen exclusivamente a partir de las mediciones de salida, dado que, en el caso concreto de sistemas robóticos, el estado coincide con las salidas cinemáticas ($q, \dot{q}, \ddot{q}$).
+La arquitectura de control propuesta en la Figura \ref{fig:arquitectura_control} se aplica sobre un sistema subactuado tipo SIMO (Single Input Multiple Output). Para la etapa de realimentación, se implementa un observador del estado por inversión. Mediante este enfoque, los estados del sistema se obtienen exclusivamente a partir de las mediciones de salida, dado que, en el caso concreto de sistemas robóticos, el estado coincide con las salidas cinemáticas ($q, \dot{q}$).
 
 \subsection{Introducción al modelado dinámico}
 
@@ -353,6 +353,66 @@ Una vez establecida la convención de signos del sistema y tener una visión esq
 		E_{\text{p}} = mgl\cos(\theta)
 	\end{cases}\label{eq:energia_sistema}
 \end{equation}
+
+A partir de formular la energía cinética y potencial, se desarrolla el Lagrangiano (Anexo \ref{anexo:desarrollo_dinamico}) y se calculan sus derivadas parciales hasta obtener las siguientes ecuaciones de movimiento \cite{tedrake2023}:
+
+\begin{equation}
+	\begin{cases}
+		(M + m)\ddot{x} + ml\ddot{\theta}\cos(\theta) - ml\dot{\theta}^2\sin(\theta) = u \\
+		ml\ddot{x}\cos(\theta) + ml^2\ddot{\theta} - mgl\sin(\theta) = 0
+	\end{cases}\label{eq:ec_movimiento}
+\end{equation}
+
+Antes de compactar las ecuaciones en la forma matricial de la Ecuación \ref{eq:matrices_dinamica} es importante añadir los términos de rozamiento viscoso para el riel y el péndulo. Así quedan las ecuaciones tras la modificación: 
+
+\begin{equation}
+	\begin{cases}
+		(M + m)\ddot{x} + ml\ddot{\theta}\cos(\theta) + c_x\dot{x} - ml\dot{\theta}^2\sin(\theta) = u \\
+		ml\ddot{x}\cos(\theta) + ml^2\ddot{\theta} + c_{\theta}\dot{\theta} - mgl\sin(\theta) = 0
+	\end{cases}\label{eq:ec_movimiento_final}
+\end{equation}
+
+Finalmente se compacta la expresión en forma matricial como indica la Ecuación \ref{eq:matrices_dinamica}. La caracterización del sistema que posteriormente se implementará en simulación es: 
+
+\begin{equation}
+	\begin{bmatrix} 
+		M + m & m l \cos\theta \\ 
+		m l \cos\theta & I + m l^2 
+	\end{bmatrix} 
+	\begin{bmatrix} 
+		\ddot{x} \\ 
+		\ddot{\theta} 
+	\end{bmatrix} 
+	+ 
+	\begin{bmatrix} 
+		c_x & -m l \dot{\theta} \sin\theta \\ 
+		0 & c_\theta 
+	\end{bmatrix} 
+	\begin{bmatrix} 
+		\dot{x} \\ 
+		\dot{\theta} 
+	\end{bmatrix} 
+	+ 
+	\begin{bmatrix} 
+		0 \\ 
+		-m g l \sin\theta 
+	\end{bmatrix} 
+	= 
+	\begin{bmatrix} 
+		1 \\ 
+		0 
+	\end{bmatrix} u
+	\label{eq:matrices_dinamica_desarrollada}
+\end{equation}
+
+ \begin{figure}[htpb]
+	\centering
+	\input{Pictures/figuras/pendulo_carro_fuerzas.tex}
+	\caption{Descomposición de fuerzas}
+	\label{fig:esquema_fuerzas_pendulo}
+\end{figure}
+
+\FloatBarrier
 
 \subsection{Estrategia de control Swing-up}
 
@@ -522,4 +582,15 @@ Trabajo a futuro --> Implementación en HAL, uso de algoritmos no basados en mod
 
 Colocar aquí cualquier tipo de información susceptible de ser consultada para la correcta comprensión del documento y el proyecto que describe.
 
+%----------------------------------------------------------------------------------------
+%	APÉNDICES / ANEXOS
+%----------------------------------------------------------------------------------------
+\appendix % Este comando cambia la numeración de Capítulos a Letras (A, B, C...)
+
+\chapter{Desarrollo del Lagrangiano}
+\label{anexo:desarrollo_dinamico} % <-- Esta etiqueta es el "ancla" para el enlace
+
+En este anexo se detalla el desarrollo matemático paso a paso del formalismo de Euler-Lagrange, partiendo de las energías del sistema hasta obtener la formulación matricial.
+
+% Aquí pegarías todo el desarrollo de las derivadas parciales de L que vimos antes.
 \end{document}
