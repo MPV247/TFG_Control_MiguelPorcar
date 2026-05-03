@@ -245,7 +245,7 @@ Los requisitos funcionales describen las acciones, cálculos y manipulaciones de
 	
 	\item \textbf{RF4. Control de estabilización (Realimentación del estado):} 
 	\begin{itemize}
-		\item \textit{Entradas:} Vector de estado completo del sistema ($x = [p, \dot{p}, q, \dot{q}]^T$). 
+		\item \textit{Entradas:} Vector de estado del sistema ($x = [p, \dot{p}, q, \dot{q}]^T$). 
 		\item \textit{Comportamiento:} Estabilización del sistema sobre el punto de linealización utilizando control por realimentación del estado. 
 		\item \textit{Salidas:}  Acción de control ($u$).
 	\end{itemize}
@@ -262,14 +262,14 @@ Los requisitos funcionales describen las acciones, cálculos y manipulaciones de
 Los requisitos no funcionales imponen condiciones y restricciones a la implementación del diseño:
 
 \begin{itemize}
-	\item \textbf{RNF1. Restricciones de rendimiento (Determinismo y tiempo real):} El bucle de control debe ejecutarse dentro de una rutina de interrupción periódica dentro de un microcontrolador, garantizando un periodo de muestreo constante y un \textit{jitter} despreciable para la viabilidad del control discreto.
+	\item \textbf{RNF1. Restricciones de rendimiento (Determinismo y tiempo real):} El bucle de control debe ejecutarse dentro de una rutina de interrupción periódica en un microcontrolador, garantizando un periodo de muestreo estable y un \textit{jitter} despreciable para la viabilidad del control discreto.
 	
 	\item \textbf{RNF2. Restricciones de fiabilidad (Robustez):} El sistema debe rechazar perturbaciones externas moderadas y ser tolerante a las discrepancias producidas por dinámicas no modeladas (fricciones no lineales y holguras mecánicas).
 	
 	\item \textbf{RNF3. Restricciones de seguridad (Gestión de fallos):} 
 	\begin{itemize}
-		\item \textit{Seguridad mecánica:} El software debe implementar una parada de emergencia si las lecturas de posición indican que el carro excede los límites físicos del riel. En caso de fallo en el software de parada se debe disponer de finales de carrera para cortar la alimentación. 
-		\item \textit{Seguridad eléctrica:} Se debe garantizar el aislamiento galvánico mediante optoacopladores para proteger la etapa de control (3.3V) frente a derivaciones de la etapa de potencia (24V).
+		\item \textit{Seguridad mecánica:} El software debe implementar una parada de emergencia si las lecturas de posición indican que el carro excede los límites físicos del riel. En caso de fallo en el software de parada se debe disponer de finales de carrera para cortar la alimentación del actuador. 
+		\item \textit{Seguridad eléctrica:} Se debe garantizar el aislamiento galvánico entre la etapa de control (3.3V) y la etapa de potencia (24V).
 	\end{itemize}
 	
 	\item \textbf{RNF4. Condiciones de implementación (Abstracción HAL):} El código desarrollado debe hacer uso de la capa de abstracción de hardware (HAL) ofrecida por el fabricante del microcontrolador, asegurando la portabilidad, estandarización y eficiencia del firmware.
@@ -286,7 +286,7 @@ Los requisitos no funcionales imponen condiciones y restricciones a la implement
 
 \FloatBarrier
 
-La estructura de control propuesta en la Figura \ref{fig:arquitectura_control} se aplica sobre un sistema subactuado de tipo SIMO (Single Input Multiple Output). Para la etapa de realimentación, se implementa un observador del estado por inversión. Mediante este enfoque, los estados del sistema se obtienen exclusivamente a partir de las mediciones de salida, dado que, en el caso de sistemas robóticos, el estado coincide con las salidas ($q, \dot{q}, \ddot{q}$).
+La arquitectura de control propuesta en la Figura \ref{fig:arquitectura_control} se aplica sobre un sistema subactuado tipo SIMO (Single Input Multiple Output). Para la etapa de realimentación, se implementa un observador del estado por inversión. Mediante este enfoque, los estados del sistema se obtienen exclusivamente a partir de las mediciones de salida, dado que, en el caso concreto de sistemas robóticos, el estado coincide con las salidas cinemáticas ($q, \dot{q}, \ddot{q}$).
 
 \subsection{Modelado cinemático y dinámico}
 
@@ -327,7 +327,7 @@ Finalmente, la lógica de conmutación atiende a un umbral angular. Este bloque 
 
 Para definir la arquitectura del sistema se ha hecho una división entre la parte de simulación y la implementación en un sistema real. 
 
-La arquitectura del sistema de simulación permite obtener una vista general del flujo de trabajo para el modelado y la validación antes de la implementación real. Por otro lado, la arquitectura del sistema real se centra en los periféricos involucrados en el control así como el proceso de discretización que se debe aplicar para controlar un sistema real haciendo uso de un microcontrolador. 
+La arquitectura del sistema de simulación permite obtener una vista general del flujo de trabajo para el modelado y la validación antes de la implementación real. Por otro lado, la arquitectura del sistema real se centra en los periféricos involucrados en el control así como el proceso de discretización que se debe aplicar para controlar un sistema real utilizando un microcontrolador. 
 
 \subsection{Arquitectura de la simulación}
 
@@ -351,7 +351,7 @@ La Figura \ref{fig:arquitectura_sim} detalla la arquitectura de software diseña
 	\begin{itemize}[]
 		\item \textbf{Archivo URDF (Unified Robot Description Format):} Es un archivo XML que describe como es el robot o mecanismo que se quiere simular. Se especifican las visuales, las restricciones cinemáticas y los marcos de referencia de las articulaciones.  
 		\item \textbf{Robot State Publisher:} Es el nodo de ROS que permite representar el movimiento del robot. Se suscribe al tópico $/joint\_states$ y actualiza el árbol de transformadas de nuestro archivo URDF. 
-		\item \textbf{RViz:} La última pieza de la arquitectura software, es la interfaz que permite visualizar de forma gráfica e intuitiva todo el flujo de datos en un modelo 3D del mecanismo. 
+		\item \textbf{RViz:} La última pieza de la arquitectura software, es la interfaz que permite visualizar de forma gráfica e intuitiva todo el flujo de datos como un modelo 3D en movimiento. 
 	\end{itemize}
 \end{itemize}
 
@@ -373,13 +373,13 @@ La Figura \ref{fig:arquitectura_sim_fis} presenta de forma esquemática la imple
 
 Esta estructura permite observar la interacción entre el entorno digital (discreto) y el proceso físico (continuo). El núcleo del sistema es el \textbf{Controlador Digital}. Este procesador se encarga de ejecutar el algoritmo de control que procesa la señal de error entre la referencia ($r_k$) y la realimentación ($y_k$). 
 
-El concepto fundamental que rige esta arquitectura es el \textbf{periodo de muestreo} ($T$). Este parámetro determina la periodicidad de la rutina de control, permitiendo sincronizar las etapas de medida, cálculo y actuación sobre la planta de manera precisa. Durante el desarrollo del proyecto se determinará el periodo de muestreo atendiendo a factores como la dinámica del sistema en bucle cerrado o la frecuencia de la señal PWM. 
+El concepto fundamental es el \textbf{periodo de muestreo} ($T$). Este parámetro determina la periodicidad de la rutina de control, permitiendo sincronizar las etapas de medida, cálculo y actuación sobre la planta de manera precisa. Durante el desarrollo del proyecto se determinará el periodo de muestreo atendiendo a factores como la dinámica del sistema en bucle cerrado o la frecuencia de la señal PWM. 
 
-Finalmente la interacción entre el mundo digital y el mundo físico es posible mediante el uso de periféricos que nos permiten medir el estado del sistema o modificarlo. Diferenciamos en dos clases de periféricos: 
+Finalmente la interacción entre el mundo digital y el mundo físico es posible mediante el uso de \textbf{periféricos} que permiten medir el estado del sistema o modificarlo. Diferenciamos en dos clases de periféricos: 
 \begin{itemize}[]
 	\item \textbf{Actuadores:} La señal de control digital ($u_k$) se convierte en una señal analógica o cuasi-analógica mediante el módulo \textit{ePWM} (DAC, convertidor digital-analógico). Posteriormente, un bloque \textit{Retenedor de orden cero} (ZOH) mantiene la señal constante durante el intervalo de muestreo, transformándola en la señal continua $u(t)$ que excita al Proceso Continuo (compuesto por el driver, el motor y el péndulo).
 	
-	\item \textbf{Sensores: } La respuesta del sistema ($y_p(t)$) es captada por los Sensores (en este caso, encoders). La señal $y(t)$ es procesada por un bloque de muestreo, gobernado por el periodo $T$, y enviada al periférico\textit{ eQEP}.Este último actúa como un equivalente a un ADC (convertidor analógico-digital), transformando los pulsos del encoder en una señal digital $y_k$ interpretable por el controlador.
+	\item \textbf{Sensores: } La respuesta del sistema ($y_p(t)$) es captada por los sensores (en este caso, encoders). La señal $y(t)$ es procesada por un bloque de muestreo, gobernado por el periodo $T$, y enviada al periférico\textit{ eQEP}.Este último actúa como un equivalente a un ADC (convertidor analógico-digital), transformando los pulsos del encoder en una señal digital $y_k$ interpretable por el controlador.
 \end{itemize}
 
 \subsection{Especificación de componentes de hardware}
