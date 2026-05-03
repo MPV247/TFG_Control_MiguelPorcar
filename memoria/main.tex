@@ -58,6 +58,7 @@
 \usepackage{algpseudocode}
 \floatname{algorithm}{Algoritmo}
 \usetikzlibrary{positioning, arrows, arrows.meta, shapes, shapes.geometric, calc, fit, backgrounds, mindmap, trees}
+\usetikzlibrary{patterns, decorations.pathreplacing}
 %\usepackage[paperwidth=25cm,paperheight=22cm,left=1cm,top=1cm]{geometry}
 
 \usetikzlibrary{mindmap,trees,backgrounds}
@@ -288,9 +289,60 @@ Los requisitos no funcionales imponen condiciones y restricciones a la implement
 
 La arquitectura de control propuesta en la Figura \ref{fig:arquitectura_control} se aplica sobre un sistema subactuado tipo SIMO (Single Input Multiple Output). Para la etapa de realimentación, se implementa un observador del estado por inversión. Mediante este enfoque, los estados del sistema se obtienen exclusivamente a partir de las mediciones de salida, dado que, en el caso concreto de sistemas robóticos, el estado coincide con las salidas cinemáticas ($q, \dot{q}, \ddot{q}$).
 
-\subsection{Modelado cinemático y dinámico}
+\subsection{Introducción al modelado dinámico}
 
-El objetivo de esta sección es compactar las ecuaciones de movimiento del péndulo invertido sobre carro en la expresión Euler - Lagrange. Buscar un libro que haga el desarrollo. 
+A diferencia de la cinemática, que estudia el movimiento de un mecanismo sin considerar las fuerzas y pares que lo producen, el modelado dinámico describe explícitamente la relación entre la fuerza aplicada y el movimiento resultante \cite{spong2006robot}. Disponer de las ecuaciones de movimiento exactas es un requisito estricto y fundamental tanto para la simulación del sistema como para el diseño de controladores basados en modelo. 
+
+Para determinar la dinámica del péndulo invertido sobre carro, se recurre a las ecuaciones de Euler-Lagrange. Este enfoque energético se basa en la obtención del Lagrangiano del sistema ($L$), definido como la diferencia entre la energía cinética ($E_c$) y la energía potencial ($E_p$):
+
+\begin{equation}
+	\begin{cases} 
+		L = E_c - E_p
+	\end{cases}
+	\label{eq:lagrangiano}
+\end{equation}
+
+Las ecuaciones diferenciales no lineales resultantes pueden reescribirse y compactarse de forma elegante en la formulación matricial clásica para sistemas robóticos \cite{murray1994mathematical}:
+
+\begin{equation}
+	\begin{cases} 
+		M(q)\ddot{q} + C(q,\dot{q})\dot{q} + G(q) = B u
+	\end{cases}
+	\label{eq:matrices_dinamica}
+\end{equation}
+
+Para el caso concreto del péndulo invertido sobre carro, sistema subactuado de dos grados de libertad, las dimensiones de cada matriz son:
+\begin{itemize}
+	\item $M(q) \in \mathbb{R}^{2 \times 2}$ es la matriz de inercia.
+	\item $C(q,\dot{q}) \in \mathbb{R}^{2 \times 2}$ es la matriz de fuerzas centrípetas y de Coriolis.
+	\item $G(q) \in \mathbb{R}^{2 \times 1}$ es el vector de fuerzas gravitacionales.
+	\item $B \in \mathbb{R}^{2 \times 1}$ vector de entrada, mapea la acción de control $u$.
+\end{itemize}
+
+Este enfoque matricial no solo facilita el análisis teórico, sino que permite realizar correcciones en la simulación del sistema muy fácilmente, ya que los parámetros que lo caracterizan (masas, longitudes, inercias, etc.) se encapsulan dentro de las propias matrices. A continuación, se detalla el proceso analítico para obtener el modelado dinámico del péndulo invertido sobre carro partiendo de su Lagrangiano. 
+
+\subsection{Modelo dinámico del sistema}
+El primer paso para el modelado dinámico consiste en definir un sistema de referencia en el plano bidimensional $(x, y)$. Esto permite localizar la posición del centro de masas (CM) del péndulo en función de las coordenadas generalizadas del sistema: la posición lineal del carro ($x$) y la posición angular del péndulo ($\theta$).
+
+Considerando $l$ como la distancia desde el eje de rotación hasta el centro de masas del péndulo, sus coordenadas son:
+
+\begin{equation}
+	\begin{cases}
+		x_{\text{cm}} = x + l \sin(\theta) \\
+		y_{\text{cm}} = l \cos(\theta)
+	\end{cases}\label{eq:coordenadas_cm}
+\end{equation}
+
+Esta elección de coordenadas establece de forma implícita el marco de trabajo del controlador. Se define la vertical superior como el origen angular ($\theta = 0$ rad) y de acuerdo con la geometría de la Ecuación \ref{eq:coordenadas_cm}, se asume una convención de signos donde el sentido de giro horario se considera positivo para el incremento de $\theta$.
+
+
+ \begin{figure}[htpb]
+ 	\centering
+	\input{Pictures/figuras/pendulo_carro_cm.tex}
+ 	\caption{Esquema cinemático y convención de coordenadas del péndulo invertido sobre carro.}
+ 	\label{fig:esquema_pendulo}
+ \end{figure}
+
 
 \subsection{Estrategia de control Swing-up}
 
