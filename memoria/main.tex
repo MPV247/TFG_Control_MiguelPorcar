@@ -339,10 +339,20 @@ Esta elección de coordenadas establece de forma implícita el marco de trabajo 
  \begin{figure}[htpb]
  	\centering
 	\input{Pictures/figuras/pendulo_carro_cm.tex}
- 	\caption{Esquema cinemático y convención de coordenadas del péndulo invertido sobre carro.}
+ 	\caption{Esquema cinemático, definición del sistema de coordenadas}
  	\label{fig:esquema_pendulo}
  \end{figure}
 
+\FloatBarrier
+
+Una vez establecida la convención de signos del sistema y tener una visión esquemática ofrecida en la Figura \ref{fig:esquema_pendulo}, es momento de desarrollar la Ecuación \ref{eq:lagrangiano} hasta obtener la forma matricial compacta de la Ecuación \ref{eq:matrices_dinamica}. La energía potencial y cinética del sistema en concreto se puede representar como \cite{tedrake2023}:
+
+\begin{equation}
+	\begin{cases}
+		E_{\text{c}} = \frac{1}{2}(M + m)\dot{x}^2 + m\dot{x}\dot{\theta} l\cos(\theta) + \frac{1}{2}  ml^2\dot{\theta}^2 \\
+		E_{\text{p}} = mgl\cos(\theta)
+	\end{cases}\label{eq:energia_sistema}
+\end{equation}
 
 \subsection{Estrategia de control Swing-up}
 
