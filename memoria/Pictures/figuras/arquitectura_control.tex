@@ -33,7 +33,7 @@
 	
 	% --- Salidas SIMO (1 a 2) ---
 	\coordinate (y_out) at ($(plant.east) + (2, 0)$);
-	\draw [->] (plant.east) -- node[pos=0.7, above] {$\mathbf{y} = [x, \theta]^T$} (y_out);
+	\draw [->] (plant.east) -- node[pos=0.7, above] {$\mathbf{y} = [q, \dot{q}]^T$} (y_out);
 	% Guardamos el punto de bifurcación de la salida
 	\coordinate (y_meas) at ($(plant.east) + (1, 0)$);
 	
