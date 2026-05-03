@@ -15,7 +15,7 @@
 		]
 		
 		% --- BLOQUES DEL PROCESADOR ---
-		\node[bloque] (control) {\textbf{Controlador}\\\textbf{Digital}};
+		\node[bloque] (control) {Controlador\\Digital};
 		
 		% r_k: Flecha de entrada
 		\draw[flecha] ([xshift=-1.8cm]control.west) -- node[etiqueta, above, pos=0.1, fill=none] {$r_k$} (control.west);
@@ -27,8 +27,8 @@
 		
 		% --- SISTEMA FÍSICO ---
 		% Forzamos 1.8cm de separación igual que antes
-		\node[planta, right=1.8cm of retenedor] (proceso) {\textbf{Proceso Continuo} \\ \scriptsize (Driver + Motor + Péndulo)};
-		\node[bloque, below=1.8cm of proceso, minimum width=3.5cm] (sensor) {\textbf{Sensores} \\ \scriptsize (Encoders)};
+		\node[planta, right=1.8cm of retenedor] (proceso) {Proceso Continuo \\ \scriptsize (Driver + Motor + Péndulo)};
+		\node[bloque, below=1.8cm of proceso, minimum width=3.5cm] (sensor) {Sensores \\ \scriptsize (Encoders)};
 		
 		% --- PERIFÉRICOS ENTRADA ---
 		% Mantenemos la cuadrícula alineando a 1.8cm del sensor
