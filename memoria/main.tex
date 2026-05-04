@@ -364,7 +364,7 @@ A partir de formular la energía cinética y potencial, se desarrolla el Lagrang
 	\end{cases}\label{eq:ec_movimiento}
 \end{equation}
 
-Antes de compactar las ecuaciones en la forma matricial de la Ecuación \ref{eq:matrices_dinamica} es importante añadir los términos de rozamiento viscoso para el riel y el péndulo. Así quedan las ecuaciones tras la modificación: 
+Antes de compactar las ecuaciones en la forma matricial de la Ecuación \ref{eq:matrices_dinamica} es importante añadir los términos de rozamiento viscoso para el riel y el péndulo.  
 
 \begin{equation}
 	\begin{cases}
@@ -406,13 +406,13 @@ Finalmente se compacta la expresión en forma matricial como indica la Ecuación
 	\label{eq:matrices_dinamica_desarrollada}
 \end{equation}
 
-Si se analiza con detalle el resultado obtenido en la Ecuación \ref{eq:matrices_dinamica_desarrollada} se pueden deducir las siguientes características: 
+Si se analiza la Ecuación \ref{eq:matrices_dinamica_desarrollada} se deducen tres características clave del sistema: 
 \begin{itemize}[]
 	\item \textbf{Sistema subactuado:} La acción de control $u$ solo permite empujar el carro de forma horizontal, no hay control directo en el posicionado del péndulo. 
 	
 	\item \textbf{Acoplamiento de términos:} El movimiento del carro afecta a la posición del péndulo y a su vez el movimiento del péndulo actúa como una perturbación en el posicionado del carro. 
 	
-	\item \textbf{Sistema inestable:} Si se analiza el sistema en $\theta = 0\ rad$ el sistema presenta polos con parte real positiva debido al término $	-m g l \sin\theta $. Por tanto, se requiere aplicar acciones de control en bucle cerrado para poder permanecer en esta posición. 
+	\item \textbf{Sistema inestable:} Si se analiza el sistema en $\theta = 0\ rad$ presenta polos con parte real positiva debido al término $	-m g l \sin\theta $. Por tanto, se requiere aplicar acciones de control en bucle cerrado para poder permanecer en esta posición. 
 	
 \end{itemize}
 
@@ -445,7 +445,7 @@ Para formalizar la ley de control esquematizada en la Figura \ref{fig:swing_up_s
 	\label{eq:pendulo_simple}
 \end{equation}
 
-En el caso de la Ecuación \ref{eq:pendulo_simple} se define la máxima energía potencial cuando $\theta = 0\ rad$ de forma que el sistema de referencia que se define para el control coincide con el del modelado. Una vez se formaliza el modelo energético, se determina la referencia energética que el control por balanceo debe conseguir \cite{astrom2000swinging}:
+En el caso de la Ecuación \ref{eq:pendulo_simple} se define la máxima energía potencial cuando $\theta = 0\ rad$ de forma que el sistema de referencia del control coincide con el del modelado. Una vez se formaliza el modelo energético, se determina la referencia energética que el control por balanceo debe conseguir \cite{astrom2000swinging}:
 \begin{equation}
 	\begin{cases} 
 		E_{ref} = mgl
@@ -469,9 +469,15 @@ Finalmente se define la ley de control que permite balancear el péndulo simple 
 	\label{eq:ley_control_swp}
 \end{equation}
 
-En función del valor de la ganancia $K$ se conseguirá el objetivo en diferente número de oscilaciones. Para pequeñas ganancias se requiere mayor número de oscilaciones de nuestro algoritmo. 
+En función del valor de la ganancia $K$ se conseguirá el objetivo en diferente número de oscilaciones. Valores pequeños de la ganancia requieren de más iteraciones para llegar hasta el punto de estabilización. 
 
-Sin embargo, la ley de control definida en la Ecuación \ref{eq:ley_control_swp} asume que el control actúa directamente como un par aplicado en el eje del péndulo. Para resolver este problema, se emplea la técnica de Linearización por Realimentación Parcial (PFL). El objetivo del PFL es transformar las ecuaciones no lineales del sistema \ref{eq:matrices_dinamica_desarrollada} de modo que la aceleración del carro genere de forma efectiva el par de balanceo $u$ requerido por la estrategia de energía, manteniendo bajo control simultáneamente el desplazamiento del carro en la guía. (Citar el artículo de PFL después de leerlo y sintetizar bien esa info)
+Sin embargo, la ley de control definida en la Ecuación \ref{eq:ley_control_swp} no es directamente transferible al péndulo invertido sobre carro. Los motivos son los siguientes:
+
+\begin{itemize}[topsep=5pt, itemsep=4pt] % Ajuste fino de espacios
+	\item \textbf{Acción de control:} En la ley de control propuesta en \ref{eq:ley_control_swp} el actuador se encuentra en el eje del péndulo. El sistema definido en \ref{eq:matrices_dinamica_desarrollada} es subactuado y solo se tiene control sobre la fuerza de empuje del carro. Para aplicar la estrategia de energía, es necesario convertir la acción de control virtual (el par necesario en el eje) a una aceleración real del carro a través del acoplamiento dinámico del sistema.
+	
+	\item \textbf{Límites físicos del riel:} Se hace indispensable, por tanto, un control multiobjetivo que regule la energía del péndulo garantizando simultáneamente la estabilidad de la posición del carro dentro del espacio de trabajo del riel.
+\end{itemize}
 
 \begin{figure}[ht]
 	\centering

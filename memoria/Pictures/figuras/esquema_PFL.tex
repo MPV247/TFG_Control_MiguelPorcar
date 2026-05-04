@@ -1,58 +1,61 @@
-\documentclass[tikz,border=10pt]{standalone}
+\documentclass[tikz, border=10pt]{standalone}
 \usetikzlibrary{shapes, arrows.meta, positioning, calc}
 
 \begin{document}
 	\begin{tikzpicture}[
-		>=Stealth,
-		auto,
-		node distance=1.5cm,
-		% Estilos de los bloques
-		block/.style={draw, rectangle, thick, minimum height=1.2cm, minimum width=1.5cm, align=center, fill=white},
-		sum/.style={draw, circle, thick, inner sep=2pt, minimum size=0.6cm},
-		line/.style={draw, thick, ->}
+		block/.style = {draw, fill=blue!10, rectangle, minimum height=3.5em, minimum width=6.5em, align=center, rounded corners=2pt},
+		sum/.style = {draw, fill=white, circle, inner sep=2pt},
+		input/.style = {coordinate},
+		output/.style = {coordinate},
+		node distance=2cm,
+		>={Stealth[scale=1.2]}
 		]
 		
-		% --- NODOS (BLOQUES) ---
+		% --- CAPA CENTRAL (EJE PRINCIPAL) ---
+		\node [sum] (sum_accel) {\Large +};
 		
-		% Entrada y sumador
-		\coordinate (input) at (0,0);
-		\node [sum, right=1.2cm of input] (sum) {};
+		% Bloques de control
+		\node [block, left=2.5cm of sum_accel, yshift=1.6cm] (ctrl_pos) {Control \\ Posición ($x$)};
+		\node [block, left=2.5cm of sum_accel, yshift=-1.6cm] (ctrl_en) {Control \\ Energía ($E$)};
 		
-		% Bloques principales
-		\node [block, right=1cm of sum] (C) {C};
-		\node [block, right=1.5cm of C, minimum width=2.5cm, minimum height=1.8cm] (PFL) {PFL};
-		\node [block, right=1.2cm of PFL] (dynamic) {Dynamic};
-		\node [block, right=1.2cm of dynamic] (int1) {$\frac{1}{s}$};
-		\node [block, right=1.2cm of int1] (int2) {$\frac{1}{s}$};
+		% Entradas
+		\node [input, left=1.2cm of ctrl_pos] (ref_x) {};
+		\node [input, left=1.2cm of ctrl_en] (ref_e) {};
 		
-		% --- LÍNEAS DIRECTAS (FORWARD PATH) ---
-		\draw [line] (input) -- node {$q_{ref}$} (sum);
-		\draw [line] (sum) -- (C);
-		\draw [line] (C) -- node {$q_{ref}''$} (PFL);
-		\draw [line] (PFL) -- node {$u$} (dynamic);
-		\draw [line] (dynamic) -- node {$q''$} (int1);
-		\draw [line] (int1) -- node [name=qdot] {$q'$} (int2);
+		% --- PROCESAMIENTO Y PLANTA ---
+		\node [block, right=1.5cm of sum_accel, fill=green!5] (pfl) {\textbf{PFL}};
+		\node [block, right=1.8cm of pfl, fill=orange!5, minimum height=5em, minimum width=8.5em] (planta) {\textbf{Sistema Real}};
+		\node [output, right=2.5cm of planta] (salida) {};
 		
-		% Salida final
-		\coordinate (output) at ($(int2.east) + (1.5,0)$);
-		\draw [line] (int2) -- node [name=q] {$q$} (output);
+		% --- CONEXIONES PRINCIPALES ---
+		\draw [->] (ref_x) -- node[above, pos=0.1] {$x_{ref}$} (ctrl_pos);
+		\draw [->] (ref_e) -- node[above, pos=0.1] {$E_{ref}$} (ctrl_en);
 		
-		% --- LAZOS DE REALIMENTACIÓN (FEEDBACK) ---
+		\draw [->] (ctrl_pos.east) -| node[right, pos=0.9] {\small $+$} (sum_accel);
+		\draw [->] (ctrl_en.east) -| node[right, pos=0.9] {\small $+$} (sum_accel);
 		
-		% 1. Feedback de q' al PFL
-		\coordinate (fb1) at ($(int1.east) + (0.6,0)$);
-		\filldraw (fb1) circle (1.5pt); % Punto de conexión
-		\draw [line] (fb1) -- ++(0,-1.5) -| ($(PFL.south) + (0.6,0)$);
+		\draw [->] (sum_accel) -- node[above] {$\ddot{x}_{des}$} (pfl);
+		\draw [->] (pfl) -- node[above] {$u$} (planta);
+		\draw [->] (planta) -- (salida) node[above left, xshift=1cm] {$[x, \theta, \dot{x}, \dot{\theta}]^T$};
 		
-		% 2. Feedback de q al PFL
-		\coordinate (fb2) at ($(int2.east) + (0.5,0)$);
-		\filldraw (fb2) circle (1.5pt); % Punto de conexión
-		\draw [line] (fb2) -- ++(0,-2.2) -| ($(PFL.south) + (-0.6,0)$);
+		% --- RETROALIMENTACIÓN (Bucle cerrado optimizado) ---
 		
-		% 3. Feedback principal (q al sumador)
-		\coordinate (fb3) at ($(int2.east) + (1.1,0)$);
-		\filldraw (fb3) circle (1.5pt); % Punto de conexión
-		\draw [line] (fb3) -- ++(0,-3.2) -| node [pos=0.97, right] {$-$} (sum.south);
+		% 1. Lazo Interno: PFL (Estado completo)
+		\coordinate (branch_interno) at ($(planta.east) + (0.6,0)$);
+		\draw [->] (branch_interno) -- ++(0,-2.2) -| node[pos=0.7, right] {$[x, \theta, \dot{x}, \dot{\theta}]^T$} (pfl.south);
+		
+		% 2. Lazo Externo: Punto de derivación único para Controles
+		\coordinate (branch_externo) at ($(planta.east) + (1.4,0)$);
+		
+		% Hacia Posición (Arriba)
+		\draw [->] (branch_externo) -- ++(0,2.8) -| node[pos=0.0, right] {$[x, \dot{x}]$} (ctrl_pos);
+		
+		% Hacia Energía (Abajo)
+		\draw [->] (branch_externo) -- ++(0,-2.8) -| node[pos=0.0, right] {$[\theta, \dot{\theta}]$} (ctrl_en);
+		
+		% Punto de unión visual para el branch externo
+		\fill (branch_externo) circle (1.5pt);
+		\fill (branch_interno) circle (1.5pt);
 		
 	\end{tikzpicture}
 \end{document}
