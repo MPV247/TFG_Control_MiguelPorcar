@@ -472,15 +472,28 @@ Sin embargo, la ley de control definida en la Ecuación \ref{eq:ley_control_swp}
 	\item \textbf{Límites físicos del riel:} Se hace indispensable, por tanto, un control multiobjetivo que regule la energía del péndulo garantizando simultáneamente la estabilidad de la posición del carro dentro del espacio de trabajo del riel.
 \end{itemize}
 
+Para abordar estas limitaciones, se recurre a la técnica de \textbf{Linearización por Realimentación Parcial (PFL)}. Esta metodología es fundamental en el estudio de sistemas mecánicos subactuados, definidos como aquellos que poseen menos actuadores que grados de libertad \cite{spong1994}. PFL permite linealizar la dinámica de un subconjunto del sistema con un cambio de variables y una ley de control no lineal \cite{spong1994}.
+
+En el contexto específico del péndulo invertido sobre carro, la aplicación práctica de este concepto se detalla extensamente en la literatura técnica sobre robótica subactuada \cite{tedrake2023}. En este sentido, se describe cómo la PFL se utiliza para ``linearizar'' la dinámica del carro, permitiendo que el diseñador dicte una aceleración deseada $\ddot{x}_{des}$ que el sistema seguirá fielmente. Esta aceleración deseada se convierte en el punto de encuentro donde convergen el control de energía para el péndulo y el control de posición para el carro, permitiendo que ambos objetivos coexistan en una única ley de control \cite{tedrake2023}.
+
+\begin{equation}
+	\begin{cases} 
+		\ddot{x}_{des} = K_e\dot{\theta}\cos(\theta)e - K_px - K_d\dot{x}
+	\end{cases}
+	\label{eq:ley_control_swp_PFL}
+\end{equation}
+
+La ley de control descrita en \ref{eq:ley_control_swp_PFL} simboliza un problema de compromiso entre la inyección de energía al péndulo y el control de posición PD del carro sobre el riel. Las ganancias $K_e, K_p$ y $K_d$ deben ajustarse para cumplir ambos objetivos al mismo tiempo.  
+
 \begin{figure}[ht]
 	\centering
 	\resizebox{\textwidth}{!}{%
 		\input{Pictures/figuras/esquema_PFL.tex}
 	}
-	\caption{Diagrama de bloques técnica PFL}
+	\caption{Diagrama de bloques Swing Up con control de posición}
 	\label{fig:PFL}
 \end{figure}
-
+\FloatBarrier
 
 \subsection{Estabilización por realimentación del estado}
 

@@ -15,8 +15,8 @@
 		\node [sum] (sum_accel) {\Large +};
 		
 		% Bloques de control
-		\node [block, left=2.5cm of sum_accel, yshift=1.6cm] (ctrl_pos) {Control \\ Posición ($x$)};
-		\node [block, left=2.5cm of sum_accel, yshift=-1.6cm] (ctrl_en) {Control \\ Energía ($E$)};
+		\node [block, left=2.5cm of sum_accel, yshift=1.6cm] (ctrl_pos) {Control \\ Posición ($K_p, K_d$)};
+		\node [block, left=2.5cm of sum_accel, yshift=-1.6cm] (ctrl_en) {Control \\ Energía ($K_e$)};
 		
 		% Entradas
 		\node [input, left=1.2cm of ctrl_pos] (ref_x) {};
@@ -31,7 +31,7 @@
 		\draw [->] (ref_x) -- node[above, pos=0.1] {$x_{ref}$} (ctrl_pos);
 		\draw [->] (ref_e) -- node[above, pos=0.1] {$E_{ref}$} (ctrl_en);
 		
-		\draw [->] (ctrl_pos.east) -| node[right, pos=0.9] {\small $+$} (sum_accel);
+		\draw [->] (ctrl_pos.east) -| node[right, pos=0.9] {\small $-$} (sum_accel);
 		\draw [->] (ctrl_en.east) -| node[right, pos=0.9] {\small $+$} (sum_accel);
 		
 		\draw [->] (sum_accel) -- node[above] {$\ddot{x}_{des}$} (pfl);
