@@ -471,6 +471,17 @@ Finalmente se define la ley de control que permite balancear el péndulo simple 
 
 En función del valor de la ganancia $K$ se conseguirá el objetivo en diferente número de oscilaciones. Para pequeñas ganancias se requiere mayor número de oscilaciones de nuestro algoritmo. 
 
+Sin embargo, la ley de control definida en la Ecuación \ref{eq:ley_control_swp} asume que el control actúa directamente como un par aplicado en el eje del péndulo. Para resolver este problema, se emplea la técnica de Linearización por Realimentación Parcial (PFL). El objetivo del PFL es transformar las ecuaciones no lineales del sistema \ref{eq:matrices_dinamica_desarrollada} de modo que la aceleración del carro genere de forma efectiva el par de balanceo $u$ requerido por la estrategia de energía, manteniendo bajo control simultáneamente el desplazamiento del carro en la guía. (Citar el artículo de PFL después de leerlo y sintetizar bien esa info)
+
+\begin{figure}[ht]
+	\centering
+	\resizebox{\textwidth}{!}{%
+		\input{Pictures/figuras/esquema_PFL.tex}
+	}
+	\caption{Diagrama de bloques técnica PFL}
+	\label{fig:PFL}
+\end{figure}
+
 
 \subsection{Estabilización por realimentación del estado}
 
