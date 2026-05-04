@@ -276,6 +276,7 @@ Los requisitos no funcionales imponen condiciones y restricciones a la implement
 	\item \textbf{RNF4. Condiciones de implementación (Abstracción HAL):} El código desarrollado debe hacer uso de la capa de abstracción de hardware (HAL) ofrecida por el fabricante del microcontrolador, asegurando la portabilidad, estandarización y eficiencia del firmware.
 \end{itemize}
 
+\newpage
 \section{Diseño del sistema}
 
 \begin{figure}[ht]
@@ -311,7 +312,7 @@ Las ecuaciones diferenciales no lineales resultantes pueden reescribirse y compa
 	\label{eq:matrices_dinamica}
 \end{equation}
 
-Para el caso concreto del péndulo invertido sobre carro, sistema subactuado de dos grados de libertad, las dimensiones de cada matriz son:
+Para el sistema en concreto, las dimensiones de cada matriz son:
 \begin{itemize}
 	\item $M(q) \in \mathbb{R}^{2 \times 2}$ es la matriz de inercia.
 	\item $C(q,\dot{q}) \in \mathbb{R}^{2 \times 2}$ es la matriz de fuerzas centrípetas y de Coriolis.
@@ -319,7 +320,7 @@ Para el caso concreto del péndulo invertido sobre carro, sistema subactuado de 
 	\item $B \in \mathbb{R}^{2 \times 1}$ vector de entrada, mapea la acción de control $u$.
 \end{itemize}
 
-Este enfoque matricial no solo facilita el análisis teórico, sino que permite realizar correcciones en la simulación del sistema muy fácilmente, ya que los parámetros que lo caracterizan (masas, longitudes, inercias, etc.) se encapsulan dentro de las propias matrices. A continuación, se detalla el proceso analítico para obtener el modelado dinámico del péndulo invertido sobre carro partiendo de su Lagrangiano. 
+Este enfoque matricial no solo facilita el análisis teórico, sino que permite realizar correcciones en la simulación del sistema muy fácilmente, ya que los parámetros que lo caracterizan (masas, longitudes, inercias, etc.) se encapsulan dentro de las propias matrices.  
 
 \subsection{Modelo dinámico del sistema}
 El primer paso para el modelado dinámico consiste en definir un sistema de referencia en el plano bidimensional $(x, y)$. Esto permite localizar la posición del centro de masas (CM) del péndulo en función de las coordenadas generalizadas del sistema: la posición lineal del carro ($x$) y la posición angular del péndulo ($\theta$).
@@ -405,6 +406,16 @@ Finalmente se compacta la expresión en forma matricial como indica la Ecuación
 	\label{eq:matrices_dinamica_desarrollada}
 \end{equation}
 
+Si se analiza con detalle el resultado obtenido en la Ecuación \ref{eq:matrices_dinamica_desarrollada} se pueden deducir las siguientes características: 
+\begin{itemize}[]
+	\item \textbf{Sistema subactuado:} La acción de control $u$ solo permite empujar el carro de forma horizontal, no hay control directo en el posicionado del péndulo. 
+	
+	\item \textbf{Acoplamiento de términos:} El movimiento del carro afecta a la posición del péndulo y a su vez el movimiento del péndulo actúa como una perturbación en el posicionado del carro. 
+	
+	\item \textbf{Sistema inestable:} Si se analiza el sistema en $\theta = 0\ rad$ el sistema presenta polos con parte real positiva debido al término $	-m g l \sin\theta $. Por tanto, se requiere aplicar acciones de control en bucle cerrado para poder permanecer en esta posición. 
+	
+\end{itemize}
+
  \begin{figure}[htpb]
 	\centering
 	\input{Pictures/figuras/pendulo_carro_fuerzas.tex}
@@ -416,7 +427,50 @@ Finalmente se compacta la expresión en forma matricial como indica la Ecuación
 
 \subsection{Estrategia de control Swing-up}
 
-Aquí tenemos que explicar en que consiste el control de energía (podemos poner el símil del columpio que es muy visual. )
+La primera ley de control se centra en el levantamiento del péndulo desde su posición estable ($\theta = \pi\ rad$) hasta su posición inestable y punto en el que se conmuta al control de posición ($\theta = 0\ rad$). 
+
+La idea intuitiva tras las matemáticas es simple, consiste en balancear el péndulo inyectando energía a favor del movimiento. El objetivo es llegar al punto de estabilización con pequeñas acciones de control que producen oscilaciones de amplitud creciente en el sistema. 
+\begin{figure}[ht]
+	\centering
+	\input{Pictures/figuras/swing_up_simple.tex}
+	\caption{Esquema del control por balanceo (swing-up) basado en energía.}
+	\label{fig:swing_up_simple}
+\end{figure}
+
+Para formalizar la ley de control esquematizada en la Figura \ref{fig:swing_up_simple}, se define la energía del péndulo libre que viene dada por la suma de la energía potencial y la cinética \cite{astrom2000swinging}: 
+\begin{equation}
+	\begin{cases} 
+		E_m = E_c + E_p = \frac{1}{2}J\dot{\theta}^2 + mgl\cos(\theta) 
+	\end{cases}
+	\label{eq:pendulo_simple}
+\end{equation}
+
+En el caso de la Ecuación \ref{eq:pendulo_simple} se define la máxima energía potencial cuando $\theta = 0\ rad$ de forma que el sistema de referencia que se define para el control coincide con el del modelado. Una vez se formaliza el modelo energético, se determina la referencia energética que el control por balanceo debe conseguir \cite{astrom2000swinging}:
+\begin{equation}
+	\begin{cases} 
+		E_{ref} = mgl
+	\end{cases}
+	\label{eq:energia_ref}
+\end{equation}
+
+Por otro lado, el error de medida para calcular la acción de control $u$ viene dado por la diferencia entre la energía actual del péndulo ($E_m$, Ecuación \ref{eq:pendulo_simple}) y la energía de referencia ($E_{ref}$, Ecuación \ref{eq:energia_ref}) \cite{astrom2000swinging}:
+\begin{equation}
+	\begin{cases} 
+		e = E_{m} - E_{ref}
+	\end{cases}
+	\label{eq:error_energia}
+\end{equation}
+
+Finalmente se define la ley de control que permite balancear el péndulo simple hasta su posición inestable, donde la acción de control $u$ es el par aplicado en el eje de rotación \cite{astrom2000swinging}: 
+\begin{equation}
+	\begin{cases} 
+		u = K\dot{\theta}\cos(\theta)e
+	\end{cases}
+	\label{eq:ley_control_swp}
+\end{equation}
+
+En función del valor de la ganancia $K$ se conseguirá el objetivo en diferente número de oscilaciones. Para pequeñas ganancias se requiere mayor número de oscilaciones de nuestro algoritmo. 
+
 
 \subsection{Estabilización por realimentación del estado}
 
