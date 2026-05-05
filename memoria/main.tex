@@ -474,46 +474,18 @@ Sin embargo, la ley de control definida en la Ecuación \ref{eq:ley_control_swp}
 
 Para abordar las limitaciones mencionadas, se recurre a la técnica de \textbf{Linearización por Realimentación Parcial (PFL)}. Esta metodología es fundamental en el estudio de sistemas mecánicos subactuados, definidos como aquellos que poseen menos actuadores que grados de libertad \cite{spong1994}. La PFL permite transformar la dinámica de un subconjunto de las coordenadas del sistema en un sistema lineal mediante un cambio de variables y una ley de control no lineal, siempre que exista un acoplamiento inercial suficiente entre las coordenadas actuadas y las pasivas \cite{spong1994}.
 
-En este trabajo se aplica la variante conocida como \textbf{linealización colocalizada} (\textit{Collocated Linearization}), la cual consiste en linealizar el grado de libertad activo del sistema, es decir, aquel donde se ubica físicamente la acción de control. El objetivo es diseñar una ley de control $u$ que cancele las no linealidades de la dinámica del carro para que este se comporte, desde el punto de vista del controlador de alto nivel, como un doble integrador lineal respecto a una aceleración deseada $\ddot{x}_{des}$.
-
-Partiendo de la ecuación de movimiento para la coordenada actuada del carro:
-\begin{equation}
-	(M + m)\ddot{x} + c_x\dot{x} +ml\cos\theta\ddot{\theta} - ml\dot{\theta}^2\sin\theta = u
-	\label{eq:dinamica_carro_base}
-\end{equation}
-
-Se busca imponer la condición $\ddot{x} = \ddot{x}_{des}$. Despejando la fuerza $u$ necesaria en la ecuación \ref{eq:dinamica_carro_base}, se obtiene la ley de control por linealización parcial:
-\begin{equation}
-	u = (M + m)\ddot{x}_{des} + ml\cos\theta\ddot{\theta} - ml\dot{\theta}^2\sin\theta
-	\label{eq:PFL_u_final}
-\end{equation}
-
-Como se observa, la fuerza física aplicada por el motor ($u$) compensa dinámicamente la masa total y los efectos inerciales del péndulo. Esta arquitectura permite definir la aceleración deseada $\ddot{x}_{des}$ como el punto de encuentro donde convergen los dos objetivos de control del sistema \cite{tedrake2023}:
-
-\begin{equation}
-	\ddot{x}_{des} = \underbrace{K_e \dot{\theta} \cos\theta (E - E_{ref})}_{\text{Control de Energía (Swing-up)}} - \underbrace{(K_p x + K_d \dot{x})}_{\text{Control de Posición (PD)}}
-	\label{eq:aceleracion_deseada}
-\end{equation}
-
-\newpage
-
-La ley de control resultante en la ecuación \ref{eq:aceleracion_deseada} simboliza un compromiso entre la inyección de energía necesaria para el balanceo y la regulación de la posición del carro sobre el riel \cite{tedrake2023}. Se debe ajustar el peso de cada ganancia para obtener un equilibrio óptimo entre ambos controles. 
-
+En este trabajo se aplica la variante conocida como \textbf{linealización colocalizada} (\textit{Collocated Linearization}), la cual consiste en linealizar el grado de libertad activo del sistema, es decir, aquel donde se ubica físicamente la acción de control \cite{spong1994}. El objetivo es diseñar una ley de control $u$ que cancele las no linealidades de la dinámica del carro para que este se comporte, desde el punto de vista del controlador de alto nivel, como un doble integrador lineal respecto a una aceleración deseada $\ddot{x}_{des}$.
 \begin{figure}[ht]
 	\centering
-	\resizebox{\textwidth}{!}{%
-		\input{Pictures/figuras/esquema_PFL.tex}
+	% Aquí cambias \textwidth por 0.7\textwidth (o el tamaño que prefieras)
+	\resizebox{0.95\textwidth}{!}{%
+		\input{Pictures/figuras/funcionamiento_PFL.tex}
 	}
-	\caption{Diagrama de bloques de la estrategia de Swing-up con linealización parcial (PFL) y control de posición.}
-	\label{fig:PFL}
+	\caption{Concepto de equivalencia de la Linealización Colocalizada.}
+	\label{fig:equivalencia_PFL}
 \end{figure}
 
 \FloatBarrier
-
-Finalmente, la figura \ref{fig:PFL} muestra de forma conceptual la arquitectura de control para la combinación de ambas técnicas. Se observa como el bloque PFL actúa como un control interno que hace creer a los controladores externos que la planta a controlar es un doble integrador, permitiendo tener acciones de control virtuales de aceleración. 
-
-
-Para que la estrategia de control sea implementable, es necesario que la ley de control final no dependa de variables que no podamos medir o dictar directamente. En el caso de la PFL colocalizada, el objetivo es que el carro siga una aceleración deseada $\ddot{x}_{des}$, pero la fuerza física $u$ en la ecuación \ref{eq:dinamica_carro_base} depende de la aceleración angular $\ddot{\theta}$, la cual es una variable pasiva.
 
 Partimos de las ecuaciones de movimiento del sistema que incluyen los términos de fricción del carro ($c_x$) y del péndulo ($c_{\theta}$):
 \begin{equation}
@@ -523,29 +495,44 @@ Partimos de las ecuaciones de movimiento del sistema que incluyen los términos 
 	\end{cases}\label{eq:ec_mov}
 \end{equation}
 
-Donde $J = I + ml^2$ es el momento de inercia del péndulo respecto al eje de rotación. Para eliminar $\ddot{\theta}$ de la ecuación de control, despejamos dicha variable de la dinámica del péndulo:
+Donde $J = I + ml^2$ es el momento de inercia del péndulo respecto al eje de rotación. Para eliminar $\ddot{\theta}$ de la ecuación de control, se despeja dicha variable de la dinámica del péndulo \cite{tedrake2023}:
 \begin{equation}
 	\begin{cases}
-	\ddot{\theta} = \frac{1}{J} \left( mgl\sin\theta - ml\cos\theta\ddot{x} - c_p\dot{\theta} \right)
+		\ddot{\theta} = \frac{1}{J} \left( mgl\sin\theta - ml\cos\theta\ddot{x} - c_p\dot{\theta} \right)
 	\end{cases}
 	\label{eq:despeje_theta}
 \end{equation}
 
-Al imponer la condición de linealización $\ddot{x} = \ddot{x}_{des}$ y sustituir la expresión \ref{eq:despeje_theta} en la ecuación del carro, se obtiene la fuerza $u$ necesaria para anular la dinámica no lineal del subsistema actuado:
+Al imponer la condición de linealización $\ddot{x} = \ddot{x}_{des}$ y sustituir la expresión \ref{eq:despeje_theta} en la ecuación del carro, se obtiene la fuerza $u$ necesaria para anular la dinámica no lineal del subsistema actuado \cite{tedrake2023}:
 \begin{equation}
-	u = (M + m)\ddot{x}_{des} + ml\cos\theta \left[ \frac{1}{J} (mgl\sin\theta - ml\cos\theta\ddot{x}_{des} - c_p\dot{\theta}) \right] - ml\dot{\theta}^2\sin\theta + c_x\dot{x}
+	\begin{cases}
+		u = (M + m)\ddot{x}_{des} + ml\cos\theta \left[ \frac{1}{J} (mgl\sin\theta - ml\cos\theta\ddot{x}_{des} - c_p\dot{\theta}) \right] - ml\dot{\theta}^2\sin\theta + c_x\dot{x}
+	\end{cases}
+	\label{eq:ley_PFL}
 \end{equation}
 
-Agrupando los términos en función de la entrada virtual $\ddot{x}_{des}$, se obtiene la ley de control por linealización parcial colocalizada desplegada:
+
+Como se observa, la fuerza física aplicada por el motor ($u$) compensa dinámicamente la masa total y los efectos inerciales del péndulo. Esta arquitectura permite definir la aceleración deseada $\ddot{x}_{des}$ como el punto de encuentro donde convergen los dos objetivos de control del sistema \cite{tedrake2023}:
+
 \begin{equation}
-	u = \underbrace{\left[ (M + m) - \frac{(ml\cos\theta)^2}{J} \right]}_{\text{Inercia efectiva}} \ddot{x}_{des} + \underbrace{\frac{m^2l^2g\cos\theta\sin\theta}{J} - \frac{mlc_p\cos\theta\dot{\theta}}{J} - ml\dot{\theta}^2\sin\theta + c_x\dot{x}}_{\text{Términos de acoplamiento y fricción}}
-	\label{eq:u_pfl_completa}
+	\ddot{x}_{des} = \underbrace{K_e \dot{\theta} \cos\theta (E - E_{ref})}_{\text{Control de Energía (Swing-up)}} - \underbrace{(K_p x + K_d \dot{x})}_{\text{Control de Posición (PD)}}
+	\label{eq:aceleracion_deseada}
 \end{equation}
 
-La ecuación \ref{eq:u_pfl_completa} representa la implementación real del bloque PFL. El primer término entre corchetes define la \textit{inercia efectiva} del sistema visto desde el actuador; nótese cómo esta inercia varía en función del ángulo del péndulo debido al acoplamiento. El segundo bloque de términos compensa las fuerzas gravitatorias, centrífugas y de fricción. 
+La ley de control resultante en la ecuación \ref{eq:aceleracion_deseada} simboliza un compromiso entre la inyección de energía necesaria para el balanceo y la regulación de la posición del carro sobre el riel \cite{tedrake2023}. Se debe ajustar el peso de cada ganancia para obtener un equilibrio óptimo entre ambos controles. 
 
-Gracias a esta formulación, el diseño de los controladores de swing-up y posición se simplifica drásticamente, ya que pueden considerar al carro como una masa unitaria ideal que responde de forma lineal a la aceleración $\ddot{x}_{des}$, delegando toda la compensación de la dinámica no lineal al nivel de control inferior definido por la PFL.
+\begin{figure}[ht]
+	\centering
+	\resizebox{\textwidth}{!}{%
+		\input{Pictures/figuras/esquema_PFL.tex}
+	}
+	\caption{Diagrama de bloques de la estrategia de Swing-up con linealización parcial (PFL) }
+	\label{fig:PFL}
+\end{figure}
 
+\FloatBarrier
+
+ 
 \subsection{Estabilización por realimentación del estado}
 
 Aquí interesa linealizar las ecuaciones de Euler - Lagrange y definir los estados del sistema. 
