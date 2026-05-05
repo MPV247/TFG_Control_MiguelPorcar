@@ -290,18 +290,14 @@ A diferencia de la cinemática, que estudia el movimiento de un mecanismo sin co
 Para determinar la dinámica del péndulo invertido sobre carro, se recurre a las ecuaciones de Euler-Lagrange. Este enfoque energético se basa en la obtención del Lagrangiano del sistema ($L$), definido como la diferencia entre la energía cinética ($E_c$) y la energía potencial ($E_p$):
 
 \begin{equation}
-	\begin{cases} 
 		L = E_c - E_p
-	\end{cases}
 	\label{eq:lagrangiano}
 \end{equation}
 
 Las ecuaciones diferenciales no lineales resultantes pueden reescribirse y compactarse de forma elegante en la formulación matricial clásica para sistemas robóticos \cite{murray1994mathematical}:
 
 \begin{equation}
-	\begin{cases} 
 		M(q)\ddot{q} + C(q,\dot{q})\dot{q} + G(q) = B u
-	\end{cases}
 	\label{eq:matrices_dinamica}
 \end{equation}
 
@@ -432,33 +428,25 @@ La idea intuitiva tras las matemáticas es simple, consiste en balancear el pén
 
 Para formalizar la ley de control esquematizada en la Figura \ref{fig:swing_up_simple}, se define la energía del péndulo libre que viene dada por la suma de la energía potencial y la cinética \cite{astrom2000swinging}: 
 \begin{equation}
-	\begin{cases} 
 		E_m = E_c + E_p = \frac{1}{2}J\dot{\theta}^2 + mgl\cos(\theta) 
-	\end{cases}
 	\label{eq:pendulo_simple}
 \end{equation}
 
 En el caso de la Ecuación \ref{eq:pendulo_simple} se define la máxima energía potencial cuando $\theta = 0\ rad$ de forma que el sistema de referencia del control coincide con el del modelado. Una vez se formaliza el modelo energético, se determina la referencia energética que el control por balanceo debe conseguir \cite{astrom2000swinging}:
 \begin{equation}
-	\begin{cases} 
 		E_{ref} = mgl
-	\end{cases}
 	\label{eq:energia_ref}
 \end{equation}
 
 Por otro lado, el error de medida para calcular la acción de control $u$ viene dado por la diferencia entre la energía actual del péndulo ($E_m$, Ecuación \ref{eq:pendulo_simple}) y la energía de referencia ($E_{ref}$, Ecuación \ref{eq:energia_ref}) \cite{astrom2000swinging}:
 \begin{equation}
-	\begin{cases} 
 		e = E_{m} - E_{ref}
-	\end{cases}
 	\label{eq:error_energia}
 \end{equation}
 
 Finalmente se define la ley de control que permite balancear el péndulo simple hasta su posición inestable, donde la acción de control $u$ es el par aplicado en el eje de rotación \cite{astrom2000swinging}: 
 \begin{equation}
-	\begin{cases} 
 		u = K\dot{\theta}\cos(\theta)e
-	\end{cases}
 	\label{eq:ley_control_swp}
 \end{equation}
 
@@ -474,11 +462,11 @@ Sin embargo, la ley de control definida en la Ecuación \ref{eq:ley_control_swp}
 
 Para abordar las limitaciones mencionadas, se recurre a la técnica de \textbf{Linearización por Realimentación Parcial (PFL)}. Esta metodología es fundamental en el estudio de sistemas mecánicos subactuados, definidos como aquellos que poseen menos actuadores que grados de libertad \cite{spong1994}. La PFL permite transformar la dinámica de un subconjunto de las coordenadas del sistema en un sistema lineal mediante un cambio de variables y una ley de control no lineal, siempre que exista un acoplamiento inercial suficiente entre las coordenadas actuadas y las pasivas \cite{spong1994}.
 
-En este trabajo se aplica la variante conocida como \textbf{linealización colocalizada} (\textit{Collocated Linearization}), la cual consiste en linealizar el grado de libertad activo del sistema, es decir, aquel donde se ubica físicamente la acción de control \cite{spong1994}. El objetivo es diseñar una ley de control $u$ que cancele las no linealidades de la dinámica del carro para que este se comporte, desde el punto de vista del controlador de alto nivel, como un doble integrador lineal respecto a una aceleración deseada $\ddot{x}_{des}$.
+En este trabajo se aplica la variante conocida como \textbf{linealización colocalizada} (\textit{Collocated Linearization}), la cual consiste en linealizar el grado de libertad activo del sistema, es decir, aquel donde se ubica físicamente la acción de control \cite{spong1994}. El objetivo es diseñar una ley de control $u (N)$ que cancele las no linealidades de la dinámica del carro para que este se comporte, desde el punto de vista del controlador de alto nivel, como un doble integrador lineal respecto a una aceleración deseada $\ddot{x}_{des} (\frac{m}{s^2})$.
 \begin{figure}[ht]
 	\centering
 	% Aquí cambias \textwidth por 0.7\textwidth (o el tamaño que prefieras)
-	\resizebox{0.95\textwidth}{!}{%
+	\resizebox{0.9\textwidth}{!}{%
 		\input{Pictures/figuras/funcionamiento_PFL.tex}
 	}
 	\caption{Concepto de equivalencia de la Linealización Colocalizada.}
@@ -497,22 +485,18 @@ Partimos de las ecuaciones de movimiento del sistema que incluyen los términos 
 
 Donde $J = I + ml^2$ es el momento de inercia del péndulo respecto al eje de rotación. Para eliminar $\ddot{\theta}$ de la ecuación de control, se despeja dicha variable de la dinámica del péndulo \cite{tedrake2023}:
 \begin{equation}
-	\begin{cases}
-		\ddot{\theta} = \frac{1}{J} \left( mgl\sin\theta - ml\cos\theta\ddot{x} - c_p\dot{\theta} \right)
-	\end{cases}
+		\ddot{\theta} = \frac{1}{J} \left( mgl\sin\theta - ml\cos\theta\ddot{x} - c_{\theta}\dot{\theta} \right)
 	\label{eq:despeje_theta}
 \end{equation}
 
 Al imponer la condición de linealización $\ddot{x} = \ddot{x}_{des}$ y sustituir la expresión \ref{eq:despeje_theta} en la ecuación del carro, se obtiene la fuerza $u$ necesaria para anular la dinámica no lineal del subsistema actuado \cite{tedrake2023}:
 \begin{equation}
-	\begin{cases}
-		u = (M + m)\ddot{x}_{des} + ml\cos\theta \left[ \frac{1}{J} (mgl\sin\theta - ml\cos\theta\ddot{x}_{des} - c_p\dot{\theta}) \right] - ml\dot{\theta}^2\sin\theta + c_x\dot{x}
-	\end{cases}
+		u = (M + m)\ddot{x}_{des} + ml\cos\theta \left[ \frac{1}{J} (mgl\sin\theta - ml\cos\theta\ddot{x}_{des} - c_{\theta}\dot{\theta}) \right] - ml\dot{\theta}^2\sin\theta + c_x\dot{x}
 	\label{eq:ley_PFL}
 \end{equation}
 
 
-Como se observa, la fuerza física aplicada por el motor ($u$) compensa dinámicamente la masa total y los efectos inerciales del péndulo. Esta arquitectura permite definir la aceleración deseada $\ddot{x}_{des}$ como el punto de encuentro donde convergen los dos objetivos de control del sistema \cite{tedrake2023}:
+Como se observa, la fuerza física aplicada ($u$) compensa dinámicamente la masa total y los efectos inerciales del péndulo. Esta arquitectura permite definir la aceleración deseada $\ddot{x}_{des}$ como el punto de encuentro donde convergen los dos objetivos de control del sistema \cite{tedrake2023}:
 
 \begin{equation}
 	\ddot{x}_{des} = \underbrace{K_e \dot{\theta} \cos\theta (E - E_{ref})}_{\text{Control de Energía (Swing-up)}} - \underbrace{(K_p x + K_d \dot{x})}_{\text{Control de Posición (PD)}}
@@ -532,10 +516,25 @@ La ley de control resultante en la ecuación \ref{eq:aceleracion_deseada} simbol
 
 \FloatBarrier
 
- 
+ \newpage
 \subsection{Estabilización por realimentación del estado}
 
-Aquí interesa linealizar las ecuaciones de Euler - Lagrange y definir los estados del sistema. 
+Una vez que la estrategia de \textit{swing-up} ha llevado al péndulo a las proximidades de su posición vertical inestable ($\theta \approx 0\ rad$), se requiere mantener el péndulo equilibrado en su punto superior mientras se regula la posición del carro en un punto de referencia (típicamente el centro del riel, $x = 0$). Para lograr esto, se implementa un control lineal por realimentación del estado completo \cite{tedrake2023}.
+
+Para aplicar técnicas de control lineal clásico, es requisito necesario obtener una representación en el espacio de estados del modelo dinámico y linealizarlo alrededor del punto de operación deseado.
+
+Se define el vector de estados del sistema $\mathbf{x} \in \mathbb{R}^4$ compuesto por las posiciones y velocidades de los grados de libertad:
+\begin{equation}
+	\mathbf{x} = \begin{bmatrix} x & \theta & \dot{x} & \dot{\theta} \end{bmatrix}^T \equiv \begin{bmatrix} q & \dot{q}\end{bmatrix}^T
+	\label{eq:vector_estados}
+\end{equation}
+
+Una vez definido el vector de estados, se determina el punto de linealización. Para este caso en concreto se linealiza el sistema con el carro en el centro del riel y el péndulo totalmente invertido:
+\begin{equation}
+	\mathbf{x} = \begin{bmatrix} 0 & 0 & 0 & 0 \end{bmatrix}^T 
+	\label{eq:punto_linealizacion}
+\end{equation} 
+
 
 \subsection{Lógica de conmutación}
 
