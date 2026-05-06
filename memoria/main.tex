@@ -460,13 +460,13 @@ Sin embargo, la ley de control definida en la Ecuación \ref{eq:ley_control_swp}
 	\item \textbf{Límites físicos del riel:} Se hace indispensable, por tanto, un control multiobjetivo que regule la energía del péndulo garantizando simultáneamente la estabilidad de la posición del carro dentro del espacio de trabajo del riel.
 \end{itemize}
 
-Para abordar las limitaciones mencionadas, se recurre a la técnica de \textbf{Linearización por Realimentación Parcial (PFL)}. Esta metodología es fundamental en el estudio de sistemas mecánicos subactuados, definidos como aquellos que poseen menos actuadores que grados de libertad \cite{spong1994}. La PFL permite transformar la dinámica de un subconjunto de las coordenadas del sistema en un sistema lineal mediante un cambio de variables y una ley de control no lineal, siempre que exista un acoplamiento inercial suficiente entre las coordenadas actuadas y las pasivas \cite{spong1994}.
+Para abordar las limitaciones mencionadas, se recurre a la técnica de \textbf{Linearización por Realimentación Parcial (PFL)}\cite{spong1994}. Permite transformar linealizar la dinámica de un subconjunto del sistema mediante un cambio de variables y una ley de control no lineal, siempre que exista un acoplamiento inercial suficiente entre las coordenadas actuadas y las pasivas \cite{spong1994}.
 
-En este trabajo se aplica la variante conocida como \textbf{linealización colocalizada} (\textit{Collocated Linearization}), la cual consiste en linealizar el grado de libertad activo del sistema, es decir, aquel donde se ubica físicamente la acción de control \cite{spong1994}. El objetivo es diseñar una ley de control $u (N)$ que cancele las no linealidades de la dinámica del carro para que este se comporte, desde el punto de vista del controlador de alto nivel, como un doble integrador lineal respecto a una aceleración deseada $\ddot{x}_{des} (\frac{m}{s^2})$.
+En este trabajo se aplica la variante conocida como \textbf{linealización colocalizada} (\textit{Collocated Linearization}), la cual consiste en linealizar el grado de libertad activo del sistema, es decir, aquel donde se ubica físicamente la acción de control \cite{spong1994}. El objetivo es diseñar una ley de control $u (N)$ que cancele las no linealidades de la dinámica del carro para que este se comporte, desde el punto de vista del controlador de alto nivel, como un doble integrador respecto a una aceleración deseada $\ddot{x}_{des} (\frac{m}{s^2})$.
 \begin{figure}[ht]
 	\centering
 	% Aquí cambias \textwidth por 0.7\textwidth (o el tamaño que prefieras)
-	\resizebox{0.9\textwidth}{!}{%
+	\resizebox{\textwidth}{!}{%
 		\input{Pictures/figuras/funcionamiento_PFL.tex}
 	}
 	\caption{Concepto de equivalencia de la Linealización Colocalizada.}
