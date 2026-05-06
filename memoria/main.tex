@@ -517,24 +517,102 @@ La ley de control resultante en la ecuación \ref{eq:aceleracion_deseada} simbol
 \FloatBarrier
 
  \newpage
-\subsection{Estabilización por realimentación del estado}
+\subsection{Modelado en el espacio de estados}
 
-Una vez que la estrategia de \textit{swing-up} ha llevado al péndulo a las proximidades de su posición vertical inestable ($\theta \approx 0\ rad$), se requiere mantener el péndulo equilibrado en su punto superior mientras se regula la posición del carro en un punto de referencia (típicamente el centro del riel, $x = 0$). Para lograr esto, se implementa un control lineal por realimentación del estado completo \cite{tedrake2023}.
-
-Para aplicar técnicas de control lineal clásico, es requisito necesario obtener una representación en el espacio de estados del modelo dinámico y linealizarlo alrededor del punto de operación deseado.
-
-Se define el vector de estados del sistema $\mathbf{x} \in \mathbb{R}^4$ compuesto por las posiciones y velocidades de los grados de libertad:
+Una vez que la estrategia de \textit{swing-up} ha llevado al péndulo a su posición vertical inestable ($\theta \approx 0\ rad$), se requiere mantener el péndulo equilibrado en su punto superior mientras se regula la posición del carro en un punto de referencia (típicamente el centro del riel, $x = 0$). Para lograr el cometido se opta por aplicar un control por realimentación del estado. Un control de este tipo, requiere una representación en el espacio de estados del modelo dinámico linealizado en el punto de equilibrio. Todos los sistemas bajo este marco se definen como:
 \begin{equation}
-	\mathbf{x} = \begin{bmatrix} x & \theta & \dot{x} & \dot{\theta} \end{bmatrix}^T \equiv \begin{bmatrix} q & \dot{q}\end{bmatrix}^T
-	\label{eq:vector_estados}
+	\begin{cases}
+		\dot{x}(t) = Ax(t) + Bu(t) \\
+		y(t) = Cx(t) + Du(t)
+	\end{cases}\label{eq:def_espacio_estados}
 \end{equation}
 
-Una vez definido el vector de estados, se determina el punto de linealización. Para este caso en concreto se linealiza el sistema con el carro en el centro del riel y el péndulo totalmente invertido:
-\begin{equation}
-	\mathbf{x} = \begin{bmatrix} 0 & 0 & 0 & 0 \end{bmatrix}^T 
-	\label{eq:punto_linealizacion}
-\end{equation} 
+Donde el vector de estados $\mathbf{x}(t) = [x, \theta, \dot{x}, \dot{\theta}]^T \equiv [q, \dot{q}]^T$ define completamente la condición del sistema en cada instante. Los componentes de la representación se describen a continuación:
+\begin{itemize}[]
+	\item\textbf{ Matriz de estado ($A \in \mathbb{R}^{4 \times 4}$):} Caracteriza la dinámica interna del sistema y cómo evolucionan los estados (posiciones y velocidades) entre sí cuando no hay acción de control. 
+	
+	\item\textbf{ Matriz de entrada ($B \in \mathbb{R}^{4 \times 1}$):} Define cómo la fuerza aplicada al carro ($u$) afecta a la aceleración de cada uno de los estados.
+	
+	\item \textbf{Matriz de salida ($C \in \mathbb{R}^{4 \times 4}$):} Relaciona los estados internos con las variables medidas. Dado que en este proyecto se dispone de sensores para todas las variables, $C$ se simplifica a la matriz identidad $I$.
+	
+	\item \textbf{Matriz de transmisión directa ($D$):} Representa el acoplamiento directo entre la entrada y la salida. Para este caso $D$ es cero, ya que la acción de control actúa sobre la dinámica del sistema primero. 
+\end{itemize}
 
+Para sistematizar la transición entre el modelo físico no lineal y el diseño del controlador de estabilidad, se parte de la ecuación \ref{eq:matrices_dinamica}. Al aplicar una linealización por Jacobiano alrededor del punto de equilibrio inestable ($\bar{q}$ con $\dot{\bar{q}} = 0$), las matrices de la dinámica se transforman en matrices de coeficientes constantes evaluadas en dicho punto:
+
+\begin{itemize}
+	\item \textbf{Inercia:} $\bar{M} = M(\bar{q})$
+	\item \textbf{Amortiguamiento:} $\bar{C} = C(\bar{q}, 0)$
+	\item \textbf{Rigidez (Gravedad):} $\bar{G} = \left. \frac{\partial G(q)}{\partial q} \right|_{q=\bar{q}}$
+	\item \textbf{Entrada:} $\bar{B} = B(\bar{q})$
+\end{itemize}
+
+Para el caso en particular del péndulo invertido sobre carro, el sistema linealizado en dicho punto es el siguiente: 
+
+\begin{equation}
+	\underbrace{\begin{bmatrix} 
+		M + m & m l \\ 
+		m l  & I + m l^2 
+	\end{bmatrix}}_{\bar{M}} 
+	\begin{bmatrix} 
+		\ddot{x} \\ 
+		\ddot{\theta} 
+	\end{bmatrix} 
+	+ 
+	\underbrace{\begin{bmatrix} 
+		c_x & 0 \\ 
+		0 & c_\theta 
+	\end{bmatrix}}_{\bar{C}} 
+	\begin{bmatrix} 
+		\dot{x} \\ 
+		\dot{\theta} 
+	\end{bmatrix} 
+	+ 
+	\underbrace{\begin{bmatrix} 
+		0 \\ 
+		-m g l 
+	\end{bmatrix}}_{\bar{G}} 
+	= 
+	\underbrace{\begin{bmatrix} 
+		1 \\ 
+		0 
+	\end{bmatrix}}_{\bar{B}} u
+	\label{eq:matrices_dinamica_lineal}
+\end{equation}
+
+El sistema descrito en la ecuación \ref{eq:matrices_dinamica_lineal} es bajo el que se diseñará el control de posición. Contra más lejos esté el péndulo de su vertical menos efectivo será el control, ya que las diferencias del sistema real respecto del lineal empiezan a acentuarse, este es uno de los motivos por el que se hace necesaria la conmutación entre control de posición y swing-up. 
+
+Definiendo el vector de estados como $\mathbf{x} = [q, \dot{q}]^T$, el sistema puede reescribirse en la representación compacta de espacio de estados mediante la siguiente expresión:
+
+\begin{equation}
+	\begin{bmatrix} \dot{q} \\ \ddot{q} \end{bmatrix} = 
+	\underbrace{\begin{bmatrix} 
+			\mathbf{0} & I \\ 
+			\color{red}{-\bar{M}^{-1}\bar{G}} & \color{red}{-\bar{M}^{-1}\bar{C}} 
+	\end{bmatrix}}_{A}
+	\begin{bmatrix} q \\ \dot{q} \end{bmatrix} + 
+	\underbrace{\begin{bmatrix} \mathbf{0} \\ \color{blue}{\bar{M}^{-1}\bar{B}} \end{bmatrix}}_{B} u
+	\label{eq:espacio_estados_bloques}
+\end{equation}
+
+\begin{figure}[ht]
+	\centering
+	\resizebox{\textwidth}{!}{%
+		\input{Pictures/figuras/modelado_SS.tex}
+	}
+	\caption{Flujo de trabajo para el modelado}
+	\label{fig:modelado_SS}
+\end{figure}
+
+Las principales ventajas de aplicar esta técnica para la obtención de la representación del sistema en el espacio de estados son:
+
+\begin{itemize}
+	\item \textbf{Abstracción y generalización del modelado:} La técnica es escalable a cualquier sistema que cumpla la dinámica definida en la ecuación \ref{eq:matrices_dinamica}. Permite centrarse en el diseño del controlador en lugar de obtener de forma manual las matrices $A$ y $B$ para cada sistema concreto. 
+	
+	\item \textbf{Eficiencia en la implementación:} La transición a un marco matricial facilita enormemente la implementación en lenguajes de programación de alto nivel, como \textit{MATLAB} o \textit{Python} (mediante la librería \textit{NumPy}). El programador simplemente define las matrices ($\bar{M}, \bar{C}, \bar{G}\ y\ \bar{B}$) luego el propio lenguaje obtiene en la salida la representación en espacio de estados ($A\ y \ B$). 
+\end{itemize}
+
+\subsection{Control por realimentación del estado}
 
 \subsection{Lógica de conmutación}
 
