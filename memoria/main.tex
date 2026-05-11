@@ -748,10 +748,41 @@ Finalmente la interacción entre el mundo digital y el mundo físico es posible 
 	
 	\item \textbf{Sensores: } La respuesta del sistema ($y_p(t)$) es captada por los sensores (en este caso, encoders). La señal $y(t)$ es procesada por un bloque de muestreo, gobernado por el periodo $T$, y enviada al periférico\textit{ eQEP}.Este último actúa como un equivalente a un ADC (convertidor analógico-digital), transformando los pulsos del encoder en una señal digital $y_k$ interpretable por el controlador.
 \end{itemize}
+\newpage
 
 \subsection{Especificación de componentes de hardware}
- 
-Aquí poner el microcontrolador que tenemos con sus características, el puente H y los encoders. 
+
+Para la implementación física del sistema de control diseñado, se han seleccionado componentes que garantizan un compromiso óptimo entre precisión de lectura, capacidad de procesamiento y tiempo de respuesta. En la Tabla \ref{tab:componentes_hardware} se resumen los elementos principales del prototipo.
+
+\begin{table}[ht]
+	\centering
+	\caption{Resumen de componentes del sistema de hardware.}
+	\begin{tabular}{lll}
+		\hline
+		\textbf{Componente} & \textbf{Modelo} & \textbf{Función Principal} \\ \hline
+		Microcontrolador & [Modelo, ej. ESP32] & Procesamiento y ejecución del algoritmo LQR \\
+		Driver de motor & [Modelo, ej. L298N] & Interfaz de potencia (Puente H) \\
+		Encoder Carro & [Modelo/PPR] & Medición de posición lineal ($x$) \\
+		Encoder Péndulo & [Modelo/PPR] & Medición de ángulo vertical ($\theta$) \\
+		Actuador & Motor DC [V] & Generación de fuerza sobre el carro ($u$) \\ \hline
+	\end{tabular}
+	\label{tab:componentes_hardware}
+\end{table}
+
+A continuación, se describen las características técnicas más relevantes de los componentes críticos:
+
+\subsubsection{Unidad de Procesamiento (Microcontrolador)}
+El control del péndulo requiere una alta frecuencia de muestreo para garantizar la estabilidad. Se ha seleccionado el [Modelo del micro], cuya arquitectura de [32 bits] y velocidad de reloj de [X MHz] permiten ejecutar la ley de control por realimentación del estado (\ref{eq:ley_control_realimentacion}) en tiempos inferiores a [X ms]. Este dispositivo gestiona las interrupciones externas de los encoders y genera la señal PWM que gobierna el motor.
+
+\subsubsection{Etapa de Potencia y Actuación}
+La acción de control $u(t)$ se traduce en una tensión aplicada al motor mediante un driver de tipo \textbf{Puente H}. Este componente es capaz de suministrar hasta [X A], permitiendo inversiones de giro rápidas necesarias para contrarrestar las caídas del péndulo. El motor de corriente continua seleccionado proporciona el par suficiente para mover la masa total del sistema ($M+m$) con la aceleración requerida por el diseño LQR.
+
+\subsubsection{Sensores de Estado (Encoders)}
+La precisión en la estimación de la velocidad ($\dot{x}, \dot{\theta}$) depende directamente de la resolución de los sensores:
+\begin{itemize}
+	\item \textbf{Posición del carro:} Se utiliza un encoder acoplado a [eje motor/correa] que proporciona [X] pulsos por revolución, permitiendo una resolución milimétrica.
+	\item \textbf{Ángulo del péndulo:} Se emplea un encoder incremental de alta resolución ([X] PPR) situado en el eje de rotación. Se ha prestado especial atención a que este sensor presente una fricción mínima, para no invalidar las asunciones del modelo dinámico ideal sin rozamiento.
+\end{itemize}
 
 \chapter{Desarrollo}
 
