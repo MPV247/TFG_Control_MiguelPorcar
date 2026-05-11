@@ -529,7 +529,7 @@ Una vez que la estrategia de \textit{swing-up} ha llevado al péndulo a su posic
 
 Donde el vector de estados $\mathbf{x}(t) = [x, \theta, \dot{x}, \dot{\theta}]^T \equiv [q, \dot{q}]^T$ define completamente la condición del sistema en cada instante. Los componentes de la representación se describen a continuación:
 \begin{itemize}[]
-	\item\textbf{ Matriz de estado ($A \in \mathbb{R}^{4 \times 4}$):} Caracteriza la dinámica interna del sistema y cómo evolucionan los estados (posiciones y velocidades) entre sí cuando no hay acción de control. 
+	\item\textbf{ Matriz de estado ($A \in \mathbb{R}^{4 \times 4}$):} Caracteriza la dinámica interna del sistema y cómo evolucionan los estados (posiciones y velocidades) entre sí cuando no hay acción de control. Sus autovalores son los polos del sistema e indican si es estable.
 	
 	\item\textbf{ Matriz de entrada ($B \in \mathbb{R}^{4 \times 1}$):} Define cómo la fuerza aplicada al carro ($u$) afecta a la aceleración de cada uno de los estados.
 	
@@ -612,8 +612,61 @@ Las principales ventajas de aplicar esta técnica para la obtención de la repre
 	\item \textbf{Eficiencia en la implementación:} La transición a un marco matricial facilita enormemente la implementación en lenguajes de programación de alto nivel, como \textit{MATLAB} o \textit{Python} (mediante la librería \textit{NumPy}). El programador simplemente define las matrices ($\bar{M}, \bar{C}, \bar{G}\ y\ \bar{B}$) luego el propio lenguaje obtiene en la salida la representación en espacio de estados ($A\ y \ B$). 
 \end{itemize}
 
+\newpage
+
 \subsection{Control por realimentación del estado}
 
+Tras definir en la anterior sección el \textit{sistema lineal invariante (LTI)} que define la dinámica del sistema en el punto de equilibrio ($q = 0, \dot{q} = 0$), se requiere diseñar una ley de control que permita estabilizar el sistema en esta región. 
+
+El \textbf{control por realimentación del estado} para este caso asume que todos los estados del sistema ($\mathbf{x}$) están disponibles para su medición. Bajo esta premisa, la acción de control $u(t)$ se calcula como una combinación lineal de dichos estados multiplicados por un vector de ganancias $K$, sumado opcionalmente a un término de referencia $r(t)$ escalado por una ganancia $K_r$:
+
+\begin{equation}
+	u(t) = K_r r(t) - K \mathbf{x}(t)
+	\label{eq:ley_control_realimentacion}
+\end{equation}
+
+Desglosando el vector de ganancias $K = [K_1, K_2, K_3, K_4]$, la fuerza aplicada al carro se define de forma extendida como:
+
+\begin{equation}
+	u = K_r r - (K_1 x + K_2 \theta + K_3 \dot{x} + K_4 \dot{\theta})
+	\label{eq:ley_control_realimentacion_exten}
+\end{equation}
+
+
+\begin{figure}[ht]
+	\centering
+	\resizebox{\textwidth}{!}{%
+		\input{Pictures/figuras/realimentacion_estado.tex}
+	}
+	\caption{Diagrama de bloques de la ley de control por realimentación del estado}
+	\label{fig:control_SS}
+\end{figure}
+
+La figura \ref{fig:control_SS} muestra como el controlador obtiene la acción de control a aplicar en cada instante de tiempo en función de los estados y la referencia. Por otro lado, en comparación con la ecuación \ref{eq:def_espacio_estados}, el sistema en bucle cerrado representado en espacio de estados es:
+\begin{equation}
+	\begin{cases}
+		\dot{x}(t) = Ax(t) + B(Kr\cdot r(t) - K \cdot x(t)) = (A -BK)x(t) + BKr(t)\\
+		y(t) = Cx(t) + Du(t)
+	\end{cases}\label{eq:def_espacio_estados_BC}
+\end{equation}
+
+Bajo esta configuración, la dinámica del sistema en bucle cerrado queda gobernada por la expresión matricial $(A - BK)$. Por tanto, el diseño del controlador se reduce a determinar los valores del vector de ganancias $K = [k_1, k_2, k_3, k_4]$ que garanticen que todos los autovalores resultantes posean parte real negativa, dotando así al sistema de una respuesta temporal específica. Para abordar este problema, se consideran habitualmente dos metodologías:
+\begin{itemize}
+	\item \textbf{Asignación de polos:} Consiste en definir arbitrariamente la ubicación de los autovalores de la matriz $(A-BK)$ en el plano complejo. Se calculan las ganancias de $K$ para que el sistema responda con una dinámica concreta (amortiguamiento y tiempo de establecimiento).
+	\newpage
+	\item \textbf{Regulador Cuadrático Lineal (LQR):} Esta metodología aborda el diseño como un problema de optimización. En lugar de elegir la ubicación de los polos, el diseñador define qué es más costoso: que el sistema se aleje del equilibrio o que el actuador trabaje en exceso. El algoritmo calcula de forma automática la matriz de ganancias $K$ que minimiza el siguiente índice de coste cuadrático:
+	\begin{equation}
+		J = \int_{0}^{\infty} (\mathbf{x}^T Q \mathbf{x} + u^T R u) \, dt
+		\label{eq:indice_coste_lqr}
+	\end{equation}
+	El comportamiento del controlador se sintoniza a través de dos matrices de ponderación:
+	\begin{itemize}
+		\item \textbf{Matriz $Q$ ($4 \times 4$):} Penaliza la desviación de los estados. Valores elevados en la diagonal de $Q$ indican que se prioriza la precisión y la rapidez en la estabilización de los estados ($x, \theta, \dot{x}, \dot{\theta}$).
+		\item \textbf{Matriz $R$ ($1 \times 1$):} Penaliza el esfuerzo de control $u(t)$. Un valor de $R$ elevado suaviza la respuesta del actuador.
+	\end{itemize}
+	Es importante notar que la respuesta del sistema no depende de los valores absolutos de las matrices, sino del peso relativo entre ellas ($Q$ frente a $R$). 
+\end{itemize}
+ 
 \subsection{Lógica de conmutación}
 
 Finalmente, la lógica de conmutación atiende a un umbral angular. Este bloque de decisión monitoriza de forma continua la posición angular estimada del péndulo ($\hat{\theta}$). Si el péndulo ingresa dentro de una vecindad acotada en torno a la vertical absoluta (\textit{el punto de linealización del sistema}), la lógica conmuta al control por realimentación del estado En caso contrario, el sistema mantiene activo el controlador de swing-up para elevar el mecanismo. Este comportamiento híbrido se formaliza en el siguiente pseudocódigo:
