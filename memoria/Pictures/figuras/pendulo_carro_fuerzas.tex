@@ -6,12 +6,12 @@
 	\begin{tikzpicture}[>=stealth, scale=1.2]
 		
 		% Definición de parámetros
-		\def\W{3}       % Ancho del carro
-		\def\H{1.5}     % Alto del carro
-		\def\x{3}       % Posición actual x del carro
-		\def\L{2}       % Longitud del péndulo al CM
+		\def\W{3}         % Ancho del carro
+		\def\H{1.5}       % Alto del carro
+		\def\x{3}         % Posición actual x del carro
+		\def\L{2}         % Longitud del péndulo al CM
 		\def\Ltotal{3.5}  % Longitud física de la barra
-		\def\ang{30}    % Ángulo theta en grados
+		\def\ang{30}      % Ángulo theta en grados
 		\def\Rrueda{0.25} % Radio de las ruedas
 		
 		% --- 1. SUELO Y REFERENCIA FIJA ---
@@ -30,10 +30,9 @@
 		
 		% Cuerpo del carro
 		\draw[thick, fill=cyan!10] (\x - \W/2, 2*\Rrueda) rectangle (\x + \W/2, 2*\Rrueda + \H);
-		\node at (\x+0.5, 2*\Rrueda + \H/2) {\Large $M$}; % Desplazado ligeramente para que no pise la línea
+		\node at (\x, 2*\Rrueda + \H/2) {\Large $M$};
 		
 		% --- 3. EL PÉNDULO ---
-		% Pivote
 		\coordinate (Pivote) at (\x, 2*\Rrueda + \H);
 		
 		% Centro de Masas (CM)
@@ -45,37 +44,33 @@
 		% Eje central del pivote
 		\draw[thick, fill=black] (Pivote) circle (0.1);
 		
-		% Punto del Centro de Masas
+		% Punto del Centro de Masas y etiqueta de masa m
 		\begin{scope}[shift={(CM)}]
 			\fill[black] (0,0) -- ++(0.15,0) arc (0:90:0.15) -- cycle;
 			\fill[black] (0,0) -- ++(-0.15,0) arc (180:270:0.15) -- cycle;
 			\draw[thick] (0,0) circle (0.15);
+			\node[right=0.2cm] at (0,0.7) {\large $m$}; % Coherencia con figuras anteriores
 		\end{scope}
 		
 		% --- 4. VECTORES DE FUERZA (Diagrama de Sólido Libre) ---
 		
-		% Acción de control u (Negro, grueso)
+		% Acción de control u
 		\draw[->, line width=1.5pt] (\x + \W/2, 2*\Rrueda + \H/2) -- ++(1.5, 0) node[above] {\large $u$};
 		
 		% Fuerzas de Gravedad y Normales (Azul)
-		% Gravedad Péndulo
 		\draw[->, very thick, blue!80!black] (CM) -- ++(0, -1.5) node[right] {\large $mg$};
-		% Gravedad Carro
 		\draw[->, very thick, blue!80!black] (\x, 2*\Rrueda) -- ++(0, -1) node[right] {\large $Mg$};
-		% Normales de las ruedas
 		\draw[->, very thick, blue!80!black] (\x - \W/2 + 0.5, 0) -- ++(0, 1.2) node[left] {$N_1$};
 		\draw[->, very thick, blue!80!black] (\x + \W/2 - 0.5, 0) -- ++(0, 1.2) node[right] {$N_2$};
 		
 		% Fuerzas de Fricción (Rojo)
-		% Fricción del carro (asumiendo vel. x positiva)
 		\draw[->, very thick, red!80!black] (\x - \W/2, 2*\Rrueda + \H/4) -- ++(-1.5, 0) node[above] {\large $c_x \dot{x}$};
 		
-		% Fricción viscosa del péndulo (Par en el pivote)
-		% Como theta positivo es horario, el par de fricción se dibuja antihorario
-		\draw[<-, very thick, red!80!black] (\x, 2*\Rrueda + \H) ++(45:0.8) arc (45:150:0.8) node[above left, xshift=5pt] {\large $c_\theta \dot{\theta}$};
+		% CORRECCIÓN: Fricción viscosa del péndulo en sentido ANTIHORARIO
+		% Se cambia la dirección de la flecha (de <- a ->) y se ajustan los ángulos
+		\draw[->, very thick, red!80!black] (\x, 2*\Rrueda + \H) ++(45:0.8) arc (45:135:0.8) node[left, xshift=-2pt] {\large $c_\theta \dot{\theta}$};
 		
-		% --- 5. INDICADORES DE MOVIMIENTO (Opcional, para dar contexto) ---
-		% Ángulo theta original en gris clarito para no saturar
+		% --- 5. INDICADORES DE MOVIMIENTO ---
 		\draw[->, thick, gray] (\x, 2*\Rrueda + \H + 1.5) arc[start angle=90, end angle={90-\ang}, radius=1.5];
 		\node[gray] at ({\x + 0.6*sin(\ang/2)}, {2*\Rrueda + \H + 1.5*cos(\ang/2) + 0.3}) {\large $\theta$};
 		\draw[dashed, thick, gray] (Pivote) -- ++(0, \L + 0.5);

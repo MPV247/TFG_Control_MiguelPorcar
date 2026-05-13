@@ -320,11 +320,11 @@ Considerando $l$ como la distancia desde el eje de rotación hasta el centro de 
 \begin{equation}
 	\begin{cases}
 		x_{\text{cm}} = x + l \sin(\theta) \\
-		y_{\text{cm}} = l \cos(\theta)
+		y_{\text{cm}} = -l \cos(\theta)
 	\end{cases}\label{eq:coordenadas_cm}
 \end{equation}
 
-Esta elección de coordenadas establece de forma implícita el marco de trabajo del controlador. Se define la vertical superior como el origen angular ($\theta = 0$ rad) y de acuerdo con la geometría de la Ecuación \ref{eq:coordenadas_cm}, se asume una convención de signos donde el sentido de giro horario se considera positivo para el incremento de $\theta$.
+Esta elección de coordenadas establece de forma implícita el marco de trabajo del controlador. Se define el péndulo colgando hacia abajo como el origen angular ($\theta = 0$ rad) y de acuerdo con la geometría de la Ecuación \ref{eq:coordenadas_cm}, se asume una convención de signos donde el incremento de $\theta$ es en sentido antihorario.
 
 
  \begin{figure}[htpb]
@@ -341,7 +341,7 @@ Una vez establecida la convención de signos del sistema y tener una visión esq
 \begin{equation}
 	\begin{cases}
 		E_{\text{c}} = \frac{1}{2}(M + m)\dot{x}^2 + m\dot{x}\dot{\theta} l\cos(\theta) + \frac{1}{2}  ml^2\dot{\theta}^2 \\
-		E_{\text{p}} = mgl\cos(\theta)
+		E_{\text{p}} = -mgl\cos(\theta)
 	\end{cases}\label{eq:energia_sistema}
 \end{equation}
 
@@ -350,7 +350,7 @@ A partir de formular la energía cinética y potencial, se desarrolla el Lagrang
 \begin{equation}
 	\begin{cases}
 		(M + m)\ddot{x} + ml\ddot{\theta}\cos(\theta) - ml\dot{\theta}^2\sin(\theta) = u \\
-		ml\ddot{x}\cos(\theta) + ml^2\ddot{\theta} - mgl\sin(\theta) = 0
+		ml\ddot{x}\cos(\theta) + ml^2\ddot{\theta} + mgl\sin(\theta) = 0
 	\end{cases}\label{eq:ec_movimiento}
 \end{equation}
 
@@ -359,7 +359,7 @@ Antes de compactar las ecuaciones en la forma matricial de la Ecuación \ref{eq:
 \begin{equation}
 	\begin{cases}
 		(M + m)\ddot{x} + ml\ddot{\theta}\cos(\theta) + c_x\dot{x} - ml\dot{\theta}^2\sin(\theta) = u \\
-		ml\ddot{x}\cos(\theta) + ml^2\ddot{\theta} + c_{\theta}\dot{\theta} - mgl\sin(\theta) = 0
+		ml\ddot{x}\cos(\theta) + ml^2\ddot{\theta} + c_{\theta}\dot{\theta} + mgl\sin(\theta) = 0
 	\end{cases}\label{eq:ec_movimiento_final}
 \end{equation}
 
@@ -386,7 +386,7 @@ Finalmente se compacta la expresión en forma matricial como indica la Ecuación
 	+ 
 	\begin{bmatrix} 
 		0 \\ 
-		-m g l \sin\theta 
+		m g l \sin\theta 
 	\end{bmatrix} 
 	= 
 	\begin{bmatrix} 
@@ -402,7 +402,7 @@ Si se analiza la Ecuación \ref{eq:matrices_dinamica_desarrollada} se deducen tr
 	
 	\item \textbf{Acoplamiento de términos:} El movimiento del carro afecta a la posición del péndulo y a su vez el movimiento del péndulo actúa como una perturbación en el posicionado del carro. 
 	
-	\item \textbf{Sistema inestable:} Si se analiza el sistema en $\theta = 0\ rad$ presenta polos con parte real positiva debido al término $	-m g l \sin\theta $. Por tanto, se requiere aplicar acciones de control en bucle cerrado para poder permanecer en esta posición. 
+	\item \textbf{Sistema inestable:} Si se analiza el sistema en $\theta = \pi\ rad$ presenta polos con parte real positiva debido al término $	m g l \sin\theta $. Por tanto, se requiere aplicar acciones de control en bucle cerrado para poder permanecer en esta posición. 
 	
 \end{itemize}
 
@@ -417,7 +417,7 @@ Si se analiza la Ecuación \ref{eq:matrices_dinamica_desarrollada} se deducen tr
 
 \subsection{Estrategia de control Swing-up}
 
-La primera ley de control se centra en el levantamiento del péndulo desde su posición estable ($\theta = \pi\ rad$) hasta su posición inestable y punto en el que se conmuta al control de posición ($\theta = 0\ rad$). 
+La primera ley de control se centra en el levantamiento del péndulo desde su posición estable ($\theta = 0\ rad$) hasta su posición inestable y punto en el que se conmuta al control de posición ($\theta = \pi\ rad$). 
 
 La idea intuitiva tras las matemáticas es simple, consiste en balancear el péndulo inyectando energía a favor del movimiento. El objetivo es llegar al punto de estabilización con pequeñas acciones de control que producen oscilaciones de amplitud creciente en el sistema. 
 \begin{figure}[ht]
@@ -429,7 +429,7 @@ La idea intuitiva tras las matemáticas es simple, consiste en balancear el pén
 
 Para formalizar la ley de control esquematizada en la Figura \ref{fig:swing_up_simple}, se define la energía del péndulo libre que viene dada por la suma de la energía potencial y la cinética \cite{astrom2000swinging}: 
 \begin{equation}
-		E_m = E_c + E_p = \frac{1}{2}J\dot{\theta}^2 + mgl\cos(\theta) 
+		E_m = E_c + E_p = \frac{1}{2}J\dot{\theta}^2 - mgl\cos(\theta) 
 	\label{eq:pendulo_simple}
 \end{equation}
 
@@ -475,24 +475,25 @@ En este trabajo se aplica la variante conocida como \textbf{linealización coloc
 \end{figure}
 
 \FloatBarrier
+\newpage
 
 Partimos de las ecuaciones de movimiento del sistema que incluyen los términos de fricción del carro ($c_x$) y del péndulo ($c_{\theta}$):
 \begin{equation}
 	\begin{cases}
 		(M + m)\ddot{x} + ml\ddot{\theta}\cos(\theta) + c_x\dot{x} - ml\dot{\theta}^2\sin(\theta) = u \\
-		ml\ddot{x}\cos(\theta) + J\ddot{\theta} + c_{\theta}\dot{\theta} - mgl\sin(\theta) = 0
+		ml\ddot{x}\cos(\theta) + J\ddot{\theta} + c_{\theta}\dot{\theta} + mgl\sin(\theta) = 0
 	\end{cases}\label{eq:ec_mov}
 \end{equation}
 
 Donde $J = I + ml^2$ es el momento de inercia del péndulo respecto al eje de rotación. Para eliminar $\ddot{\theta}$ de la ecuación de control, se despeja dicha variable de la dinámica del péndulo \cite{tedrake2023}:
 \begin{equation}
-		\ddot{\theta} = \frac{1}{J} \left( mgl\sin\theta - ml\cos\theta\ddot{x} - c_{\theta}\dot{\theta} \right)
+		\ddot{\theta} = \frac{1}{J} \left( -mgl\sin\theta - ml\cos\theta\ddot{x} - c_{\theta}\dot{\theta} \right)
 	\label{eq:despeje_theta}
 \end{equation}
 
 Al imponer la condición de linealización $\ddot{x} = \ddot{x}_{des}$ y sustituir la expresión \ref{eq:despeje_theta} en la ecuación del carro, se obtiene la fuerza $u$ necesaria para anular la dinámica no lineal del subsistema actuado \cite{tedrake2023}:
 \begin{equation}
-		u = (M + m)\ddot{x}_{des} + ml\cos\theta \left[ \frac{1}{J} (mgl\sin\theta - ml\cos\theta\ddot{x}_{des} - c_{\theta}\dot{\theta}) \right] - ml\dot{\theta}^2\sin\theta + c_x\dot{x}
+		u = (M + m)\ddot{x}_{des} + ml\cos\theta \left[ \frac{1}{J} (-mgl\sin\theta - ml\cos\theta\ddot{x}_{des} - c_{\theta}\dot{\theta}) \right] - ml\dot{\theta}^2\sin\theta + c_x\dot{x}
 	\label{eq:ley_PFL}
 \end{equation}
 
@@ -520,7 +521,7 @@ La ley de control resultante en la ecuación \ref{eq:aceleracion_deseada} simbol
  \newpage
 \subsection{Modelado en el espacio de estados}
 
-Una vez que la estrategia de \textit{swing-up} ha llevado al péndulo a su posición vertical inestable ($\theta \approx 0\ rad$), se requiere mantener el péndulo equilibrado en su punto superior mientras se regula la posición del carro en un punto de referencia (típicamente el centro del riel, $x = 0$). Para lograr el cometido se opta por aplicar un control por realimentación del estado. Un control de este tipo, requiere una representación en el espacio de estados del modelo dinámico linealizado en el punto de equilibrio. Todos los sistemas bajo este marco se definen como \cite{Penarrocha_Tema7}:
+Una vez que la estrategia de \textit{swing-up} ha llevado al péndulo a su posición vertical inestable ($\theta \approx \pi\ rad$), se requiere mantener el péndulo equilibrado en su punto superior mientras se regula la posición del carro en un punto de referencia (típicamente el centro del riel, $x = 0$). Para lograr el cometido se opta por aplicar un control por realimentación del estado. Un control de este tipo, requiere una representación en el espacio de estados del modelo dinámico linealizado en el punto de equilibrio. Todos los sistemas bajo este marco se definen como \cite{Penarrocha_Tema7}:
 \begin{equation}
 	\begin{cases}
 		\dot{x}(t) = Ax(t) + Bu(t) \\
@@ -539,7 +540,7 @@ Donde el vector de estados $\mathbf{x}(t) = [x, \theta, \dot{x}, \dot{\theta}]^T
 	\item \textbf{Matriz de transmisión directa ($D$):} Representa el acoplamiento directo entre la entrada y la salida. Para este caso $D$ es cero, ya que la acción de control actúa sobre la dinámica del sistema primero. 
 \end{itemize}
 
-Para sistematizar la transición entre el modelo físico no lineal y el diseño del controlador de estabilidad, se parte de la ecuación \ref{eq:matrices_dinamica}. Al aplicar una linealización por Jacobiano alrededor del punto de equilibrio inestable ($\bar{q}$ con $\dot{\bar{q}} = 0$), las matrices de la dinámica se transforman en matrices de coeficientes constantes evaluadas en dicho punto \cite{Penarrocha_Tema7}:
+Para sistematizar la transición entre el modelo físico no lineal y el diseño del controlador de estabilidad, se parte de la ecuación \ref{eq:matrices_dinamica}. Al aplicar una linealización por Jacobiano alrededor del punto de equilibrio inestable $x = [0, \pi, 0, 0]^T$, las matrices de la dinámica se transforman en matrices de coeficientes constantes evaluadas en dicho punto \cite{Penarrocha_Tema7}:
 
 \begin{itemize}
 	\item \textbf{Inercia:} $\bar{M} = M(\bar{q})$
@@ -552,8 +553,8 @@ Para el caso en particular del péndulo invertido sobre carro, el sistema lineal
 
 \begin{equation}
 	\underbrace{\begin{bmatrix} 
-		M + m & m l \\ 
-		m l  & I + m l^2 
+		M + m & -m l \\ 
+		-m l  & I + m l^2 
 	\end{bmatrix}}_{\bar{M}} 
 	\begin{bmatrix} 
 		\ddot{x} \\ 
@@ -617,7 +618,7 @@ Las principales ventajas de aplicar esta técnica para la obtención de la repre
 
 \subsection{Control por realimentación del estado}
 
-Tras definir en la anterior sección el \textit{sistema lineal invariante (LTI)} que define la dinámica del sistema en el punto de equilibrio ($q = 0, \dot{q} = 0$), se requiere diseñar una ley de control que permita estabilizar el sistema en esta región. 
+Tras definir en la anterior sección el \textit{sistema lineal invariante (LTI)} que define la dinámica del sistema en el punto de equilibrio $x = [0, \pi, 0, 0]^T$, se requiere diseñar una ley de control que permita estabilizar el sistema en esta región. 
 
 El \textbf{control por realimentación del estado} para este caso asume que todos los estados del sistema ($\mathbf{x}$) están disponibles para su medición. Bajo esta premisa, la acción de control $u(t)$ se calcula como una combinación lineal de dichos estados multiplicados por un vector de ganancias $K$, sumado opcionalmente a un término de referencia $r(t)$ escalado por una ganancia $K_r$ \cite{Penarrocha_Tema8}:
 

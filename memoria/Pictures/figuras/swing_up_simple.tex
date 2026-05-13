@@ -20,7 +20,7 @@
 		% 1. Posición Inicial (Estable / Downward position)
 		% Se cambia gray!30 por dashed, black para que coincida con el objetivo[cite: 1]
 		\draw[dashed, black] (0,0) -- (0,-3) node[circle, fill=black!10, draw=black, inner sep=2pt] {};
-		\node[black, font=\bfseries, below] at (0,-3.8) {$\theta = \pi$ (Estable)};
+		\node[black, font=\bfseries, below] at (0,-3.8) {$\theta = 0$ (Estable)};
 		
 		% 2. Posición Intermedia (Durante el swing-up)
 		\draw[line width=1.2pt] (0,0) -- (-40:3.4) node[circle, fill=blue!20, draw, inner sep=4pt] (mass) {};
@@ -28,7 +28,7 @@
 		
 		% 3. Objetivo (Inestable / Upright position)[cite: 1]
 		\draw[dashed, black] (0,0) -- (0,3) node[circle, fill=black!10, draw=black, inner sep=2pt] {};
-		\node[black, font=\bfseries, above] at (0,3.2) {$\theta = 0$ (Objetivo)};
+		\node[black, font=\bfseries, above] at (0,3.2) {$\theta = \pi$ (Objetivo)};
 		
 		% --- ACCIÓN DE CONTROL (PAR u) ---
 		% El par aplicado según la ley de control de energía[cite: 1]
