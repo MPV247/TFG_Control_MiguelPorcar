@@ -785,10 +785,25 @@ Asimismo, el chip dispone de periféricos de control avanzado que descargan de t
 	\item \textbf{ePWM (Enhanced Pulse Width Modulator):} Capaz de generar señales con una resolución de hasta \textbf{150 ps}, garantizando un control fino sobre el motor DC \cite{ti_f280049c_ds}.
 \end{itemize}
 
-Para asegurar la máxima eficiencia en el uso de los recursos del \textbf{TMS320F280049C}, el desarrollo se apoya en el ecosistema oficial de Texas Instruments. Como entorno de desarrollo integrado (IDE) se emplea \textbf{Code Composer Studio (CCS)} \cite{ti_ccs}, el cual permite una depuración avanzada y optimización específica para la arquitectura C28x. Complementariamente, se utiliza la SDK \textbf{C2000Ware}, que proporciona una capa de abstracción de hardware (HAL) facilitando la programación y la interpretabilidad del código \cite{ti_c2000ware}.
+El desarrollo software se apoya en el ecosistema oficial de Texas Instruments. Como entorno de desarrollo integrado (IDE) se emplea \textbf{Code Composer Studio (CCS)} \cite{ti_ccs}, permite una depuración avanzada y optimización específica para la arquitectura C28x. Además, se utiliza la SDK \textbf{C2000Ware}, que proporciona una capa de abstracción de hardware (HAL) facilitando la programación y la interpretabilidad del código \cite{ti_c2000ware}.
 
 \subsubsection{Etapa de Potencia y Actuación}
-La acción de control $u(t)$ se traduce en una tensión aplicada al motor mediante un driver de tipo \textbf{Puente H}. Este componente es capaz de suministrar hasta [X A], permitiendo inversiones de giro rápidas necesarias para contrarrestar las caídas del péndulo. El motor de corriente continua seleccionado proporciona el par suficiente para mover la masa total del sistema ($M+m$) con la aceleración requerida por el diseño LQR.
+La acción de control $u(t)$ se traduce en una tensión aplicada al motor mediante el driver de motores de corriente continua \textbf{AQMH2407ND}. Implementa un \textbf{Puente H} de doble canal basado en tecnología \textbf{MOSFET} \cite{handson_aqmh2407nd}, lo que le otorga una eficiencia energética superior y una disipación térmica significativamente menor en comparación con drivers basados en transistores \textbf{BJT}, como el \textbf{L298N} \cite{st_l298_ds}.
+
+El dispositivo es capaz de suministrar una corriente continua de hasta \textbf{7 A} por canal (con picos de hasta 50 A) \cite{handson_aqmh2407nd}. El control se gestiona mediante señales PWM provenientes del microcontrolador, permitiendo la regulación de la tensión media aplicada al motor.
+
+Un aspecto fundamental en el diseño de este driver es la integración de \textbf{optoacopladores EL357N-G} \cite{everlight_el357n_ds}, los cuales proporcionan un \textbf{aislamiento galvánico} entre la etapa de control y la de potencia. Esta característica es esencial en la implementación de sistemas de control, ya que ofrece:
+\begin{itemize}
+	\item \textbf{Mitigación de ruido:} Evita que el ruido electromagnético inducido por la conmutación de las bobinas del motor afecte a las señales de medición.
+	\item \textbf{Protección del hardware:} Asegura la integridad del microcontrolador frente a posibles picos de tensión o corrientes de retorno (\textit{back-EMF}) provenientes de la etapa de potencia.
+\end{itemize}
+
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=0.6\textwidth]{Pictures/pte_h}
+	\caption{Driver AQMH2407ND}
+	\label{fig:pte_h}
+\end{figure} 
 
 \subsubsection{Sensores de Estado (Encoders)}
 La precisión en la estimación de la velocidad ($\dot{x}, \dot{\theta}$) depende directamente de la resolución de los sensores:
