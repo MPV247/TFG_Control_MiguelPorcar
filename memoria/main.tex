@@ -762,10 +762,10 @@ Para la implementación física del sistema de control diseñado, se han selecci
 		\hline
 		\textbf{Componente} & \textbf{Modelo} & \textbf{Función Principal} \\ \hline
 		Microcontrolador & TMS320F280049C & Procesamiento de señales y ejecución del control\\
-		Driver de motor & [Modelo, ej. L298N] & Interfaz de potencia (Puente H) \\
-		Encoder Motor & [Modelo/PPR] & Medición de posición lineal ($x$) \\
-		Encoder Péndulo & [Modelo/PPR] & Medición de ángulo vertical ($\theta$) \\
-		Actuador & Motor DC [V] & Generación de fuerza sobre el carro ($u$) \\ \hline
+		Driver de motor & AQMH2407ND & Interfaz de potencia (Puente H con aislamiento) \\
+		Encoder Motor & HEDS-5140-I (2048 PPR) & Medición de posición lineal ($x$) \\
+		Encoder Péndulo & HEDS-5140-A06 (2000 PPR) & Medición de ángulo vertical ($\theta$) \\
+		Actuador & Crouzet 82 760 0 (24V) & Generación de fuerza sobre el carro ($u$) \\ \hline
 	\end{tabular}
 	\label{tab:componentes_hardware}
 \end{table}
