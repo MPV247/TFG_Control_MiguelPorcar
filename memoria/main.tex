@@ -760,19 +760,32 @@ Para la implementación física del sistema de control diseñado, se han selecci
 	\begin{tabular}{lll}
 		\hline
 		\textbf{Componente} & \textbf{Modelo} & \textbf{Función Principal} \\ \hline
-		Microcontrolador & [Modelo, ej. ESP32] & Procesamiento y ejecución del algoritmo LQR \\
+		Microcontrolador & TMS320F280049C & Procesamiento de señales y ejecución del control\\
 		Driver de motor & [Modelo, ej. L298N] & Interfaz de potencia (Puente H) \\
-		Encoder Carro & [Modelo/PPR] & Medición de posición lineal ($x$) \\
+		Encoder Motor & [Modelo/PPR] & Medición de posición lineal ($x$) \\
 		Encoder Péndulo & [Modelo/PPR] & Medición de ángulo vertical ($\theta$) \\
 		Actuador & Motor DC [V] & Generación de fuerza sobre el carro ($u$) \\ \hline
 	\end{tabular}
 	\label{tab:componentes_hardware}
 \end{table}
 
-A continuación, se describen las características técnicas más relevantes de los componentes críticos:
-
 \subsubsection{Unidad de Procesamiento (Microcontrolador)}
-El control del péndulo requiere una alta frecuencia de muestreo para garantizar la estabilidad. Se ha seleccionado el [Modelo del micro], cuya arquitectura de [32 bits] y velocidad de reloj de [X MHz] permiten ejecutar la ley de control por realimentación del estado (\ref{eq:ley_control_realimentacion}) en tiempos inferiores a [X ms]. Este dispositivo gestiona las interrupciones externas de los encoders y genera la señal PWM que gobierna el motor.
+Para la implementación del algoritmo de control se ha seleccionado el \textbf{TMS320F280049C}, un microcontrolador de tiempo real de la familia \textbf{C2000} de \textbf{Texas Instruments}. Este dispositivo está específicamente diseñado para aplicaciones de control, destacando su núcleo \textit{C28x} a \textbf{100 MHz} que integra una unidad de punto flotante (\textbf{FPU}) y una unidad de aceleración trigonométrica (\textbf{TMU}) \cite{ti_f280049c_ds}. Ambos aceleradores son fundamentales para procesar la aritmética del controlador y las funciones trigonométricas del modelo.
+
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=0.7\textwidth]{Pictures/F280049C_launchpad}
+	\caption{TMS320F280049C en formato \textit{Launchpad}}
+	\label{fig:diagrama_bloques_dsp}
+\end{figure}
+
+Asimismo, el chip dispone de periféricos de control avanzado que descargan de tareas críticas a la CPU, los más destacados en el proyecto son:
+\begin{itemize}
+	\item \textbf{eQEP (Enhanced Quadrature Encoder Pulse):} Dos módulos dedicados para la decodificación de señales en cuadratura de los encoders, permitiendo una lectura de posición y ángulo sin consumo de ciclos de reloj \cite{ti_f280049c_ds}.
+	\item \textbf{ePWM (Enhanced Pulse Width Modulator):} Capaz de generar señales con una resolución de hasta \textbf{150 ps}, garantizando un control fino sobre el motor DC \cite{ti_f280049c_ds}.
+\end{itemize}
+
+Para asegurar la máxima eficiencia en el uso de los recursos del \textbf{TMS320F280049C}, el desarrollo se apoya en el ecosistema oficial de Texas Instruments. Como entorno de desarrollo integrado (IDE) se emplea \textbf{Code Composer Studio (CCS)} \cite{ti_ccs}, el cual permite una depuración avanzada y optimización específica para la arquitectura C28x. Complementariamente, se utiliza la SDK \textbf{C2000Ware}, que proporciona una capa de abstracción de hardware (HAL) facilitando la programación y la interpretabilidad del código \cite{ti_c2000ware}.
 
 \subsubsection{Etapa de Potencia y Actuación}
 La acción de control $u(t)$ se traduce en una tensión aplicada al motor mediante un driver de tipo \textbf{Puente H}. Este componente es capaz de suministrar hasta [X A], permitiendo inversiones de giro rápidas necesarias para contrarrestar las caídas del péndulo. El motor de corriente continua seleccionado proporciona el par suficiente para mover la masa total del sistema ($M+m$) con la aceleración requerida por el diseño LQR.
@@ -811,6 +824,9 @@ En esta sección solamente hay que aportar la información técnica estrictament
 4)(Lo que hay que acabar de hacer este més) Razonar experimentos de identificación de parámetros del sistema. La justificación es que los parámetros del fabricante no sabemos si son del todo ciertos al ser una máquina de hace 25 años. Algunos experimentos: Conversión de voltios a fuerza horizontal (encontrar la constante que relaciona ambas magnitudes), Identificación del rozamiento horizontal del carro, identificación del rozamiento y la inercia del péndulo. 
 
 5)Simular de nuevo con los parámetros obtenidos mediante identificación. 
+
+
+Para la configuración de los periféricos se ha optado por el uso de estructuras de campos de bits (Bit-fields) proporcionadas por la SDK \textit{C2000Ware}. A diferencia de la librería de abstracción \textit{DriverLib}, este enfoque permite un acceso directo y optimizado a los registros del procesador mediante el uso de punteros a estructuras mapeadas en memoria. Esta elección garantiza la máxima eficiencia en la ejecución, reduciendo la sobrecarga de funciones (\textit{overhead}) y facilitando el control preciso de registros críticos como los de los módulos \textit{eQEP} y \textit{ePWM}.
 
 \chapter{Resultados}
 
