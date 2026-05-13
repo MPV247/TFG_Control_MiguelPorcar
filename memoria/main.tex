@@ -56,6 +56,7 @@
 \usepackage{placeins}
 \usepackage{algorithm}
 \usepackage{algpseudocode}
+\usepackage{subcaption}
 \floatname{algorithm}{Algoritmo}
 \usetikzlibrary{positioning, arrows, arrows.meta, shapes, shapes.geometric, calc, fit, backgrounds, mindmap, trees}
 \usetikzlibrary{patterns, decorations.pathreplacing}
@@ -805,12 +806,98 @@ Un aspecto fundamental en el diseño de este driver es la integración de \textb
 	\label{fig:pte_h}
 \end{figure} 
 
-\subsubsection{Sensores de Estado (Encoders)}
-La precisión en la estimación de la velocidad ($\dot{x}, \dot{\theta}$) depende directamente de la resolución de los sensores:
+\newpage
+
+\subsubsection{Sensores (Encoders)}
+
+Para el caso concreto de péndulo invertido sobre carro, se requieren dos encoders (uno por grado de libertad), estos sensores son vitales para obtener el estado del sistema en cada instante de tiempo y calcular una acción de control acorde. 
+
+Concretamente, se ha utilizado un sistema de detección óptica que se compone de un módulo detector de la serie \textbf{HEDS-9140} y un disco óptico de la serie \textbf{HEDS-5140}. A continuación se descibe la ubicación y resolución de los dos encoders del sistema:
+
 \begin{itemize}
-	\item \textbf{Posición del carro:} Se utiliza un encoder acoplado a [eje motor/correa] que proporciona [X] pulsos por revolución, permitiendo una resolución milimétrica.
-	\item \textbf{Ángulo del péndulo:} Se emplea un encoder incremental de alta resolución ([X] PPR) situado en el eje de rotación. Se ha prestado especial atención a que este sensor presente una fricción mínima, para no invalidar las asunciones del modelo dinámico ideal sin rozamiento.
+	\item \textbf{Posición del carro ($x$):} Se utiliza un encoder acoplado al eje del motor de continua que proporciona una resolución de \textbf{2048 pulsos por revolución (PPR)} tras el procesado en cuadratura. 
+	
+	\item \textbf{Ángulo del péndulo ($\theta$):} Acoplado en el eje del pénudlo, ofrece 500 ciclos por revolución (CPR), traduciendose en una resolución de \textbf{2000 PPR} en cuadratura.
 \end{itemize}
+
+\begin{figure}[ht]
+	\centering
+	\begin{subfigure}[b]{0.45\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{Pictures/nomenclatura_encoders_disco}
+		\caption{Especificaciones módulo de detección y disco óptico según modelo específico}
+		\label{fig:nomenclatura_disco}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[b]{0.45\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{Pictures/heds_9140_dibujo}
+		\caption{Descripción del módulo detector y mapeo de señales}
+		\label{fig:heds_dibujo}
+	\end{subfigure}
+	\caption{Detalles técnicos de los componentes de detección óptica de la serie HEDS \cite{broadcom_heds9140_ds}}
+\end{figure}
+
+La Figura \ref{fig:nomenclatura_disco} permite identificar con precisión la configuración de cada sensor atendiendo a su resolución y dimensiones mecánicas:
+\begin{itemize}
+	\item \textbf{Encoder del motor:} Para alcanzar los 2048 PPR en cuadratura, se utiliza un disco óptico de 512 CPR. Siguiendo la codificación de la figura, este corresponde al modelo \textbf{HEDS-5140-I}.
+	
+	\item \textbf{Encoder del péndulo:} Este eje utiliza el modelo \textbf{HEDS-5140-A06}. El código \textbf{A} identifica la resolución de 500 CPR (2000 PPR en cuadratura), mientras que el sufijo \textbf{06} indica un diámetro interno del disco, garantizando un ajuste mecánico con el eje sin holguras.
+\end{itemize}
+
+Por último, el módulo detector \textbf{HEDS-9140} (Figura \ref{fig:heds_dibujo}) es el encargado de transformar el paso de las ranuras del disco en señales TTL. La disposición de sus fotodetectores internos permite que el periférico \textbf{eQEP} del microcontrolador interprete el desfase entre los canales A y B para determinar la dirección del movimiento.
+
+\newpage
+
+\subsubsection{Actuador}
+El movimiento del carro se realiza mediante un motor de corriente continua de imanes permanentes del fabricante \textbf{Crouzet}, modelo \textbf{82 760 0}. 
+
+\begin{table}[ht]
+	\centering
+	\caption{Parámetros técnicos del motor Crouzet 82 760 0 (24V) \cite{crouzet_82760_ds}}
+	\label{tab:datos_motor}
+	\begin{tabular}{lcc}
+		\hline
+		\textbf{Parámetro} & \textbf{Valor} & \textbf{Unidad} \\ \hline
+		Velocidad nominal & 2300 & rpm \\
+		Par nominal & 76 & mN$\cdot$m \\
+		Potencia útil nominal & 18 & W \\
+		Corriente nominal & 1,3 & A \\
+		Resistencia ($R$) & 5,5 & $\Omega$ \\
+		Inductancia ($L$) & 7,2 & mH \\
+		Constante de par ($K_t$) & 0,068 & N$\cdot$m/A \\
+		Inercia ($J_m$) & 270 & g$\cdot$cm$^2$ \\ 
+		Eficiencia ($\eta$) & 57 & \% \\ \hline
+	\end{tabular}
+\end{table}
+
+Los datos del fabricante expuestos en la tabla \ref{tab:datos_motor} son vitales para caracterizar actuador y estimar la relación entre el voltaje aplicado en sus bornes y la fuerza horizontal que empuja el carro. 
+
+\begin{figure}[ht]
+	\centering
+	% Primera imagen (el plano)
+	\begin{subfigure}{\textwidth}
+		\centering
+		\includegraphics[width=0.6\textwidth]{Pictures/motor_plano}
+		\caption{Dimensiones del actuador \cite{crouzet_82760_ds}}
+		\label{fig:plano_motor}
+	\end{subfigure}
+	
+	\vspace{0.5cm} % Espacio controlado entre las dos imágenes
+	
+	% Segunda imagen (la real)
+	\begin{subfigure}{\textwidth}
+		\centering
+		\includegraphics[width=0.5\textwidth]{Pictures/actuador_real}
+		\caption{Motor instalado en la unidad mecánica del laboratorio}
+		\label{fig:motor_real}
+	\end{subfigure}
+	
+	\caption{Detalles del actuador Crouzet 82 760 0: diseño técnico y montaje real.}
+	\label{fig:grupo_motor}
+\end{figure}
+
+El sistema utiliza una transmisión por correa dentada (Figura \ref{fig:motor_real}) para convertir el movimiento rotativo del motor en el desplazamiento lineal del carro, minimizando las holguras mecánicas.
 
 \chapter{Desarrollo}
 
