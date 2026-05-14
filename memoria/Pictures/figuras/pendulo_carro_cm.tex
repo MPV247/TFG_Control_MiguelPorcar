@@ -11,7 +11,7 @@
 		\def\x{3}          % Posición actual x del carro
 		\def\L{2}          % Longitud del péndulo al CM
 		\def\Ltotal{3.5}   % Longitud física de la barra
-		\def\ang{30}       % Ángulo theta (desde la vertical superior en este dibujo)
+		\def\ang{30}       % Ángulo theta (desde la vertical superior)
 		\def\Rrueda{0.25}  % Radio de las ruedas
 		\def\Rref{2.3}     % Radio para las etiquetas de radianes
 		
@@ -19,7 +19,7 @@
 		\draw[thick] (-2, 0) -- (7, 0);
 		\fill[pattern=north east lines] (-2, -0.25) rectangle (7, 0);
 		
-		% Origen de coordenadas fijo (Desplazado a la izquierda para no chocar con -1.57 rad)
+		% Origen de coordenadas fijo
 		\def\origX{-2.0}
 		\draw[->, thick] (\origX, 2) -- (\origX+0.8, 2) node[right] {$X$};
 		\draw[->, thick] (\origX, 2) -- (\origX, 2.8) node[above] {$Y$};
@@ -40,13 +40,11 @@
 		\draw[dashed] (0, 0) -- (0, -0.6);
 		\draw[<->, thick] (0, -0.4) -- (\x, -0.4) node[midway, below] {$x$};
 		
-		% Fuerza u (Acción de control)
+		% Fuerza u
 		\draw[->, line width=1.5pt] (\x + \W/2, 2*\Rrueda + \H/2) -- ++(1.2, 0) node[right] {\large $u$};
 		
 		% --- 3. EL PÉNDULO ---
 		\coordinate (Pivote) at (\x, 2*\Rrueda + \H);
-		
-		% Centro de Masas (CM)
 		\coordinate (CM) at ({\x + \L*sin(\ang)}, {2*\Rrueda + \H + \L*cos(\ang)});
 		
 		% Barra del péndulo
@@ -55,7 +53,7 @@
 		% Eje central del pivote
 		\draw[thick, fill=black] (Pivote) circle (0.1);
 		
-		% Punto del Centro de Masas
+		% Punto del Centro de Masas (m)
 		\begin{scope}[shift={(CM)}]
 			\fill[black] (0,0) -- ++(0.15,0) arc (0:90:0.15) -- cycle;
 			\fill[black] (0,0) -- ++(-0.15,0) arc (180:270:0.15) -- cycle;
@@ -63,28 +61,22 @@
 			\node[right=0.2cm] at (0,0.7) {\large $m$};
 		\end{scope}
 		
-		% --- 4. MARCAS DE REFERENCIA (Gris claro unificado) ---
-		% Círculo de referencia
+		% --- 4. MARCAS DE REFERENCIA ---
 		\draw[gray!50, dashed] (Pivote) circle (\Rref);
-		
-		% Marca 0 rad (Abajo) - Ahora en gris claro
 		\draw[dashed, gray!50] (Pivote) -- ++(0, -\Rref-0.3);
 		\node[below, font=\small\bfseries] at (\x, 2*\Rrueda + \H - \Rref - 0.3) {$0$ rad};
-		
-		% Marca pi rad (Arriba)
 		\draw[dashed, gray!50] (Pivote) -- ++(0, \Rref);
 		\node[above, font=\small\bfseries] at (\x, 2*\Rrueda + \H + \Rref) {$\pi$ rad};
-		
-		% Marca 1.57 rad (Derecha)
 		\draw[dashed, gray!50] (Pivote) -- ++(\Rref, 0);
 		\node[right, font=\small] at (\x + \Rref, 2*\Rrueda + \H) {$1.57$ rad};
-		
-		% Marca -1.57 rad (Izquierda)
 		\draw[dashed, gray!50] (Pivote) -- ++(-\Rref, 0);
 		\node[left, font=\small] at (\x - \Rref, 2*\Rrueda + \H) {$-1.57$ rad};
 		
-		% Arco del ángulo theta
-		\draw[->, thick] (\x, 2*\Rrueda + \H + 1.5) arc[start angle=90, end angle={90-\ang}, radius=1.5];
+		% --- CAMBIO AQUÍ: Arco del ángulo theta (Antihorario) ---
+		% Empezamos en la posición del péndulo y terminamos en 90 grados (la vertical)
+		\draw[->, thick] ({\x + 1.5*sin(\ang)}, {2*\Rrueda + \H + 1.5*cos(\ang)}) 
+		arc[start angle=90-\ang, end angle=90, radius=1.5];
+		
 		\node at ({\x + 0.6*sin(\ang/2)}, {2*\Rrueda + \H + 1.5*cos(\ang/2) + 0.3}) {\large $\theta$};
 		
 		% Longitud l al CM

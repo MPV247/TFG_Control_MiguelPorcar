@@ -210,7 +210,7 @@ Este equipo lleva en los laboratorios de la universidad más de 25 años. Debido
 
 \begin{figure}[ht]
 	\centering
-	\includegraphics[width=0.55\textwidth, angle=90]{Pictures/control_viejo}
+	\includegraphics[width=0.5\textwidth, angle=90]{Pictures/control_viejo}
 	\caption{Controlador digital original}
 	\label{fig:estado_inicial_fotos}
 \end{figure}
@@ -239,7 +239,7 @@ Este equipo lleva en los laboratorios de la universidad más de 25 años. Debido
 
 \FloatBarrier
 
-Luego el punto de partida es el \textbf{rescate de la unidad mecánica}, aprovechando aquellos elementos que aún conservaban su utilidad, como el motor. No obstante, ha sido necesario intervenir en otros componentes que, debido a su naturaleza como piezas de desgaste, presentaban falta de mantenimiento. Por otro lado, para solucionar el problema del control digital obsoleto, se decidió \textbf{sustituir la electrónica antigua} por tecnología actual (microcontroladores y drivers modernos). Esta elección no solo permite que la unidad vuelva a ser plenamente funcional, sino que además la convierte en una plataforma de \textbf{código abierto}, facilitando que futuros usuarios puedan entender, modificar y mejorar el sistema sin las restricciones del hardware propietario original.
+Luego el punto de partida es el \textbf{rescate de la unidad mecánica}, aprovechando aquellos elementos que aún conservaban su utilidad, como el motor. No obstante, ha sido necesario intervenir en otros componentes que, debido a su naturaleza como piezas de desgaste, presentaban falta de mantenimiento. Por otro lado, para solucionar el problema del control digital obsoleto, se decidió \textbf{sustituir la electrónica antigua} por tecnología actual (microcontrolador de la familia \textit{C2000 de Texas Instruments} y drivers modernos). Esta elección no solo permite que la unidad vuelva a ser plenamente funcional, sino que además la convierte en una plataforma de \textbf{código abierto}, facilitando que futuros usuarios puedan entender, modificar y mejorar el sistema sin las restricciones del hardware propietario original.
 
 \section{Motivaciones}
 Las razones que impulsan el desarrollo de este proyecto combinan el interés personal por ciertos conocimientos adquiridos en el grado y la oportunidad de brindar un servicio a la universidad:
@@ -572,7 +572,7 @@ Para formalizar la ley de control esquematizada en la Figura \ref{fig:swing_up_s
 	\label{eq:pendulo_simple}
 \end{equation}
 
-En el caso de la Ecuación \ref{eq:pendulo_simple} se define la máxima energía potencial cuando $\theta = 0\ rad$ de forma que el sistema de referencia del control coincide con el del modelado. Una vez se formaliza el modelo energético, se determina la referencia energética que el control por balanceo debe conseguir \cite{astrom2000swinging}:
+En el caso de la Ecuación \ref{eq:pendulo_simple} se define la máxima energía potencial cuando $\theta = \pi\ rad$ de forma que el sistema de referencia del control coincide con el del modelado. Una vez se formaliza el modelo energético, se determina la referencia energética que el control por balanceo debe conseguir \cite{astrom2000swinging}:
 \begin{equation}
 		E_{ref} = mgl
 	\label{eq:energia_ref}

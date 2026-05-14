@@ -6,13 +6,13 @@
 	\begin{tikzpicture}[>=stealth, scale=1.2]
 		
 		% Definición de parámetros
-		\def\W{3}         % Ancho del carro
-		\def\H{1.5}       % Alto del carro
-		\def\x{3}         % Posición actual x del carro
-		\def\L{2}         % Longitud del péndulo al CM
-		\def\Ltotal{3.5}  % Longitud física de la barra
-		\def\ang{30}      % Ángulo theta en grados
-		\def\Rrueda{0.25} % Radio de las ruedas
+		\def\W{3}          % Ancho del carro
+		\def\H{1.5}        % Alto del carro
+		\def\x{3}          % Posición actual x del carro
+		\def\L{2}          % Longitud del péndulo al CM
+		\def\Ltotal{3.5}   % Longitud física de la barra
+		\def\ang{30}       % Ángulo theta en grados
+		\def\Rrueda{0.25}  % Radio de las ruedas
 		
 		% --- 1. SUELO Y REFERENCIA FIJA ---
 		\draw[thick] (-2, 0) -- (6, 0);
@@ -49,7 +49,7 @@
 			\fill[black] (0,0) -- ++(0.15,0) arc (0:90:0.15) -- cycle;
 			\fill[black] (0,0) -- ++(-0.15,0) arc (180:270:0.15) -- cycle;
 			\draw[thick] (0,0) circle (0.15);
-			\node[right=0.2cm] at (0,0.7) {\large $m$}; % Coherencia con figuras anteriores
+			\node[right=0.2cm] at (0,0.7) {\large $m$};
 		\end{scope}
 		
 		% --- 4. VECTORES DE FUERZA (Diagrama de Sólido Libre) ---
@@ -66,14 +66,17 @@
 		% Fuerzas de Fricción (Rojo)
 		\draw[->, very thick, red!80!black] (\x - \W/2, 2*\Rrueda + \H/4) -- ++(-1.5, 0) node[above] {\large $c_x \dot{x}$};
 		
-		% CORRECCIÓN: Fricción viscosa del péndulo en sentido ANTIHORARIO
-		% Se cambia la dirección de la flecha (de <- a ->) y se ajustan los ángulos
+		% Fricción viscosa del péndulo
 		\draw[->, very thick, red!80!black] (\x, 2*\Rrueda + \H) ++(45:0.8) arc (45:135:0.8) node[left, xshift=-2pt] {\large $c_\theta \dot{\theta}$};
 		
-		% --- 5. INDICADORES DE MOVIMIENTO ---
-		\draw[->, thick, gray] (\x, 2*\Rrueda + \H + 1.5) arc[start angle=90, end angle={90-\ang}, radius=1.5];
-		\node[gray] at ({\x + 0.6*sin(\ang/2)}, {2*\Rrueda + \H + 1.5*cos(\ang/2) + 0.3}) {\large $\theta$};
+		% --- 5. INDICADORES DE MOVIMIENTO (MODIFICADO A ANTIHORARIO) ---
 		\draw[dashed, thick, gray] (Pivote) -- ++(0, \L + 0.5);
+		
+		% La flecha comienza en la barra y termina en la vertical (90 grados)
+		\draw[->, thick, gray] ({\x + 1.5*sin(\ang)}, {2*\Rrueda + \H + 1.5*cos(\ang)}) 
+		arc[start angle=90-\ang, end angle=90, radius=1.5];
+		
+		\node[gray] at ({\x + 0.6*sin(\ang/2)}, {2*\Rrueda + \H + 1.5*cos(\ang/2) + 0.3}) {\large $\theta$};
 		
 	\end{tikzpicture}
 	
