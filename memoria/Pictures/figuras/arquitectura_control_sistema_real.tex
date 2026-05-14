@@ -1,73 +1,58 @@
 \documentclass[tikz]{standalone}
-\usetikzlibrary{positioning, arrows.meta, calc, fit, backgrounds, shapes.geometric}
+\usetikzlibrary{positioning, arrows.meta, calc, fit, backgrounds}
 
 \begin{document}
 	
 	\begin{tikzpicture}[
-		node distance=1.2cm and 1.8cm,
-		% Estilos base
-		bloque/.style={draw=black!50, fill=white, thick, rectangle, rounded corners, minimum height=1.5cm, minimum width=2.6cm, align=center, font=\sffamily},
-		periferico/.style={draw=black!50, fill=white, thick, rectangle, rounded corners, minimum height=1cm, minimum width=1.8cm, align=center, font=\scriptsize\sffamily},
-		planta/.style={draw=black!50, fill=white, thick, rectangle, rounded corners, minimum height=1.5cm, minimum width=3.5cm, align=center, font=\sffamily},
-		env_box/.style={draw, thick, rounded corners=10pt, inner sep=15pt, fill opacity=0.05},
-		flecha/.style={-{Stealth[scale=1.2]}, thick, draw=gray!80!black},
-		etiqueta/.style={align=center, font=\scriptsize\sffamily, fill=white, inner sep=1.5pt}
+		% Aumentamos la separación horizontal de 1.8cm a 2.2cm
+		node distance=1.5cm and 2.2cm,
+		% Estilos de bloques
+		bloque/.style={draw=gray!80, fill=white, thick, rectangle, rounded corners=3pt, minimum height=1.3cm, minimum width=2.8cm, align=center, font=\sffamily\small},
+		periferico/.style={draw=gray!80, fill=white, thick, rectangle, rounded corners=2pt, minimum height=1cm, minimum width=2.2cm, align=center, font=\sffamily\scriptsize},
+		% Estilo de cajas de entorno
+		mcu_box/.style={draw=blue!50!black, fill=blue!5, thick, rounded corners=8pt, dashed},
+		planta_box/.style={draw=gray!50!black, fill=gray!5, thick, rounded corners=8pt},
+		% Estilo de flechas y etiquetas
+		flecha/.style={-{Stealth[scale=1.0]}, thick, draw=black!70},
+		label_est/.style={font=\scriptsize\sffamily, fill=none, inner sep=4pt} % Más separación interna en etiquetas
 		]
 		
-		% --- BLOQUES DEL PROCESADOR ---
-		\node[bloque] (control) {Controlador\\Digital};
+		% --- CAPA DEL MICROCONTROLADOR (IZQUIERDA) ---
+		\node[bloque] (control) {Controlador Digital \\ \footnotesize (-Kx / Swing-up)};
+		% Separación manual extra para u_k
+		\node[periferico, right=2.2cm of control] (pwm) {\textbf{ePWM} \\ Modulación};
+		\node[periferico, below=1.8cm of pwm] (eqep) {\textbf{eQEP} \\ Captura/Conteo};
 		
-		% r_k: Flecha de entrada
-		\draw[flecha] ([xshift=-1.8cm]control.west) -- node[etiqueta, above, pos=0.1, fill=none] {$r_k$} (control.west);
+		% Flecha de consigna r_k con más espacio desde el borde
+		\draw[flecha] ($(control.west)-(1.5,0)$)-- (control.west) node[label_est, pos=0, left, black] {$r_k$};
 		
-		% --- PERIFÉRICOS ---
-		% Forzamos 1.8cm de separación para que la brecha entre cajas sea idéntica
-		\node[periferico, right=1.8cm of control] (pwm) {ePWM \\ (DAC)};
-		\node[periferico, right=1.2cm of pwm] (retenedor) {Retenedor \\ (ZOH)};
+		% --- CAPA DE HARDWARE EXTERNO (DERECHA) ---
+		\node[periferico, right=2.2cm of pwm] (driver) {Puente H \\ \footnotesize (Etapa Potencia)};
+		\node[bloque, right=2.2cm of driver] (proceso) {Proceso Continuo \\ \footnotesize (Motor + Péndulo)};
+		\node[bloque, at={(proceso |- eqep)}] (sensor) {Encoders};
 		
-		% --- SISTEMA FÍSICO ---
-		% Forzamos 1.8cm de separación igual que antes
-		\node[planta, right=1.8cm of retenedor] (proceso) {Proceso Continuo \\ \scriptsize (Driver + Motor + Péndulo)};
-		\node[bloque, below=1.8cm of proceso, minimum width=3.5cm] (sensor) {Sensores \\ \scriptsize (Encoders)};
+		% --- CONEXIONES DE LAZO ---
+		% Camino de ida (Acción)
+		\draw[flecha] (control) -- node[label_est, above] {$u_k$} (pwm);
+		\draw[flecha] (pwm) -- node[label_est, above] {PWM} (driver);
+		\draw[flecha] (driver) -- node[label_est, above] {$u(t)$} (proceso);
 		
-		% --- PERIFÉRICOS ENTRADA ---
-		% Mantenemos la cuadrícula alineando a 1.8cm del sensor
-		\node[periferico, left=1.8cm of sensor] (muestreo) {Muestreo};
-		\node[periferico, left=1.2cm of muestreo] (eqep) {eQEP \\ (ADC)};
+		% Camino de vuelta (Sensores)
+		\draw[flecha] (proceso) -- node[label_est, right] {$y_p(t)$} (sensor);
+		\draw[flecha] (sensor) -- node[label_est, above] {Pulsos} (eqep);
 		
-		% --- CONEXIONES ---
-		\draw[flecha] (control.east) -- node[etiqueta, above] {$u_k$} (pwm.west);
-		\draw[flecha] (pwm.east) -- node[etiqueta, above] {$u^*(kT)$} (retenedor.west);
-		\draw[flecha] (retenedor.east) -- node[etiqueta, above, pos=0.5] {$u(t)$} (proceso.west);
+		% Cierre del lazo con mayor curvatura/espacio
+		\draw[flecha] (eqep.west) -| node[label_est, pos=0.8, left] {$y_k$ (Lectura / $T_s$)} (control.south);
 		
-		% y_p(t): Creamos un punto de giro y trazamos la flecha
-		\coordinate (giro_yp) at ($(proceso.east) + (0.8,0)$);
-		\draw[flecha] (proceso.east) -- (giro_yp) node[etiqueta, above, pos=0.5, fill=none] {$y_p(t)$} |- (sensor.east);
-		
-		\draw[flecha] (sensor.west) -- node[etiqueta, above, pos=0.5] {$y(t)$} (muestreo.east);
-		\draw[flecha] (muestreo.west) -- node[etiqueta, above] {$y^*(kT)$} (eqep.east);
-		\draw[flecha] (eqep.west) -| node[etiqueta, pos=0.8, left, fill=none] {$y_k$} (control.south);
-		
-		% --- CAPAS DE FONDO ---
+		% --- CAJAS DE FONDO ---
 		\begin{scope}[on background layer]
-			\coordinate (alt_top) at ($(control.north)+(0,0.6)$);
+			% Extendemos el fit de la caja MCU a la izquierda para r_k
+			\node[mcu_box, fit={(control) (pwm) (eqep) ($(control.west)-(1.8,0)$)}, inner sep=15pt] (mcu) {};
+			\node[above=2pt of mcu.north, font=\sffamily\bfseries\color{blue!50!black}] {Microcontrolador TI C2000};
 			
-			% Caja 1
-			\node[env_box, draw=blue!70, fill=blue, fit=(control) (alt_top)] (caja_proc) {};
-			\node[above=0.1cm of caja_proc.north, font=\sffamily\bfseries\color{blue!70!black}] {Procesador};
-			
-			% Caja 2
-			\node[env_box, draw=green!60!black, fill=green, fit=(pwm) (retenedor) (muestreo) (eqep) (pwm |- alt_top)] (caja_perif) {};
-			\node[above=0.1cm of caja_perif.north, font=\sffamily\bfseries\color{green!60!black}] {Periféricos};
-			
-			% Caja 3: Añadimos (giro_yp) al comando fit para que la caja envuelva la flecha entera
-			\node[env_box, draw=gray!70, fill=gray!20, fit=(proceso) (sensor) (proceso |- alt_top) (giro_yp)] (caja_planta) {};
-			\node[above=0.1cm of caja_planta.north, font=\sffamily\bfseries\color{gray!70!black}] {Planta / Sistema Físico};
+			\node[planta_box, fit={(driver) (proceso) (sensor)}, inner sep=15pt] (planta) {};
+			\node[above=2pt of planta.north, font=\sffamily\bfseries\color{gray!50!black}] {Unidad Mecánica / Planta};
 		\end{scope}
-		
-		% Dibujo del interruptor
-		\draw[thick] ([xshift=-0.2cm, yshift=0.3cm]muestreo.north) -- ([xshift=0.2cm, yshift=0.5cm]muestreo.north);
-		\node[etiqueta, fill=none] at ([yshift=0.7cm]muestreo.north) {$T$};
 		
 	\end{tikzpicture}
 	

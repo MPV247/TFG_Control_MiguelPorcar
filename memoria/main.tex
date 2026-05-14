@@ -373,13 +373,13 @@ Los requisitos funcionales describen las acciones, cálculos y manipulaciones de
 	\item \textbf{RF3. Control de inyección de energía (Swing-up):} 
 	\begin{itemize}
 		\item \textit{Entradas:} Posición y velocidad angular actual del péndulo ($q, \dot{q}$).
-		\item \textit{Comportamiento:} Cálculo y ejecución de una ley de control basada en energía para balancear el péndulo desde su posición estable ($q = \pi \text{ rad}$) hasta el punto de linealización del sistema ($q = 0 \text{ rad}$).
+		\item \textit{Comportamiento:} Cálculo y ejecución de una ley de control basada en energía para balancear el péndulo desde su posición estable ($q = 0 \text{ rad}$) hasta el punto de linealización del sistema ($q = \pi \text{ rad}$).
 		\item \textit{Salidas:} Acción de control ($u$).
 	\end{itemize}
 	
 	\item \textbf{RF4. Control de estabilización (Realimentación del estado):} 
 	\begin{itemize}
-		\item \textit{Entradas:} Vector de estado del sistema ($x = [p, \dot{p}, q, \dot{q}]^T$). 
+		\item \textit{Entradas:} Vector de estado del sistema ($x = [x, \dot{x}, \theta, \dot{\theta}]^T \equiv [q, \dot{q}]^T$). 
 		\item \textit{Comportamiento:} Estabilización del sistema sobre el punto de linealización utilizando control por realimentación del estado. 
 		\item \textit{Salidas:}  Acción de control ($u$).
 	\end{itemize}
@@ -428,14 +428,12 @@ La arquitectura de control propuesta en la Figura \ref{fig:arquitectura_control}
 A diferencia de la cinemática, que estudia el movimiento de un mecanismo sin considerar las fuerzas y pares que lo producen, el modelado dinámico describe explícitamente la relación entre la fuerza aplicada y el movimiento resultante \cite{spong2006robot}. Disponer de las ecuaciones de movimiento exactas es un requisito estricto y fundamental tanto para la simulación del sistema como para el diseño de controladores basados en modelo. 
 
 Para determinar la dinámica del péndulo invertido sobre carro, se recurre a las ecuaciones de Euler-Lagrange. Este enfoque energético se basa en la obtención del Lagrangiano del sistema ($L$), definido como la diferencia entre la energía cinética ($E_c$) y la energía potencial ($E_p$):
-
 \begin{equation}
 		L = E_c - E_p
 	\label{eq:lagrangiano}
 \end{equation}
 
 Las ecuaciones diferenciales no lineales resultantes pueden reescribirse y compactarse de forma elegante en la formulación matricial clásica para sistemas robóticos \cite{murray1994mathematical}:
-
 \begin{equation}
 		M(q)\ddot{q} + C(q,\dot{q})\dot{q} + G(q) = B u
 	\label{eq:matrices_dinamica}
@@ -443,9 +441,9 @@ Las ecuaciones diferenciales no lineales resultantes pueden reescribirse y compa
 
 Para el sistema en concreto, las dimensiones de cada matriz son:
 \begin{itemize}
-	\item $M(q) \in \mathbb{R}^{2 \times 2}$ es la matriz de inercia.
-	\item $C(q,\dot{q}) \in \mathbb{R}^{2 \times 2}$ es la matriz de fuerzas centrípetas y de Coriolis.
-	\item $G(q) \in \mathbb{R}^{2 \times 1}$ es el vector de fuerzas gravitacionales.
+	\item $M(q) \in \mathbb{R}^{2 \times 2}$ matriz de inercia.
+	\item $C(q,\dot{q}) \in \mathbb{R}^{2 \times 2}$ matriz de fuerzas centrípetas y de Coriolis. Incluye también el rozamiento viscoso.
+	\item $G(q) \in \mathbb{R}^{2 \times 1}$ vector de fuerzas gravitacionales.
 	\item $B \in \mathbb{R}^{2 \times 1}$ vector de entrada, mapea la acción de control $u$.
 \end{itemize}
 
@@ -475,8 +473,7 @@ Esta elección de coordenadas establece de forma implícita el marco de trabajo 
 
 \FloatBarrier
 
-Una vez establecida la convención de signos del sistema y tener una visión esquemática ofrecida en la Figura \ref{fig:esquema_pendulo}, es momento de desarrollar la Ecuación \ref{eq:lagrangiano} hasta obtener la forma matricial compacta de la Ecuación \ref{eq:matrices_dinamica}. La energía potencial y cinética del sistema en concreto se puede representar como \cite{tedrake2023}:
-
+Una vez establecida la convención de signos del sistema y tener una visión esquemática ofrecida en la Figura \ref{fig:esquema_pendulo}, es momento de desarrollar la ecuación \ref{eq:lagrangiano} hasta obtener la forma matricial compacta de la Ecuación \ref{eq:matrices_dinamica}. La energía potencial y cinética del sistema en concreto se puede representar como \cite{tedrake2023}:
 \begin{equation}
 	\begin{cases}
 		E_{\text{c}} = \frac{1}{2}(M + m)\dot{x}^2 + m\dot{x}\dot{\theta} l\cos(\theta) + \frac{1}{2}  ml^2\dot{\theta}^2 \\
@@ -485,7 +482,6 @@ Una vez establecida la convención de signos del sistema y tener una visión esq
 \end{equation}
 
 A partir de formular la energía cinética y potencial, se desarrolla el Lagrangiano (Anexo \ref{anexo:desarrollo_dinamico}) y se calculan sus derivadas parciales hasta obtener las siguientes ecuaciones de movimiento \cite{tedrake2023}:
-
 \begin{equation}
 	\begin{cases}
 		(M + m)\ddot{x} + ml\ddot{\theta}\cos(\theta) - ml\dot{\theta}^2\sin(\theta) = u \\
@@ -494,7 +490,6 @@ A partir de formular la energía cinética y potencial, se desarrolla el Lagrang
 \end{equation}
 
 Antes de compactar las ecuaciones en la forma matricial de la Ecuación \ref{eq:matrices_dinamica} es importante añadir los términos de rozamiento viscoso para el riel y el péndulo.  
-
 \begin{equation}
 	\begin{cases}
 		(M + m)\ddot{x} + ml\ddot{\theta}\cos(\theta) + c_x\dot{x} - ml\dot{\theta}^2\sin(\theta) = u \\
@@ -503,7 +498,6 @@ Antes de compactar las ecuaciones en la forma matricial de la Ecuación \ref{eq:
 \end{equation}
 
 Finalmente se compacta la expresión en forma matricial como indica la Ecuación \ref{eq:matrices_dinamica}. La caracterización del sistema que posteriormente se implementará en simulación es: 
-
 \begin{equation}
 	\begin{bmatrix} 
 		M + m & m l \cos\theta \\ 
@@ -554,6 +548,8 @@ Si se analiza la Ecuación \ref{eq:matrices_dinamica_desarrollada} se deducen tr
 
 \FloatBarrier
 
+
+\newpage
 \subsection{Estrategia de control Swing-up}
 
 La primera ley de control se centra en el levantamiento del péndulo desde su posición estable ($\theta = 0\ rad$) hasta su posición inestable y punto en el que se conmuta al control de posición ($\theta = \pi\ rad$). 
@@ -578,7 +574,7 @@ En el caso de la Ecuación \ref{eq:pendulo_simple} se define la máxima energía
 	\label{eq:energia_ref}
 \end{equation}
 
-Por otro lado, el error de medida para calcular la acción de control $u$ viene dado por la diferencia entre la energía actual del péndulo ($E_m$, Ecuación \ref{eq:pendulo_simple}) y la energía de referencia ($E_{ref}$, Ecuación \ref{eq:energia_ref}) \cite{astrom2000swinging}:
+Por otro lado, el error de seguimiento para calcular la acción de control $u$ viene dado por la diferencia entre la energía actual del péndulo ($E_m$, Ecuación \ref{eq:pendulo_simple}) y la energía de referencia ($E_{ref}$, Ecuación \ref{eq:energia_ref}) \cite{astrom2000swinging}:
 \begin{equation}
 		e = E_{m} - E_{ref}
 	\label{eq:error_energia}
@@ -885,9 +881,9 @@ El concepto fundamental es el \textbf{periodo de muestreo} ($T$). Este parámetr
 
 Finalmente la interacción entre el mundo digital y el mundo físico es posible mediante el uso de \textbf{periféricos} que permiten medir el estado del sistema o modificarlo. Diferenciamos en dos clases de periféricos: 
 \begin{itemize}[]
-	\item \textbf{Actuadores:} La señal de control digital ($u_k$) se convierte en una señal analógica o cuasi-analógica mediante el módulo \textit{ePWM} (DAC, convertidor digital-analógico). Posteriormente, un bloque \textit{Retenedor de orden cero} (ZOH) mantiene la señal constante durante el intervalo de muestreo, transformándola en la señal continua $u(t)$ que excita al Proceso Continuo (compuesto por el driver, el motor y el péndulo).
+	\item \textbf{Actuadores:} La señal de control digital calculada ($u_k$) se traduce en señales lógicas de dirección y una señal modulada por ancho de pulso (\textit{PWM}) generada por el periférico \textit{ePWM}. Tanto el estado de las señales digitales como el ciclo de trabajo (\textit{duty cycle}) del PWM se mantienen constantes durante el intervalo de muestreo ($T_s$). Estas señales excitan un puente en H (driver), el cual conmuta el voltaje de alimentación para inyectar una corriente cuasi-analógica en el motor. De este modo, se transforma la decisión del algoritmo en el par mecánico necesario para accionar el proceso continuo.
 	
-	\item \textbf{Sensores: } La respuesta del sistema ($y_p(t)$) es captada por los sensores (en este caso, encoders). La señal $y(t)$ es procesada por un bloque de muestreo, gobernado por el periodo $T$, y enviada al periférico\textit{ eQEP}.Este último actúa como un equivalente a un ADC (convertidor analógico-digital), transformando los pulsos del encoder en una señal digital $y_k$ interpretable por el controlador.
+	\item \textbf{Sensores:} La respuesta física del sistema ($y_p(t)$) es captada por encoders ópticos incrementales. A diferencia de un sensor analógico convencional, estos dispositivos generan una secuencia de pulsos basada en eventos de movimiento (detección de flancos). El periférico \textit{eQEP} del microcontrolador actúa como una unidad de conteo especializada que registra estos eventos de forma asíncrona. No obstante, para el bucle de control, la señal se digitaliza de forma efectiva ($y_k$) al leer el estado de dichos contadores en intervalos de tiempo estrictamente periódicos ($T_s$). Este muestreo periódico es fundamental para el cálculo de variables derivadas, como la velocidad, mediante la diferencia de posición en cada intervalo.
 \end{itemize}
 \newpage
 
