@@ -182,23 +182,162 @@
 
 \chapter{Introducción}
 
+El objeto de este proyecto es el estudio y control de un péndulo invertido sobre un carro móvil. Aunque a primera vista pueda parecer un sistema mecánico simple, en el ámbito de la \textbf{Robótica} este dispositivo constituye uno de los problemas fundamentales de control y equilibrio dinámico. 
+
+La relevancia de este sistema reside en su transferencia directa a tecnologías críticas de la robótica moderna. El reto de mantener una barra inestable en equilibrio vertical es, en esencia, el mismo principio físico que permite a un \textbf{robot humanoide} caminar sin desplomarse, a un cohete mantenerse estable durante el despegue o a vehículos de transporte personal (como los \textit{Segways}) desplazarse de forma autónoma. Controlar este sistema implica dominar la capacidad de un robot para reaccionar ante la gravedad y las perturbaciones externas en milisegundos.
+
+En ingeniería, este reto se utiliza para evaluar la eficacia de un sistema de control. El objetivo es que un microcontrolador (cerebro) interprete la inclinación de la barra mediante sensores (ojos) y actúe sobre un motor (músculos) con una velocidad y precisión tales que desafíen la inestabilidad natural del sistema. 
+
+Finalmente, en el marco de la robótica, este proyecto se sitúa en la denominada \textbf{capa reactiva}. Mientras que gran parte de la robótica actual se enfoca en procesos cognitivos de alto nivel —como la navegación mediante SLAM—, este sistema aborda el control a bajo nivel, equiparable a los \textbf{reflejos motores} de un ser vivo. No se trata de "pensar" una trayectoria a largo plazo, sino de reaccionar en milisegundos para corregir desviaciones imperceptibles. Esta capacidad de respuesta inmediata es la que garantiza que el robot sea capaz de interactuar con el mundo físico de forma segura, sirviendo de base fundamental sobre la que se construyen las capas de inteligencia superior. 
+
+\newpage
+\section{Punto de partida}
+El trabajo se realiza sobre un equipo educativo clásico: el \textbf{Digital Pendulum 33-005} de la marca \textit{Feedback Instruments Ltd}. Este sistema se divide en dos partes: el controlador 33-201 (la caja con la electrónica) y la unidad mecánica 33-200 (el raíl con el carro y la barra).
+
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=1.0\textwidth]{Pictures/sistema_original}
+	\caption{Digital Pendulum 33-005, descripción esquemática \cite{feedback_getting_started}}
+	\label{fig:esquema_sistema}
+\end{figure}
+
+En la Figura \ref{fig:esquema_sistema} se detalla la disposición de la unidad mecánica 33-200. El sistema consta de un raíl sobre el que se desplaza horizontalmente un carro metálico. Este movimiento es accionado por un motor de corriente continua situado en un extremo, que transmite la fuerza mediante una correa dentada. En los extremos del raíl se sitúan los finales de carrera, que actúan como interruptores de seguridad para detener el motor antes de que el carro colisione con la estructura. Sobre el carro se monta el eje del péndulo, cuya rotación libre de 360 grados es captada por un sensor óptico (encoder) situado en su base.
+
+Este equipo lleva en los laboratorios de la universidad más de 25 años. Debido a este largo periodo de tiempo, el punto de partida del proyecto se caracteriza por una obsolescencia tecnológica total:
+\begin{itemize}
+	\item \textbf{Electrónica antigua:} Según la documentación del fabricante, este sistema fue diseñado para operar con \textbf{MATLAB 5 y Windows 95}, utilizando protocolos de comunicación y tarjetas de expansión (bus ISA/PCI) que ya no existen en los ordenadores actuales \cite{feedback_external}. Esto lo convertía en una "caja negra" cerrada e incompatible con las herramientas de programación modernas, lo que justificaba su sustitución completa por un sistema de control digital actual.
+\end{itemize}
+
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=0.55\textwidth, angle=90]{Pictures/control_viejo}
+	\caption{Controlador digital original}
+	\label{fig:estado_inicial_fotos}
+\end{figure}
+\FloatBarrier
+
+\begin{itemize}
+	\item \textbf{Falta de mantenimiento:} La unidad mecánica presentaba suciedad acumulada en los raíles y grasa reseca en los engranajes, lo que impedía que el carro se moviera con suavidad, complicando enormemente la tarea de equilibrio. Además de tener un desgaste notable en la correa dentada (transmisión) y el disco óptico del encoder. 
+\end{itemize}
+
+\begin{figure}[ht]
+	\centering
+	\begin{subfigure}{0.48\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{Pictures/unidad_mecanica_sin_reparar} % Foto de la electrónica vieja
+		\caption{Unidad mecánica con notable falta de mantenimiento}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{0.48\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{Pictures/encoder_roto} % Foto de la suciedad en el raíl
+		\caption{Encoder del péndulo doblado y con pérdida de pulsos}
+	\end{subfigure}
+	\caption{Estado inicial de la unidad mecánica}
+	\label{fig:estado_unidad_mec}
+\end{figure}
+
+\FloatBarrier
+
+Luego el punto de partida es el \textbf{rescate de la unidad mecánica}, aprovechando aquellos elementos que aún conservaban su utilidad, como el motor. No obstante, ha sido necesario intervenir en otros componentes que, debido a su naturaleza como piezas de desgaste, presentaban falta de mantenimiento. Por otro lado, para solucionar el problema del control digital obsoleto, se decidió \textbf{sustituir la electrónica antigua} por tecnología actual (microcontroladores y drivers modernos). Esta elección no solo permite que la unidad vuelva a ser plenamente funcional, sino que además la convierte en una plataforma de \textbf{código abierto}, facilitando que futuros usuarios puedan entender, modificar y mejorar el sistema sin las restricciones del hardware propietario original.
+
 \section{Motivaciones}
+Las razones que impulsan el desarrollo de este proyecto combinan el interés personal por ciertos conocimientos adquiridos en el grado y la oportunidad de brindar un servicio a la universidad:
 
-En caso de que haya motivo(s) concreto(s() para la realización del proyecto.
-
-\section{Objetivos}
-
-Objetivos que se espera alcanzar al inicio del proyecto.
+\begin{itemize}
+	\item \textbf{Personal y Vocacional:} Mi interés principal dentro del \textit{Grado en Inteligencia Robótica} reside en el control automático, la programación de sistemas empotrados en tiempo real y la electrónica. Este proyecto me permite profundizar en la asignatura de \textit{Sistemas Automáticos Avanzados}, enfrentándome al reto de diseñar algoritmos de control a bajo nivel con restricciones críticas de tiempo y hardware que imponen los sistemas físicos reales.
+	
+	\item \textbf{Curiosidad Científica:} Me motiva entender el funcionamiento interno de las máquinas. El control automático me brinda la oportunidad perfecta para aplicar de forma práctica la física y las matemáticas que subyacen a los sistemas robóticos capaces de equilibrarse y moverse con precisión. 
+	
+	\item \textbf{Profesional:} El uso de la familia de microcontroladores \textit{C2000 de Texas Instruments} constituye una motivación clave. Superar las capas de abstracción de \textit{Arduino IDE} para trabajar directamente sobre el registro y el hardware de los \textit{C2000} me permite entender el control de bajo nivel de forma real. Esta capacidad para gestionar sistemas complejos con estándares industriales constituye una ventaja competitiva.
+	
+	\item \textbf{Académica:} Durante este último curso, he disfrutado de la \textit{Beca de Colaboración del Ministerio} en el \textit{Departamento de Ingeniería de Sistemas Industriales y Diseño}. Parte de mi labor ha consistido en poner en marcha esta infraestructura, por lo que este TFG es la culminación del trabajo. Dejar una unidad funcional y actualizada que sirva como banco de pruebas para que futuros estudiantes e investigadores puedan seguir evolucionando algoritmos y técnicas de control avanzado en la universidad sería un gran honor.
+\end{itemize}
 
 \section{Planificación}
 
-Lista de tareas, relación entre ellas y duración estimada
-Posibles desviaciones de la polanificación
-Diagrama de Gantt
+Dentro de este apartado se aborda de forma lógica y ordenada los objetivos generales del proyecto y las tareas asociadas para lograr su consecución. Además se expone el \textit{Diagrma de Gantt} para tener una visión general de la planificación de tiempos por cada tarea. 
+
+\subsection{Objetivos}
+
+\begin{itemize}
+	\item \textbf{O1:} Obtención del modelo matemático del sistema de péndulo invertido sobre carro.
+	
+	\item \textbf{O2:} Simulación en \textit{Matlab/Simulink} para la validación preliminar de los controladores e integración con \textit{ROS}.
+	
+	\item \textbf{O3:} Diseño y evaluación en simulación diferentes estrategias de control.
+	
+	\item \textbf{O4:} Caracterización y puesta a punto el hardware de la planta real, incluyendo la etapa de potencia y la lectura de sensores.
+	
+	\item \textbf{O5:} Desarrollo el firmware de bajo nivel en el microcontrolador, garantizando el control en tiempo real.
+	
+	\item \textbf{O6:} Implementación, ajuste y validación experimental de los algoritmos de control sobre la unidad mecánica real. 
+	
+	\item \textbf{O7:} Documentación técnica del trabajo realizado y los resultados obtenidos. 
+	 
+\end{itemize}
+
+\newpage
+
+\subsection{Tareas}
+
+Cada tarea y subtarea tiene un objetivo asociado para facilitar el desarrollo del proyecto en pequeños retos dentro de un plazo temporal. De este modo la organización es máxima y el enfoque del trabajo es claro.  
+
+\subsubsection{T1. Modelado matemático y físico (O1)}
+\begin{itemize}
+	\item \textbf{T1.1} Obtención de las ecuaciones de movimiento mediante Euler-Lagrange.
+	\item \textbf{T1.2} Identificación de parámetros cinemáticos y dinámicos (masas, longitudes, inercias).
+	\item \textbf{T1.3} Caracterización de las no linealidades: fricción estática y dinámica en el raíl y zona muerta del motor.
+\end{itemize}
+
+\subsubsection{T2. Entorno de simulación e integración con ROS (O2)}
+\begin{itemize}
+	\item \textbf{T2.1} Implementación del modelo dinámico en bloques de \textit{Simulink}.
+	\item \textbf{T2.2} Configuración del nodo de comunicación entre \textit{Matlab} y el ecosistema \textit{ROS} para el intercambio de datos.
+	\item \textbf{T2.3} Desarrollo de un entorno visual para la monitorización de la simulación.
+\end{itemize}
+
+\subsubsection{T3. Diseño de estrategias de control en simulación (O3)}
+\begin{itemize}
+	\item \textbf{T3.1} Diseño del control de posición mediante regulador cuadrático lineal (LQR).
+	\item \textbf{T3.2} Desarrollo del algoritmo de \textit{Swing-up} basado en el control de energía.
+\end{itemize}
+
+\subsubsection{T4. Preparación del hardware y electrónica (O4)}
+\begin{itemize}
+	\item \textbf{T4.1} Revisión mecánica y mantenimiento de la unidad \textit{Feedback 33-200} (limpieza, engrasado y ajuste de tensión).
+	\item \textbf{T4.2} Integración del driver de potencia y diseño del conexionado con los encoders ópticos.
+	\item \textbf{T4.3} Implementación de sistemas de seguridad físicos (finales de carrera) y lógicos.
+\end{itemize}
+
+\subsubsection{T5. Desarrollo del firmware de bajo nivel (O5)}
+\begin{itemize}
+	\item \textbf{T5.1} Configuración de periféricos de captura (eQEP) y generación de señales PWM en el microcontrolador.
+	\item \textbf{T5.2} Programación del bucle de control con una rutina de interrupción periódica.
+	\item \textbf{T5.3} Implementación del protocolo de comunicación entre el microcontrolador y el ordenador para obtener la telemetría.
+\end{itemize}
+
+\subsubsection{T6. Validación experimental en el sistema real (O6)}
+\begin{itemize}
+	\item \textbf{T6.1} Ejecución y ajuste fino de los controladores (\textit{tuning}) sobre la planta física.
+	\item \textbf{T6.2} Comparativa de rendimiento entre los resultados obtenidos en el laboratorio y la simulación previa.
+\end{itemize}
+
+\subsubsection{T7. Documentación y cierre (O7)}
+\begin{itemize}
+	\item \textbf{T7.1} Elaboración de la memoria técnica del proyecto.
+	\item \textbf{T7.2} Preparación de la defensa pública y material visual de apoyo.
+\end{itemize}
+
+\newpage
+
+\subsection{Estimación de tiempos}
+% Aquí irían los objetivos (Estabilización, Swing-up, etc.) 
+% Y la tabla de horas que ya definimos (300h totales, 50h para memoria).
 
 \section{Estimación de costes}
-
-Estimación del coste económico que supondría la adquisición del material necesario (hardware y software) para la realización del proyecto, los salarios involucrados y otros aspectos como alquileres de espacios y energía. 
+% Aquí incluyes el coste del ingeniero (25€/h x 300h), 
+% el coste proporcional del equipo Feedback y el software MATLAB.
 
 \chapter{Análisis}
 
