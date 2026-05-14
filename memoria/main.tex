@@ -919,7 +919,7 @@ Para la implementación del algoritmo de control se ha seleccionado el \textbf{T
 Asimismo, el chip dispone de periféricos de control avanzado que descargan de tareas críticas a la CPU, los más destacados en el proyecto son:
 \begin{itemize}
 	\item \textbf{eQEP (Enhanced Quadrature Encoder Pulse):} Dos módulos dedicados para la decodificación de señales en cuadratura de los encoders, permitiendo una lectura de posición y ángulo sin consumo de ciclos de reloj \cite{ti_f280049c_ds}.
-	\item \textbf{ePWM (Enhanced Pulse Width Modulator):} El periférico permite una resolución de hasta \textbf{16 bits} en la generación del ciclo de trabajo (\textit{duty cycle}), garantizando un control fino sobre el motor DC \cite{ti_f280049c_ds}.
+	\item \textbf{ePWM (Enhanced Pulse Width Modulator):} El periférico permite una resolución de \textbf{16 bits} en la generación del ciclo de trabajo (\textit{duty cycle}) y hasta \textbf{32 bits} si se utiliza \textit{High Resolution PWM}, garantizando un control fino sobre el motor DC \cite{ti_f280049c_ds}.
 \end{itemize}
 
 El desarrollo software se apoya en el ecosistema oficial de Texas Instruments. Como entorno de desarrollo integrado (IDE) se emplea \textbf{Code Composer Studio (CCS)} \cite{ti_ccs}, permite una depuración avanzada y optimización específica para la arquitectura C28x. Además, se utiliza la SDK \textbf{C2000Ware}, que proporciona una capa de abstracción de hardware (HAL) facilitando la programación y la interpretabilidad del código \cite{ti_c2000ware}.
