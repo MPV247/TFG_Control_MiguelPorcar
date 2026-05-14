@@ -873,7 +873,7 @@ La Figura \ref{fig:arquitectura_sim} detalla la arquitectura de software diseña
 
 \FloatBarrier
 
-La Figura \ref{fig:arquitectura_sim_fis} presenta de forma esquemática la implementación del bucle de control en un microcontrolador. 
+La Figura \ref{fig:arquitectura_sim_fis} presenta de forma esquemática la implementación del bucle de control en el microcontrolador. 
 
 Esta estructura permite observar la interacción entre el entorno digital (discreto) y el proceso físico (continuo). El núcleo del sistema es el \textbf{Controlador Digital}. Este procesador se encarga de ejecutar el algoritmo de control que procesa la señal de error entre la referencia ($r_k$) y la realimentación ($y_k$). 
 
@@ -881,7 +881,7 @@ El concepto fundamental es el \textbf{periodo de muestreo} ($T$). Este parámetr
 
 Finalmente la interacción entre el mundo digital y el mundo físico es posible mediante el uso de \textbf{periféricos} que permiten medir el estado del sistema o modificarlo. Diferenciamos en dos clases de periféricos: 
 \begin{itemize}[]
-	\item \textbf{Actuadores:} La señal de control digital calculada ($u_k$) se traduce en señales lógicas de dirección y una señal modulada por ancho de pulso (\textit{PWM}) generada por el periférico \textit{ePWM}. Tanto el estado de las señales digitales como el ciclo de trabajo (\textit{duty cycle}) del PWM se mantienen constantes durante el intervalo de muestreo ($T_s$). Estas señales excitan un puente en H (driver), el cual conmuta el voltaje de alimentación para inyectar una corriente cuasi-analógica en el motor. De este modo, se transforma la decisión del algoritmo en el par mecánico necesario para accionar el proceso continuo.
+	\item \textbf{Actuadores:} La señal de control digital calculada ($u_k$) se traduce en señales lógicas de dirección y una señal modulada por ancho de pulso (\textit{PWM}) generada por el periférico \textit{ePWM}. Tanto el estado de las señales digitales como el ciclo de trabajo (\textit{duty cycle}) del PWM se mantienen constantes durante el intervalo de muestreo ($T_s$). Estas señales excitan un puente en H (driver), el cual conmuta el voltaje de alimentación para inyectar una corriente en el motor. De este modo, se transforma la decisión del algoritmo en el par mecánico necesario para accionar el proceso continuo.
 	
 	\item \textbf{Sensores:} La respuesta física del sistema ($y_p(t)$) es captada por encoders ópticos incrementales. A diferencia de un sensor analógico convencional, estos dispositivos generan una secuencia de pulsos basada en eventos de movimiento (detección de flancos). El periférico \textit{eQEP} del microcontrolador actúa como una unidad de conteo especializada que registra estos eventos de forma asíncrona. No obstante, para el bucle de control, la señal se digitaliza de forma efectiva ($y_k$) al leer el estado de dichos contadores en intervalos de tiempo estrictamente periódicos ($T_s$). Este muestreo periódico es fundamental para el cálculo de variables derivadas, como la velocidad, mediante la diferencia de posición en cada intervalo.
 \end{itemize}
