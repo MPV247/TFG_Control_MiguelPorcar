@@ -592,7 +592,7 @@ Si se analiza la Ecuación \ref{eq:matrices_dinamica_desarrollada} se deducen tr
 
 \FloatBarrier
 
-Finalmente, en la figura \ref{fig:bloques_modelado} se muestra la representación del modelado dinámico del sistema utilizando la formulación de la ecuación matricial \ref{eq:matrices_dinamica}. Es una forma interesante de representación, ya que la traslación a \textit{Simulink} es directa, sirviendo como preámbulo para la implementación de la simulación en este entorno.
+Finalmente, en la Figura \ref{fig:bloques_modelado} se muestra la representación del modelado dinámico del sistema con diagramas de bloques. Es una forma interesante de representación, ya que la traslación a \textit{Simulink} es directa, sirviendo como preámbulo para la implementación de la simulación en este entorno.
 
 
 \newpage
@@ -852,7 +852,7 @@ Bajo esta configuración, la dinámica del sistema en bucle cerrado queda gobern
 \end{itemize}
  
 \subsection{Lógica de conmutación}
-
+\label{cap:log_conmu}
 Finalmente, la lógica de conmutación atiende a un umbral angular. Este bloque de decisión monitoriza de forma continua la posición angular estimada del péndulo ($\hat{\theta}$). Si el péndulo ingresa dentro de una vecindad acotada en torno a la vertical absoluta (\textit{el punto de linealización del sistema}), la lógica conmuta al control por realimentación del estado En caso contrario, el sistema mantiene activo el controlador de swing-up para elevar el mecanismo. Este comportamiento híbrido se formaliza en el siguiente pseudocódigo:
 
 \begin{algorithm}[H]
@@ -1117,7 +1117,7 @@ Este enfoque metodológico responde firmemente al paradigma del \textit{Diseño 
 \begin{figure}[ht]
 	\centering
 	\includegraphics[width=1.0\textwidth]{Pictures/respuesta_libre_sim}
-	\caption{Arquitectura general del diagrama de bloques implementado en \textit{Simulink}}
+	\caption{Diagrama de bloques del modelo dinámico implementado en \textit{Simulink}}
 	\label{fig:sim_respuesta_libre}
 \end{figure} 
 
@@ -1168,14 +1168,36 @@ Para concluir, la obtención numérica de los vectores de ganancia $K$ dentro de
 \subsubsection{Levantamiento de péndulo}
 
 \subsubsection{Conmutación entre controladores}
-2)Explicar también como mediante simulación se pudo obtener las ganancias necesarias para poder hacer control swin-up con PFL. Muy importante poner los diagramas de bloques de nuestro simulink (El de publicación de tópicos, el de dinámica del sistema y el de conmutación de control (Swing-Up to LQR))
+Una vez implementados ambos controladores por separado, para finalizar con la implementación en \textit{Simulink} se aborda la lógica de conmutación explicada en la Sección \ref{cap:log_conmu}. 
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=1.0\textwidth]{Pictures/control_conmutado_sim}
+	\caption{Diagrama de bloques conmutación entre controles}
+	\label{fig:sim_control_conmutado}
+\end{figure}
+\FloatBarrier
+\newpage
+La arquitectura implementada en \textit{Simulink} (Figura~\ref{fig:sim_control_conmutado}) representa el hito central del desarrollo de la simulación. Su diseño permite emular el comportamiento físico del péndulo e integrar de forma segura las estrategias de control antes de su transferencia al hardware real. Para facilitar su comprensión, el diagrama se divide en tres bloques funcionales:
 
-3)Finalmente explicar como se acabo implementando una simulación discreta del sistema (uso de bucle for y mida de paso con el método de Euler o1). Sirve como puente a la implementación de algoritmos de control en microcontroladores. Uno de los mayores problemas que tiene este método es ajustar la mida de paso correcta para evitar que la simulación diverga de la física. Comentar también que ha sido el tipo de simulación que más hemos utilizado para ajustar ganancias del controlador real por su rapidez y simpleza en realizar pequeños cambios. 
+\begin{itemize}
+	\item \textbf{Modelo Dinámico de la Planta (Zona Derecha):} Representa el comportamiento mecánico del sistema real a través de su física matemática. El bloque \texttt{Inercias3} calcula la aceleración del sistema, la cual se integra sucesivamente para obtener en tiempo real la velocidad ($\dot{q}$) y la posición ($q$). Los bloques \texttt{Coriolis3} y \texttt{Gravedad3} calculan y realimentan continuamente las fuerzas de fricción y gravedad que afectan al movimiento.
+	
+	\item \textbf{Algoritmos de Control (Zona Izquierda):} Resuelven el desafío de control mediante dos estrategias diferenciadas según el estado del péndulo:
+	\begin{itemize}
+		\item \textit{Control de Energía (Swing-up):} Actúa cuando el péndulo está hacia abajo, balanceándolo de un lado a otro para inyectarle la energía necesaria para elevarlo.
+		\item \textit{Control de Posición ($K*u$):} Actúa mediante realimentación de estados para mantener el péndulo en equilibrio estricto una vez ha alcanzado la posición vertical inestable.
+	\end{itemize}
+	
+	\item \textbf{Lógica de Conmutación (Zona Central):} Es el componente que resuelve la transición automática entre ambos controladores. El bloque \texttt{q\_norm} evalúa constantemente el ángulo del péndulo; si este se encuentra lejos de la vertical, el interruptor (\texttt{Switch}) selecciona el control de energía. En el instante en que el péndulo entra en la zona de equilibrio, el dispositivo conmuta automáticamente al control de posición.
+\end{itemize}
+
+Tras la integración de la lógica de conmutación de ambos controles la parte de cálculo numérico para las \textit{EDOs} queda resuelta, se pueden ajustar controladores y observar el comportamiento del sistema únicamente con esta implementación. No obstante, atendiendo a la Figura \ref{fig:arquitectura_sim} sobre la \textit{Arquitectura de la Simulación} falta implementar la conexión con el entorno de \textit{ROS} para la visualización del gemelo digital en \textit{RViz}. 
 
 \subsection{Comunicación con ROS}
 
 4) Conexión exitosa entre ROS y Matlab mediante la herramienta ROS Toolbox, hay que comentar como se tubo que cambiar el DDS al cyclone para funcionar, la lógica de publicador subscriptor, el diseño de un archivo URDF para la visualización de la unidad mecánica desde RViz así como se tuvo que modificar el solver de Simulink para sincronizarse correctamente con la frecuencia de publicación de topicos.. (Posibles vías de estudio como la migración de la simulación completamente a ROS)
 
+\subsection{Simulaciones Discretas en Código}
 
 \section{Sistema físico}
 
