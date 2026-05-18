@@ -57,6 +57,11 @@
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 \usepackage{subcaption}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\tcbuselibrary{listings, skins}
+
 \floatname{algorithm}{Algoritmo}
 \usetikzlibrary{positioning, arrows, arrows.meta, shapes, shapes.geometric, calc, fit, backgrounds, mindmap, trees}
 \usetikzlibrary{patterns, decorations.pathreplacing}
@@ -70,6 +75,45 @@
 \definecolor{color_meta}{RGB}{192,192,255}
 \definecolor{color_text}{RGB}{255,150,150}
 \definecolor{color_plas}{RGB}{150,150,255}
+% Definición de colores estilo Matlab/Moderno
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.97,0.97,0.98} % Fondo gris muy suave
+\definecolor{framecolour}{rgb}{0.85,0.88,0.92} % Borde azul-grisáceo suave
+
+% Estilo de las líneas de código
+\lstdefinestyle{matlabstyle}{
+	language=MATLAB,
+	commentstyle=\color{codegreen},
+	keywordstyle=\color{blue},
+	numberstyle=\tiny\color{codegray},
+	stringstyle=\color{codepurple},
+	basicstyle=\ttfamily\small, % Fuente monoespaciada limpia
+	breakatwhitespace=false,         
+	breaklines=true,                 
+	keepspaces=true,                 
+	showspaces=false,                
+	showstringspaces=false,
+	showtabs=false,                  
+	tabsize=4,
+	extendedchars=true,
+	literate={Ó}{{\'O}}1 {Ó}{{\'O}}1 {Í}{{\'I}}1 {Ú}{{\'U}}1 {á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'ó}}1 {ú}{{\'u}}1 {ñ}{{\~n}}1 % Corrección de tildes
+}
+
+\newtcblisting{matlabbox}[1]{
+	arc=3mm,                  % Esquinas redondeadas suaves
+	colback=backcolour,       % Fondo suave
+	colframe=framecolour,     % Color del borde
+	enhanced,
+	listing only,
+	listing options={style=matlabstyle},
+	title=#1,                 % Título de la caja
+	coltitle=black,           % Color del texto del título
+	fonttitle=\small\sffamily\bfseries,
+	attach boxed title to top left={yshift=-3mm, xshift=5mm}, % Eleva el título sobre el marco
+	boxed title style={colback=framecolour, colframe=framecolour, arc=1mm}
+}
 
 \begin{document}
 %----------------------------------------------------------------------------------------
@@ -754,6 +798,7 @@ Las principales ventajas de aplicar esta técnica para la obtención de la repre
 \newpage
 
 \subsection{Control por realimentación del estado}
+\label{cap:control_kx}
 
 Tras definir en la anterior sección el \textit{sistema lineal invariante (LTI)} que define la dinámica del sistema en el punto de equilibrio $x = [0, \pi, 0, 0]^T$, se requiere diseñar una ley de control que permita estabilizar el sistema en esta región. 
 
@@ -1047,7 +1092,7 @@ En esta sección solamente hay que aportar la información técnica estrictament
 \section{Trabajo de simulación}
 
 \subsection{Modelado del sistema en Simulink}
-El punto de partida consistió en la traslación de las ecuaciones diferenciales dinámicas obtenidas en el capítulo anterior hacia un entorno de simulación numérica en \textit{Matlab/Simulink}. Para una primera aproximación, se emplearon los parámetros nominales de masas, longitudes, inercias y rozamientos proporcionados en la documentación original del fabricante, los cuales se detallan en la Tabla \ref{tab:parametros_fabricante}. No obstante, debido a que la unidad mecánica cuenta con más de 25 años de antigüedad, se llevó a cabo una campaña de identificación experimental de sus parámetros reales. Este procedimiento resultó indispensable para contrastar la validez de los datos de catálogo del fabricante y recalibrar el modelo de simulación, garantizando que este refleje con total fidelidad la dinámica actual del hardware.
+El punto de partida consistió en trasladar el modelo representado en la Ecuación \ref{eq:matrices_dinamica_desarrollada} hacia un entorno de simulación numérica en \textit{Matlab/Simulink}. Para una primera aproximación, se emplearon los parámetros de masas, longitudes, inercias y rozamientos proporcionados en la documentación original del fabricante, los cuales se detallan en la Tabla \ref{tab:parametros_fabricante}. No obstante, debido a que la unidad mecánica cuenta con más de 25 años de antigüedad, posteriormente se llevó a cabo la identificación experimental de sus parámetros reales.
 
 \begin{table}[ht]
 	\centering
@@ -1055,19 +1100,19 @@ El punto de partida consistió en la traslación de las ecuaciones diferenciales
 	\label{tab:parametros_fabricante}
 	\begin{tabular}{l c c l}
 		\toprule
-		\textbf{Parámetro} & \textbf{Símbolo} & \textbf{Valor Nominal} & \textbf{Unidades} \\
+		\textbf{Parámetro} & \textbf{Símbolo} & \textbf{Valor} & \textbf{Unidades} \\
 		\midrule
-		Masa del carro              & $M_c$   & 1.12 & kg \\
-		Masa del péndulo            & $m_p$   & 0.125 & kg \\
-		Longitud al centro de masas & $l$     & 0.167 & m \\
-		Inercia del péndulo         & $I_p$   & 0.006 & kg$\cdot$m$^2$ \\
-		Fricción del carro          & $c_c$   & 0.100 & N$\cdot$s/m \\
-		Fricción del péndulo        & $c_\theta$   & 0.005 & N$\cdot$m$\cdot$s/rad \\
+		Masa del carro              & $M$         & 1.12   & $\mathrm{kg}$ \\
+		Masa del péndulo            & $m$         & 0.12   & $\mathrm{kg}$ \\
+		Longitud al centro de masas & $l$         & 0.305  & $\mathrm{m}$ \\
+		Inercia del péndulo         & $J_p$       & 0.0136 & $\mathrm{kg \cdot m^2}$ \\
+		Fricción del carro           & $c_x$       & 0.05   & $\mathrm{N \cdot s / m}$ \\
+		Fricción del péndulo        & $c_\theta$  & 0.0005 & $\mathrm{N \cdot m \cdot s / rad}$ \\
 		\bottomrule
 	\end{tabular}
 \end{table}
 
-Este enfoque metodológico responde firmemente al paradigma del \textit{Diseño Basado en Modelos} (MBD). Disponer de un modelo matemático bien calibrado constituye la piedra angular para asegurar una transición eficiente entre la teoría y la práctica. Al emular con precisión el comportamiento de la planta real, el entorno virtual permite verificar de manera exhaustiva la estabilidad y robustez de los algoritmos diseñados antes de su despliegue definitivo en el hardware, mitigando por completo el riesgo de daños mecánicos o eléctricos por pérdidas de control. Asimismo, esta fidelidad matemática posibilita sustituir la sintonización empírica basada en el ensayo y error por un cálculo analítico, sistemático y determinista de las matrices de ganancias óptimas del regulador.
+Este enfoque metodológico responde firmemente al paradigma del \textit{Diseño Basado en Modelos} (MBD). Disponer de un modelo matemático bien calibrado para asegurar una transición eficiente entre la teoría y la práctica. Al emular con precisión el comportamiento de la planta real, el entorno virtual permite verificar de manera exhaustiva la estabilidad y robustez de los algoritmos diseñados antes de su implementación en el hardware, mitigando por completo el riesgo de daños mecánicos o eléctricos por pérdidas de control. 
 
 \begin{figure}[ht]
 	\centering
@@ -1076,10 +1121,53 @@ Este enfoque metodológico responde firmemente al paradigma del \textit{Diseño 
 	\label{fig:sim_respuesta_libre}
 \end{figure} 
 
-La mayor dificultad en esta etapa inicial no radicó en la configuración técnica de la herramienta informática, sino en el análisis crítico del propio modelado fenomenológico. Fue imperativo asegurar la correcta correspondencia de signos en las fuerzas acopladas y las aceleraciones generalizadas del sistema carro-péndulo. Este modelo no lineal global, estructurado según se muestra en la Figura \ref{fig:sim_respuesta_libre}, sirvió como base fundamental para validar la respuesta libre del sistema y dar soporte a la posterior linealización matemática requerida por las estrategias de control multivariable en el entorno del equilibrio vertical inestable.
+La Figura~\ref{fig:sim_respuesta_libre} detalla la arquitectura implementada en \textit{Simulink}, la cual constituye la traslación directa de las ecuaciones dinámicas del sistema al entorno computacional, en el Anexo \ref{ap:codigo_dinamica} se detalla el contenido de cada bloque. Esta estructura materializa de forma práctica el álgebra de bloques conceptual introducida previamente en la Figura~\ref{fig:bloques_modelado}, sirviendo como la plataforma sobre la cual se ejecutan los algoritmos de control por realimentación del estado y por energía.
 
 \subsection{Algoritmo de control en Simulink}
 
+\subsubsection{Control de posición}
+Una vez modelada la dinámica del sistema de péndulo invertido sobre carro e implementada en \textit{Simulink}, el siguiente paso fue implementar un control de posición por realimentación del estado para mantener el sistema estable con el péndulo invertido ($\theta = \pi \ \mathrm{rad}$). 
+
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=1.0\textwidth]{Pictures/control_Kx_sim}
+	\caption{Diagrama de bloques con control de posición por realimentación del estado}
+	\label{fig:sim_control_lqr}
+\end{figure}
+
+Como se ilustra en la Figura~\ref{fig:sim_control_lqr}, la arquitectura implementada establece una dinámica en bucle cerrado donde el bloque del controlador procesa de forma continua los vectores de estado medidos ($q$ y $\dot{q}$). A partir de esta información, el algoritmo computa la acción de control óptima, denotada como la fuerza de empuje $u$. El fundamento matemático detrás de esta técnica fue abordado en el desarrollo teórico de la Sección~\ref{cap:control_kx}.
+
+La ley de control se reduce conceptualmente a una combinación lineal de los estados multiplicados por un vector de ganancias $K$, expresado formalmente como $u = K(\mathrm{ref} - x)$. 
+
+Consecuentemente, como se aprecia en el detalle del diagrama de bloques, esta ley de control se materializa en \textit{Simulink} mediante un único bloque de ganancia matricial (denotado en la simulación como \texttt{K*u}).
+
+A su vez, con el propósito de demostrar la divergencia entre el modelo linealizado y la dinámica real de la planta cuando el sistema se aleja del punto de linealización, se integró en la simulación el modelo linealizado en $x = [0, \pi, 0, 0]^T$. Esta configuración permite contrastar, ante idénticas acciones de control $u$, el comportamiento del sistema lineal descrito en el espacio de estados mediante las matrices algebraicas $\{A, B, C, D\}$ frente a la respuesta del sistema real no lineal, denotado por el conjunto $\{M, C, G\}$.
+
+\newpage
+Para concluir, la obtención numérica de los vectores de ganancia $K$ dentro del entorno de \textit{MATLAB}, se optó por las dos metodologías clásicas de control propuestas en la Sección \ref{cap:control_kx}:
+\begin{itemize}[]
+	\item \textbf{Regulador Lineal Cuadrático (LQR):} se definieron las matrices de ponderación $Q$ y $R$ para sintonizar el comando \texttt{lqr()} \cite{matlab_lqr}.
+	
+	\item \textbf{Asignación de polos:} Se fija la dinámica en bucle cerrado del sistema con el comando \texttt{place()} \cite{matlab_place}.
+\end{itemize}
+
+\begin{matlabbox}{Comando lqr() y comando place() para la obtención de K}
+	%% OBTENCION  DE K = [K1, K2, K3 K4]
+	% 1. Regulador Lineal Cuadratico (LQR)
+	Q = diag([1, 1, 1, 1]); 
+	R = 0.1;                
+	[K_lqr, S, E] = lqr(A, B, Q, R);
+	
+	% 2. Asignacion de Polos (Pole Placement)
+	polos = [-2.5, -3, -3.5, -4]; 
+	K_plc = place(A, B, polos);
+\end{matlabbox}
+
+
+
+\subsubsection{Levantamiento de péndulo}
+
+\subsubsection{Conmutación entre controladores}
 2)Explicar también como mediante simulación se pudo obtener las ganancias necesarias para poder hacer control swin-up con PFL. Muy importante poner los diagramas de bloques de nuestro simulink (El de publicación de tópicos, el de dinámica del sistema y el de conmutación de control (Swing-Up to LQR))
 
 3)Finalmente explicar como se acabo implementando una simulación discreta del sistema (uso de bucle for y mida de paso con el método de Euler o1). Sirve como puente a la implementación de algoritmos de control en microcontroladores. Uno de los mayores problemas que tiene este método es ajustar la mida de paso correcta para evitar que la simulación diverga de la física. Comentar también que ha sido el tipo de simulación que más hemos utilizado para ajustar ganancias del controlador real por su rapidez y simpleza en realizar pequeños cambios. 
@@ -1154,18 +1242,67 @@ Trabajo a futuro --> Implementación en HAL, uso de algoritmos no basados en mod
 %----------------------------------------------------------------------------------------
 
 \chapter{Apéndices}
-
 Colocar aquí cualquier tipo de información susceptible de ser consultada para la correcta comprensión del documento y el proyecto que describe.
 
 %----------------------------------------------------------------------------------------
-%	APÉNDICES / ANEXOS
+%	CONFIGURACIÓN DE APÉNDICES
 %----------------------------------------------------------------------------------------
-\appendix % Este comando cambia la numeración de Capítulos a Letras (A, B, C...)
+\appendix % A partir de aquí, \chapter se convierte en Apéndice A, B, C...
 
+% ==================================================================
+% APÉNDICE A: Desarrollo matemático
+% ==================================================================
 \chapter{Desarrollo del Lagrangiano}
-\label{anexo:desarrollo_dinamico} % <-- Esta etiqueta es el "ancla" para el enlace
+\label{anexo:desarrollo_dinamico}
 
 En este anexo se detalla el desarrollo matemático paso a paso del formalismo de Euler-Lagrange, partiendo de las energías del sistema hasta obtener la formulación matricial.
 
-% Aquí pegarías todo el desarrollo de las derivadas parciales de L que vimos antes.
+\section{Cálculo de la Energía Cinética ($T$)}
+% Aquí el desarrollo de la energía cinética...
+
+\section{Cálculo de la Energía Potencial ($V$)}
+% Aquí el desarrollo de la energía potencial...
+
+
+% ==================================================================
+% APÉNDICE B: Código de la Planta
+% ==================================================================
+\chapter{Dinámica en MATLAB Functions}
+\label{ap:codigo_dinamica}
+
+\section{Bloque de la Matriz de Inercia Inversa $M(q)^{-1}$} 
+\label{sec:ap-matriz-m}
+\begin{matlabbox}{MATLAB Function $M(q)^{-1}$}
+function M_inv = fcn(q, M, m, l, Jp)
+	% q(2) representa la posicion angular theta del pendulo
+	theta = q(2); 
+	
+	% Elementos de la matriz de inercia M(q)
+	m11 = M + m;
+	m12 = m * l * cos(theta);
+	m21 = m * l * cos(theta);
+	m22 = Jp + m * l^2;
+	
+	% Determinante de la matriz
+	det_M = (m11 * m22) - (m12 * m21);
+	
+	% Matriz inversa analitica
+	M_inv = (1 / det_M) * [m22, -m12; -m21, m11];
+end	
+\end{matlabbox}
+
+\section{Bloque de la Matriz de Coriolis y Fuerzas Centrífugas $C(\dot{q}, q)$}
+\label{sec:ap-matriz-c}
+
+\begin{matlabbox}{{MATLAB Function $C(\dot{q}, q)$}}
+	function C_mat = fcn(q, q_dot, m, l)
+	theta = q(2);
+	theta_dot = q_dot(2);
+	
+	% Expresion simplificada de los coeficientes de Coriolis
+	C_mat = [0, -m * l * sin(theta) * theta_dot;
+	         0, 0];
+	end
+\end{matlabbox}
+
 \end{document}

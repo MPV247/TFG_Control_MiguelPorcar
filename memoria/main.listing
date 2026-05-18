@@ -1,0 +1,8 @@
+	function C_mat = fcn(q, q_dot, m, l)
+	theta = q(2);
+	theta_dot = q_dot(2);
+	
+	% Expresion simplificada de los coeficientes de Coriolis
+	C_mat = [0, -m * l * sin(theta) * theta_dot;
+	         0, 0];
+	end
