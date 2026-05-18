@@ -281,7 +281,7 @@ Dentro de este apartado se aborda de forma lógica y ordenada los objetivos gene
 
 \subsection{Tareas}
 
-Cada tarea y subtarea tiene un objetivo asociado para facilitar el desarrollo del proyecto en pequeños retos dentro de un plazo temporal. De este modo la organización es máxima y el enfoque del trabajo es claro.  
+Cada tarea y subtarea tiene un objetivo asociado para facilitar el desarrollo del proyecto en pequeños retos dentro de un plazo. De este modo la organización es mayor y el enfoque del trabajo es claro.  
 
 \subsubsection{T1. Modelado matemático y físico (O1)}
 \begin{itemize}
@@ -541,12 +541,14 @@ Si se analiza la Ecuación \ref{eq:matrices_dinamica_desarrollada} se deducen tr
 
  \begin{figure}[htpb]
 	\centering
-	\input{Pictures/figuras/pendulo_carro_fuerzas.tex}
-	\caption{Descomposición de fuerzas}
-	\label{fig:esquema_fuerzas_pendulo}
+	\input{Pictures/figuras/modelado_dinamica_bloques.tex}
+	\caption{Diagrama de bloques del modelado}
+	\label{fig:bloques_modelado}
 \end{figure}
 
 \FloatBarrier
+
+Finalmente, en la figura \ref{fig:bloques_modelado} se muestra la representación del modelado dinámico del sistema utilizando la formulación de la ecuación matricial \ref{eq:matrices_dinamica}. Es una forma interesante de representación, ya que la traslación a \textit{Simulink} es directa, sirviendo como preámbulo para la implementación de la simulación en este entorno.
 
 
 \newpage
@@ -1041,27 +1043,70 @@ Explicación de las actividades realizadas durante el desarrollo del proyecto. S
 
 En esta sección solamente hay que aportar la información técnica estrictamente necesaria para comprender el trabajo realizado. Esta información debe, además, estar presentada de forma que sea inteligible por cualquiera no familiarizado con los aspectos técnicos del trabajo realizado. La información técnica puede ubicarse en los apéndices para ser consultada si se desea.
 
-\section{Simulación}
+\newpage
+\section{Trabajo de simulación}
 
-1)Uso de parámetros proporcionados por el fabricante (rozamiento, inercias, etc.) para modelado del sistema en Matlab/Simulink.
+\subsection{Modelado del sistema en Simulink}
+El punto de partida consistió en la traslación de las ecuaciones diferenciales dinámicas obtenidas en el capítulo anterior hacia un entorno de simulación numérica en \textit{Matlab/Simulink}. Para una primera aproximación, se emplearon los parámetros nominales de masas, longitudes, inercias y rozamientos proporcionados en la documentación original del fabricante, los cuales se detallan en la Tabla \ref{tab:parametros_fabricante}. No obstante, debido a que la unidad mecánica cuenta con más de 25 años de antigüedad, se llevó a cabo una campaña de identificación experimental de sus parámetros reales. Este procedimiento resultó indispensable para contrastar la validez de los datos de catálogo del fabricante y recalibrar el modelo de simulación, garantizando que este refleje con total fidelidad la dinámica actual del hardware.
 
-2) Conexión exitosa entre ROS y Matlab mediante la herramienta ROS Toolbox, hay que comentar como se tubo que cambiar el DDS al cyclone para funcionar, la lógica de publicador subscriptor, el diseño de un archivo URDF para la visualización de la unidad mecánica desde RViz. (Posibles vías de estudio como la migración de la simulación completamente a ROS)
+\begin{table}[ht]
+	\centering
+	\caption{Parámetros proporcionados por el fabricante \cite{feedback_pendulum_33005_manual}}
+	\label{tab:parametros_fabricante}
+	\begin{tabular}{l c c l}
+		\toprule
+		\textbf{Parámetro} & \textbf{Símbolo} & \textbf{Valor Nominal} & \textbf{Unidades} \\
+		\midrule
+		Masa del carro              & $M_c$   & 1.12 & kg \\
+		Masa del péndulo            & $m_p$   & 0.125 & kg \\
+		Longitud al centro de masas & $l$     & 0.167 & m \\
+		Inercia del péndulo         & $I_p$   & 0.006 & kg$\cdot$m$^2$ \\
+		Fricción del carro          & $c_c$   & 0.100 & N$\cdot$s/m \\
+		Fricción del péndulo        & $c_\theta$   & 0.005 & N$\cdot$m$\cdot$s/rad \\
+		\bottomrule
+	\end{tabular}
+\end{table}
 
-3)Explicar también como mediante simulación se pudo obtener las ganancias necesarias para poder hacer control swin-up con PFL. Muy importante poner los diagramas de bloques de nuestro simulink (El de publicación de tópicos, el de dinámica del sistema y el de conmutación de control (Swing-Up to LQR))
+Este enfoque metodológico responde firmemente al paradigma del \textit{Diseño Basado en Modelos} (MBD). Disponer de un modelo matemático bien calibrado constituye la piedra angular para asegurar una transición eficiente entre la teoría y la práctica. Al emular con precisión el comportamiento de la planta real, el entorno virtual permite verificar de manera exhaustiva la estabilidad y robustez de los algoritmos diseñados antes de su despliegue definitivo en el hardware, mitigando por completo el riesgo de daños mecánicos o eléctricos por pérdidas de control. Asimismo, esta fidelidad matemática posibilita sustituir la sintonización empírica basada en el ensayo y error por un cálculo analítico, sistemático y determinista de las matrices de ganancias óptimas del regulador.
 
-4)Finalmente explicar como se acabo implementando una simulación discreta del sistema (uso de bucle for y mida de paso con el método de Euler o1). Sirve como puente a la implementación de algoritmos de control en microcontroladores. 
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=1.0\textwidth]{Pictures/respuesta_libre_sim}
+	\caption{Arquitectura general del diagrama de bloques implementado en \textit{Simulink}}
+	\label{fig:sim_respuesta_libre}
+\end{figure} 
+
+La mayor dificultad en esta etapa inicial no radicó en la configuración técnica de la herramienta informática, sino en el análisis crítico del propio modelado fenomenológico. Fue imperativo asegurar la correcta correspondencia de signos en las fuerzas acopladas y las aceleraciones generalizadas del sistema carro-péndulo. Este modelo no lineal global, estructurado según se muestra en la Figura \ref{fig:sim_respuesta_libre}, sirvió como base fundamental para validar la respuesta libre del sistema y dar soporte a la posterior linealización matemática requerida por las estrategias de control multivariable en el entorno del equilibrio vertical inestable.
+
+\subsection{Algoritmo de control en Simulink}
+
+2)Explicar también como mediante simulación se pudo obtener las ganancias necesarias para poder hacer control swin-up con PFL. Muy importante poner los diagramas de bloques de nuestro simulink (El de publicación de tópicos, el de dinámica del sistema y el de conmutación de control (Swing-Up to LQR))
+
+3)Finalmente explicar como se acabo implementando una simulación discreta del sistema (uso de bucle for y mida de paso con el método de Euler o1). Sirve como puente a la implementación de algoritmos de control en microcontroladores. Uno de los mayores problemas que tiene este método es ajustar la mida de paso correcta para evitar que la simulación diverga de la física. Comentar también que ha sido el tipo de simulación que más hemos utilizado para ajustar ganancias del controlador real por su rapidez y simpleza en realizar pequeños cambios. 
+
+\subsection{Comunicación con ROS}
+
+4) Conexión exitosa entre ROS y Matlab mediante la herramienta ROS Toolbox, hay que comentar como se tubo que cambiar el DDS al cyclone para funcionar, la lógica de publicador subscriptor, el diseño de un archivo URDF para la visualización de la unidad mecánica desde RViz así como se tuvo que modificar el solver de Simulink para sincronizarse correctamente con la frecuencia de publicación de topicos.. (Posibles vías de estudio como la migración de la simulación completamente a ROS)
+
 
 \section{Sistema físico}
 
-1)Selección de microcontrolador, Pte H y encoders. Explicar un poco la tecnología detrás de cada componente (Ejemplo: Sabemos que los encoders son HEDS-9140-A00, también sabemos que el PTE H tiene aislamiento galvánico mediante optoacopladores).
+\subsection{Programación del microcontrolador}
+1)Firmware, comentar como se programa una DSP de texas instruments mediante el uso del IDE CCS y la capa de HAL C2000-ware. Utilizar el datashet del fabricante para justificar la configuración de ciertos registros. Módulos Epwm y Eqep muy interesante ver como liberan a la CPU de estas tareas. Explicar la configuración de registros para conseguir cierto comportamiento en los periféricos así como explicar como se configuró el protocolo serie para la telemetría del sistema. 
 
-2)Firmware, comentar como se programa una DSP de texas instruments mediante el uso del IDE CCS y la capa de HAL C2000-ware. Utilizar el datashet del fabricante para justificar la configuración de ciertos registros. Módulos Epwm y Eqep muy interesante ver como liberan a la CPU de estas tareas.
+2)Explicar como se programo la DSP con timers para ejecutar el bucle de control en una rutina de interrupción periódica (implica determinismo, nada del loop de Arduino).
 
-3)Explicar como se programo la DSP con timers para ejecutar el bucel de control en una rutina de interrupción periódica (implica determinismo, nada del loop de Arduino)
+\subsection{Problemas con la zona muerta}
 
-4)(Lo que hay que acabar de hacer este més) Razonar experimentos de identificación de parámetros del sistema. La justificación es que los parámetros del fabricante no sabemos si son del todo ciertos al ser una máquina de hace 25 años. Algunos experimentos: Conversión de voltios a fuerza horizontal (encontrar la constante que relaciona ambas magnitudes), Identificación del rozamiento horizontal del carro, identificación del rozamiento y la inercia del péndulo. 
+3)Ajuste de la ZM del actuador, explicar técnicas que se han utilizado para reducirla y compensarla. Compensación de ZM y ajuste de la frecuencia de la PWM para obtener menor zona muerta y mayor linealidad. 
+
+\subsection{Identificación de parámetros}
+4)Razonar experimentos de identificación de parámetros del sistema. La justificación es que los parámetros del fabricante no sabemos si son del todo ciertos al ser una máquina de hace 25 años. Algunos experimentos: Conversión de voltios a fuerza horizontal (encontrar la constante que relaciona ambas magnitudes), Identificación del rozamiento horizontal del carro, identificación del rozamiento y la inercia del péndulo. 
 
 5)Simular de nuevo con los parámetros obtenidos mediante identificación. 
+
+\subsection{Algoritmo de control en el microcontrolador}
+6)Implementación de algoritmos de control en el microcontrolador (lo tenemos todo dividido en funciones, explicar un poco que recibe y devuelve cada una y como se ajusta todo)
 
 
 Para la configuración de los periféricos se ha optado por el uso de estructuras de campos de bits (Bit-fields) proporcionadas por la SDK \textit{C2000Ware}. A diferencia de la librería de abstracción \textit{DriverLib}, este enfoque permite un acceso directo y optimizado a los registros del procesador mediante el uso de punteros a estructuras mapeadas en memoria. Esta elección garantiza la máxima eficiencia en la ejecución, reduciendo la sobrecarga de funciones (\textit{overhead}) y facilitando el control preciso de registros críticos como los de los módulos \textit{eQEP} y \textit{ePWM}.

@@ -1,0 +1,68 @@
+\documentclass[tikz, border=15pt]{standalone}
+\usetikzlibrary{shapes, arrows.meta, positioning, calc}
+
+\begin{document}
+	\begin{tikzpicture}[
+		% Estilos profesionales con mejor contraste y bordes definidos
+		block/.style = {draw=black!60, fill=blue!5, rectangle, minimum height=2.8em, minimum width=5.5em, align=center, rounded corners=4pt, thick},
+		int_block/.style = {draw=black!60, fill=blue!5, rectangle, minimum height=2.5em, minimum width=2.5em, align=center, rounded corners=4pt, thick},
+		sum/.style = {draw=black!60, fill=white, circle, minimum size=16pt, inner sep=0pt, thick},
+		line/.style = {draw=black!70, -Stealth, thick}
+		]
+		
+		% --- EJE PRINCIPAL (Espaciado modular y proporcionado) ---
+		\node [coordinate] (in) {};
+		\node [sum, right=1.6cm of in] (sum1) {};
+		\node [sum, right=1.4cm of sum1] (sum2) {};
+		\node [block, right=1.4cm of sum2] (mq) {$M(q)^{-1}$};
+		\node [int_block, right=1.4cm of mq] (int1) {$\int$};
+		\node [int_block, right=1.8cm of int1] (int2) {$\int$};
+		\node [coordinate, right=1.6cm of int2] (out) {};
+		
+		% --- BLOQUES DE RETROALIMENTACIÓN ---
+		% Perfectamente centrados bajo el tramo de integración y con espaciado vertical limpio
+		\node [block, minimum width=6.5em] (cq) at ($(int1.south)!0.5!(int2.south) + (0,-1.8)$) {$C(\dot{q}, q)$};
+		\node [block, minimum width=6.5em] (gq) at ($(cq.south) + (0,-1.8)$) {$G(q)$};
+		
+		% --- PUNTOS DE RAMIFICACIÓN ---
+		\coordinate (branch_qdot) at ($(int1.east)!0.4!(int2.west)$);
+		\coordinate (branch_q) at ($(int2.east)!0.5!(out)$);
+		
+		\fill (branch_qdot) circle (2pt);
+		\fill (branch_q) circle (2pt);
+		
+		% --- CONEXIONES DIRECTAS ---
+		\draw [line] (in) -- node[above, pos=0.2] {$u$} (sum1);
+		\draw [line] (sum1) -- (sum2);
+		\draw [line] (sum2) -- (mq);
+		\draw [line] (mq) -- node[above, midway] {$\ddot{q}$} (int1);
+		\draw [line] (int1) -- node[above, midway] {$\dot{q}$} (int2);
+		\draw [line] (int2) -- node[above, pos=0.6] {$q$} (out);
+		
+		% --- LAZOS DE RETROALIMENTACIÓN ---
+		
+		% Lazo superior hacia M(q)^-1
+		\draw [line] (branch_q) -- ++(0,2.0) -| (mq.north);
+		
+		% Lazo desde q_dot hacia la parte superior de C (Quiebre limpio en escuadra)
+		\draw [line] (branch_qdot) -- ++(0,-0.7) -| ($(cq.north) + (-0.2,0)$);
+		
+		% Lazos desde q hacia el lateral de C y G (Compartiendo una línea vertical perfecta)
+		\draw [line] (branch_q) |- (cq.east);
+		\draw [line] (branch_q) |- (gq.east);
+		
+		% Retornos ortogonales limpios a los sumadores
+		\draw [line] (cq.west) -| (sum2.south);
+		\draw [line] (gq.west) -| (sum1.south);
+		
+		% --- SIGNOS DE LOS SUMADORES (Ubicación externa exacta libre de colisiones) ---
+		% Sumador 1
+		\node[above left, inner sep=2pt, xshift=-1pt] at (sum1.west) {$+$};
+		\node[below left, inner sep=2pt, yshift=-1pt] at (sum1.south) {$-$};
+		
+		% Sumador 2
+		\node[above left, inner sep=2pt, xshift=-1pt] at (sum2.west) {$+$};
+		\node[below left, inner sep=2pt, yshift=-1pt] at (sum2.south) {$-$};
+		
+	\end{tikzpicture}
+\end{document}
