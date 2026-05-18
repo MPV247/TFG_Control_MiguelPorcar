@@ -1191,12 +1191,32 @@ La arquitectura implementada en \textit{Simulink} (Figura~\ref{fig:sim_control_c
 	\item \textbf{Lógica de Conmutación (Zona Central):} Es el componente que resuelve la transición automática entre ambos controladores. El bloque \texttt{q\_norm} evalúa constantemente el ángulo del péndulo; si este se encuentra lejos de la vertical, el interruptor (\texttt{Switch}) selecciona el control de energía. En el instante en que el péndulo entra en la zona de equilibrio, el dispositivo conmuta automáticamente al control de posición.
 \end{itemize}
 
-Tras la integración de la lógica de conmutación de ambos controles la parte de cálculo numérico para las \textit{EDOs} queda resuelta, se pueden ajustar controladores y observar el comportamiento del sistema únicamente con esta implementación. No obstante, atendiendo a la Figura \ref{fig:arquitectura_sim} sobre la \textit{Arquitectura de la Simulación} falta implementar la conexión con el entorno de \textit{ROS} para la visualización del gemelo digital en \textit{RViz}. 
+Tras la integración de la lógica de conmutación de ambos controles, la parte de cálculo numérico para las \textit{EDOs} queda resuelta, se pueden ajustar controladores y observar el comportamiento del sistema únicamente con esta implementación. No obstante, atendiendo a la Figura \ref{fig:arquitectura_sim} sobre la \textit{Arquitectura de la Simulación} falta implementar la conexión con el entorno de \textit{ROS} para la visualización del gemelo digital en \textit{RViz}. 
 
-\subsection{Comunicación con ROS}
+\subsection{Comunicación con ROS y Visualización del Gemelo Digital}
 
-4) Conexión exitosa entre ROS y Matlab mediante la herramienta ROS Toolbox, hay que comentar como se tubo que cambiar el DDS al cyclone para funcionar, la lógica de publicador subscriptor, el diseño de un archivo URDF para la visualización de la unidad mecánica desde RViz así como se tuvo que modificar el solver de Simulink para sincronizarse correctamente con la frecuencia de publicación de topicos.. (Posibles vías de estudio como la migración de la simulación completamente a ROS)
+Una vez resuelto el cálculo dinámico y el control en Simulink, el siguiente hito fundamental consistió en establecer la infraestructura de comunicación con el ecosistema de ROS. Esta integración permite materializar el concepto de gemelo digital, facilitando la monitorización tridimensional del sistema en tiempo real.
 
+Para articular esta conexión se empleó la herramienta \textit{ROS Toolbox}, estructurando el flujo de información bajo el paradigma clásico de publicador/suscriptor:
+\begin{itemize}
+	\item \textbf{Lógica de Publicación (Nodo Publicador):} Como se ilustra en la Figura~\ref{fig:sim_nodo_publicador}, la interfaz desarrollada en Simulink toma de forma continua el vector con las posiciones $x$ y $\theta$ (\texttt{[q]}) y el tiempo de simulación para estructurar el envío de datos mediante un bloque de conversión (\texttt{MATLAB to ROS}). Esta información se acopla a la plantilla de un mensaje estándar de articulaciones (\texttt{sensor\_msgs/JointState}) y el bloque \texttt{Publish} la difunde activamente en la red bajo el tópico \texttt{/joint\_states}.
+	
+	\item \textbf{Modelado y Visualización en RViz:} Con el propósito de renderizar la planta virtual, se diseñó un archivo de descripción unificada de robots (URDF) que define la geometría y las articulaciones mecánicas del carro y el péndulo. La herramienta de visualización \textit{RViz} se suscribe al tópico generado por Simulink, traduciendo instantáneamente cada mensaje numérico recibido en movimiento visual sobre el modelo 3D.
+\end{itemize}
+
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=0.9\textwidth]{Pictures/nodo_publicador}
+	\caption{Arquitectura interna del nodo publicador en Simulink para la conversión y envío de datos a ROS}
+	\label{fig:sim_nodo_publicador}
+\end{figure}
+
+Durante la integración de esta arquitectura de red, surgieron dos problemas técnicos críticos que requirieron desviaciones de la configuración por defecto para estabilizar la plataforma:
+\begin{itemize}
+	\item \textbf{Incompatibilidad en el Middleware (DDS):} Inicialmente se presentaron cortes intermitentes en la comunicación y pérdida de paquetes entre plataformas. El problema se resolvió modificando el estándar de comunicación de red hacia \textit{Cyclone DDS}, lo que garantizó un intercambio de datos robusto y compatible entre MATLAB y ROS.
+	
+	\item \textbf{Sincronización del Solver de Simulink:} El motor de cálculo numérico de Simulink tendía a desfasarse de la frecuencia de actualización estricta que exige ROS para la publicación de sus tópicos. Para solucionarlo, se configuró el \textit{solver} en un paso de tiempo fijo discreto, forzando a la simulación a ejecutarse en perfecta sincronía con la tasa de muestreo de la red robótica.
+\end{itemize}
 \subsection{Simulaciones Discretas en Código}
 
 \section{Sistema físico}
