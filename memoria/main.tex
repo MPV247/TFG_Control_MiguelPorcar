@@ -111,10 +111,14 @@
 	title=#1,                 % Título de la caja
 	coltitle=black,           % Color del texto del título
 	fonttitle=\small\sffamily\bfseries,
-	attach boxed title to top left={yshift=-3mm, xshift=5mm}, % Eleva el título sobre el marco
-	boxed title style={colback=framecolour, colframe=framecolour, arc=1mm}
+	attach boxed title to top left={yshift=-2mm, xshift=5mm}, % Ajustado sutilmente
+	boxed title style={colback=framecolour, colframe=framecolour, arc=1mm, top=1mm, bottom=1mm}, % Caja de título más delgada
+	% --- NUEVOS AJUSTES DE COMPACTACIÓN ---
+	top=1.5mm,                % Reduce espacio interno arriba del código
+	bottom=1.5mm,             % Reduce espacio interno abajo del código
+	beforeafter skip=3mm      % Reduce drásticamente el espacio entre bloques sucesivos
 }
-
+\raggedbottom
 \begin{document}
 %----------------------------------------------------------------------------------------
 %	TITLE PAGE
@@ -1175,7 +1179,7 @@ El siguiente hito en el trabajo, fue conseguir levantar el péndulo con la técn
 
 Atendiendo a la Figura \ref{fig:control_energia} el bloque de simulación tiene dos subconjuntos claramente diferenciados:
 \begin{itemize}[]
-	\item \textbf{Control de energía (Zona Izquierda):} Se utiliza una \textit{MATLAB Function} para integrar de forma compacta la técnica de Swing-Up con PFL, tiene como entradas los estados del sistema ($q, \dot{q}$) y la energía de referencia ($E_{ref}$), como salida proporciona una acción de control ($u$) en forma de fuerza de empuje horizontal. Para conocer la implementación del controlador en más detalle consulte el Anexo \ref{anexo:control_energia}.
+	\item \textbf{Control de energía (Zona Izquierda):} Se utiliza una \textit{MATLAB Function} para integrar de forma compacta la técnica de Swing-Up con PFL, tiene como entradas los estados del sistema ($q, \dot{q}$) y la energía de referencia ($E_{ref}$), como salida proporciona una acción de control ($u$) en forma de fuerza de empuje horizontal. Para conocer la implementación del controlador en más detalle consulte el Anexo \ref{ap:control_energia}.
 	
 	\item \textbf{Modelo Dinámico (Zona Derecha):} Representa la planta del sistema con los parámetros que la caracterizan. Los detalles de la implementación y el bloque de código de cada función se abordan en la Sección \ref{cap:modelado_sim} y el Anexo \ref{ap:codigo_dinamica}.
 \end{itemize}
@@ -1239,6 +1243,9 @@ Durante la integración de esta arquitectura de red, surgieron dos problemas té
 	
 	\item \textbf{Sincronización del Solver de Simulink:} El motor de cálculo numérico de Simulink tendía a desfasarse de la frecuencia de actualización estricta que exige ROS para la publicación de sus tópicos. Para solucionarlo, se configuró el \textit{solver} en un paso de tiempo fijo discreto, forzando a la simulación a ejecutarse en perfecta sincronía con la tasa de muestreo de la red robótica.
 \end{itemize}
+
+Si se desea conocer en detalle la configuracíon de \textit{Simulink} así como la conversión de un vector numérico en un mensaje estándar de ROS, consulte el Anexo \ref{ap:conexion_ROS}. 
+
 \subsection{Simulaciones Discretas en Código}
 
 \section{Sistema físico}
@@ -1306,61 +1313,222 @@ Trabajo a futuro --> Implementación en HAL, uso de algoritmos no basados en mod
 %----------------------------------------------------------------------------------------
 
 \chapter{Apéndices}
-Colocar aquí cualquier tipo de información susceptible de ser consultada para la correcta comprensión del documento y el proyecto que describe.
+\label{chap:apendices}
 
-%----------------------------------------------------------------------------------------
-%	CONFIGURACIÓN DE APÉNDICES
-%----------------------------------------------------------------------------------------
-\appendix % A partir de aquí, \chapter se convierte en Apéndice A, B, C...
+% --- CONFIGURACIÓN DE NOMBRES PARA LAS SECCIONES (A, B, C...) ---
+\setcounter{section}{0} % Reinicia el contador de secciones
+\renewcommand{\thesection}{\Alph{section}} % Hace que las secciones sean A, B, C...
 
 % ==================================================================
 % APÉNDICE A: Desarrollo matemático
 % ==================================================================
-\chapter{Desarrollo del Lagrangiano}
+\section{Desarrollo del Lagrangiano}
 \label{anexo:desarrollo_dinamico}
 
 En este anexo se detalla el desarrollo matemático paso a paso del formalismo de Euler-Lagrange, partiendo de las energías del sistema hasta obtener la formulación matricial.
-
-\section{Cálculo de la Energía Cinética ($T$)}
-% Aquí el desarrollo de la energía cinética...
-
-\section{Cálculo de la Energía Potencial ($V$)}
-% Aquí el desarrollo de la energía potencial...
-
-
+\clearpage
 % ==================================================================
 % APÉNDICE B: Código de la Planta
 % ==================================================================
-\chapter{Dinámica en MATLAB Functions}
+\section{Dinámica en MATLAB Functions}
 \label{ap:codigo_dinamica}
 
+Este apéndice agrupa los bloques de código implementados en Simulink mediante estructuras \textit{MATLAB Function} para modelar la dinámica del sistema mecánico de dos grados de libertad.
+
+% ------------------------------------------------------------------
+% Función 1: M(q)^-1
+% ------------------------------------------------------------------
 \begin{matlabbox}{MATLAB Function $M(q)^{-1}$}
-function Acel = Minv(q,par, J_p, M, m, lcm)
+	function Acel = Minv(q,par, J_p, M, m, l)
 	M = [M + m,          +m*l*cos(q(2));
 	+m*l*cos(q(2)),      J_p];
 	Acel = M\par; %Division de matrices.
-end
+	end
 \end{matlabbox}
+Esta función calcula el vector de aceleraciones del sistema a partir de la inversión numérica de la matriz de inercia. Para optimizar el coste computacional, evita el cálculo explícito de la matriz inversa utilizando el operador de división a la izquierda.
 
+\begin{itemize}[leftmargin=1.5cm]
+	\item[\textbf{Entradas:}] Vector de posiciones $q$, vector de fuerzas/pares generalizados remanentes $par$ (derivado de restarle a las fuerzas de control los efectos de fricción, gravedad y Coriolis), inercia del péndulo $J_p$, masa del carro $M$, masa del péndulo $m$, y distancia al centro de masas $l$.
+	\item[\textbf{Salidas:}] Vector de aceleraciones generalizadas $\ddot{q} = [\ddot{x}, \ddot{\theta}]^T$.
+	\item[\textbf{Operación:}] Resuelve algebraicamente el sistema lineal para obtener $\ddot{q} = M(q)^{-1} \cdot \tau_{neto}$.
+\end{itemize}
+
+
+
+
+% ------------------------------------------------------------------
+% Función 2: C(q_dot, q)
+% ------------------------------------------------------------------
 \begin{matlabbox}{{MATLAB Function $C(\dot{q}, q)$}}
-function par_c = Cq(qdot, q, cx, ctheta, m, l)
+	function par_c = Cq(qdot, q, cx, ctheta, m, l)
 	C = [cx,   -m*l*qdot(2)*sin(q(2))
 	0,          ctheta        ];
 	par_c = C*qdot;
-end
+	end
 \end{matlabbox}
+Esta función evalúa los efectos dinámicos asociados a las fuerzas centrífugas, de Coriolis y a los coeficientes de amortiguamiento viscoso presentes en las articulaciones del mecanismo.
 
+\begin{itemize}[leftmargin=1.5cm]
+	\item[\textbf{Entradas:}] Vector de velocidades $qdot = [\dot{x}, \dot{\theta}]^T$, vector de posiciones $q = [x, \theta]^T$, coeficientes de fricción viscosa ($c_x, c_\theta$), masa $m$ y longitud del péndulo $l$.
+	\item[\textbf{Salidas:}] Vector de fuerzas generalizadas de Coriolis y amortiguamiento $par\_c = C(\dot{q}, q)\dot{q}$.
+	\item[\textbf{Operación:}] Construye la matriz no lineal $C(\dot{q}, q)$ y realiza la multiplicación matricial por el vector de velocidades ($\dot{q}$).
+\end{itemize}
+\newpage
+% ------------------------------------------------------------------
+% Función 3: G(q)
+% ------------------------------------------------------------------
 \begin{matlabbox}{{MATLAB Function $G(q)$}}
-function par_g = Gq(q, m, g, l)
+	function par_g = Gq(q, m, g, l)
 	G = [0; m*g*l*sin(q(2))];
 	par_g = G;
-end
+	end
 \end{matlabbox}
+Esta función determina el par generado por el campo gravitatorio sobre el péndulo basándose en su posición angular.
 
+\begin{itemize}[leftmargin=1.5cm]
+	\item[\textbf{Entradas:}] Vector de posiciones $q$, masa del péndulo $m$, constante de gravedad $g$, y longitud $l$.
+	\item[\textbf{Salidas:}] Vector de fuerzas gravitacionales generalizadas $par\_g = G(q)$.
+	\item[\textbf{Operación:}] Evalúa el par gravitatorio que afecta exclusivamente al segundo grado de libertad (coordenada angular del péndulo $\theta = q(2)$).
+\end{itemize}
+
+% ------------------------------------------------------------------
+% Función 4: B
+% ------------------------------------------------------------------
 \begin{matlabbox}{{MATLAB Function $B$}}
-function tau_b = B(u)
-	tau_b = [1; 0]*u; .
+	function tau_b = B(u)
+	tau_b = [1; 0]*u;
+	end
+\end{matlabbox}
+Esta función mapea la acción de control hacia el espacio de coordenadas generalizadas del modelo dinámico (matriz de acoplamiento de la entrada).
+
+\begin{itemize}[leftmargin=1.5cm]
+	\item[\textbf{Entradas:}] Señal de control escalar $u$ (fuerza aplicada sobre el carro).
+	\item[\textbf{Salidas:}] Vector de fuerzas generalizadas de entrada $tau\_b = B \cdot u$.
+	\item[\textbf{Operación:}] Proyecta la fuerza $u$ sobre el primer grado de libertad (movimiento lineal del carro), asumiendo que el péndulo no tiene ningún actuador.
+\end{itemize}
+
+\section{Código Control de Energía}
+\label{ap:control_energia}
+
+\begin{matlabbox}{MATLAB Function Swing-Up con PFL}
+function F = fcn(q, qdot, E_ref, m, l, ctheta, cx, J_p, M)
+	% --- PARAMETROS FISICOS Y GANANCIAS ---
+	g = 9.81;
+	Ke = 26;
+	kp = 6;
+	kd = 4;
+	% -- ESTADOS DEL SISTEMA --
+	x = q(1);        % Posicion del carro
+	theta = q(2);    % Angulo del pendulo
+	xdot = qdot(1);  % Velocidad del carro
+	thetadot = qdot(2); % Velocidad angular
+	% --- 1. CALCULO DE ENERGÍA ---
+	Ep = m * g * l * cos(theta);
+	Ek = 0.5 * J_p * thetadot^2;
+	E_total = Ep + Ek;
+	% --- 2. LEY DE CONTROL DE ENERGIA (Aceleracion 'u') ---
+	e = E_total - E_ref;
+	u = Ke * thetadot * cos(theta) * e - kp * x - kd * xdot;
+	% --- 3. LINEARIZACION POR RETROALIMENTACION PARCIAL (PFL) ---
+	% Convierte la aceleracion deseada 'u' en Fuerza 'F' para el motor
+	thetadotdot = 1/J *(-m*l*cos(theta)*u ...
+	+ m*g*l*sin(theta) -ctheta*thetadot);
+	F = (M + m) * u ...
+	- (m * l * thetadot^2 * sin(theta)) ...
+	+ (m * l * cos(theta)) * thetadotdot ...
+	+cc*xdot;
+	% --- 4. SATURACION --- 
+	F_max = 2; % Newtons
+	if F > F_max
+	F = F_max;
+	elseif F < -F_max
+	F = -F_max;
+	end
+end
+\end{matlabbox}
+\noindent
+
+\begin{itemize}[leftmargin=1.5cm, topsep=1mm, itemsep=0mm, parsep=0mm]
+	\item[\textbf{Entradas:}] Vector de posiciones $q = [x, \theta]^T$, vector de velocidades $qdot = [\dot{x}, \dot{\theta}]^T$, energía mecánica de referencia del péndulo en posición vertical $E_{ref}$.
+	\item[\textbf{Salidas:}] Fuerza de empuje $F$ (en Newtons).
+	\item[\textbf{Operación:}] El algoritmo ejecuta consecutivamente cuatro etapas fundamentales:
+	\begin{enumerate}[leftmargin=0.5cm, topsep=1mm, itemsep=0mm]
+		\item \textbf{Cálculo de Energía:} Evalúa la energía mecánica total instantánea del péndulo ($E_{total} = E_k + E_p$).
+		
+		\item \textbf{Control de Energía:} Genera una aceleración de referencia $u$ proporcional al error de energía ($e$).
+		
+		\item \textbf{Linealización PFL:} Traduce analíticamente la aceleración virtual $u$ en la fuerza real $F$ requerida para compensar la dinámica no lineal del carro.
+		
+		\item \textbf{Saturación:} Limita la salida a un umbral simétrico ($\pm 2\text{ N}$).
+	\end{enumerate}
+\end{itemize}
+
+\section{Configuración Conexión MATLAB ROS}
+\label{ap:conexion_ROS}
+
+\begin{matlabbox}{MATLAB Function conversión a mensaje de ROS}
+function msg = create_msg(blankMsg, q, time, start_time_epoch)
+	msg = blankMsg;
+	%Sincronizacion con el reloj interno de la máquina.
+	total_time = start_time_epoch + time;.
+	s = floor(total_time);
+	ns = (total_time - s) * 1e9; 
+	msg.header.stamp.sec = int32(s);
+	msg.header.stamp.nanosec = uint32(ns);
+	% 1. Configurar NOMBRES (coinciden con URDF)
+	strArrayToAssign = {'cart_slider', 'pole_joint'};
+	positionsToAssign = [q(1), q(2)];
+	numStringsInArray = length(strArrayToAssign);
+	msg.name_SL_Info.CurrentLength = uint32(numStringsInArray);
+	for idx=1:numStringsInArray
+		str = strArrayToAssign{idx};
+		strLength = length(str);
+		msg.name(idx).data(1:strLength) = uint8(str);
+		msg.name(idx).data_SL_Info.CurrentLength = uint32(strLength);
+	end
+	% 2. POSICIONES (float64 array)
+	numPositions = length(positionsToAssign);
+	msg.position_SL_Info.CurrentLength = uint32(numPositions);
+	msg.position(1:numPositions) = positionsToAssign;
+	% 3. VELOCIDAD y ESFUERZO (vacíos)
+	msg.velocity_SL_Info.CurrentLength = uint32(0);
+	msg.effort_SL_Info.CurrentLength = uint32(0);
 end
 \end{matlabbox}
 
+Esta función se encarga de mapear la información matemática simulada hacia un mensaje de tipo \textit{sensor\_msgs/JointState}, permitiendo que el visualizador gráfico de ROS (RViz) interprete la telemetría en tiempo real de acuerdo a las articulaciones definidas en el archivo URDF del robot.
+
+\begin{itemize}[leftmargin=1.5cm, topsep=1mm, itemsep=0mm, parsep=0mm]
+	\item[\textbf{Entradas:}] Estructura base vacía del mensaje de ROS (\textit{blankMsg}), vector de posiciones generalizadas $q = [x, \theta]^T$, tiempo acumulado de la simulación (\textit{time}) y la marca de tiempo absoluta en formato Unix Epoch obtenida al iniciar el proceso (\textit{start\_time\_epoch}).
+	\item[\textbf{Salidas:}] Mensaje estructurado \textit{msg} (\textit{sensor\_msgs/JointState}) listo para ser publicado en ROS.
+	\item[\textbf{Operación:}] El algoritmo procesa los datos siguiendo el protocolo estricto de mensajería de ROS:
+	\begin{enumerate}[leftmargin=0.5cm, topsep=1mm, itemsep=0mm]
+		\item \textbf{Sincronización Temporal:} Combina el tiempo base Unix con el reloj local del solucionador de Simulink, descomponiendo el tiempo total en segundos enteros (\textit{sec}) y nanosegundos fraccionarios (\textit{nanosec}) para rellenar el campo \textit{header.stamp}.
+		
+		\item \textbf{Asignación de Identificadores (Names):} Configura un arreglo de caracteres con los nombres de las articulaciones virtuales descritas en el URDF (\textit{'cart\_slider'} y \textit{'pole\_joint'}). 
+		
+		\item \textbf{Inyección de Telemetría (Positions):} Almacena de forma indexada el vector de estados continuos $q$ dentro del arreglo de tipo \textit{float64} reservado para las posiciones.
+		
+		\item \textbf{Vaciado de Campos Auxiliares:} Configura explícitamente a cero la longitud de los arreglos de velocidad y esfuerzo (\textit{velocity} y \textit{effort}), solo se requiere el envío de datos posicionales para la sincronización de la cinemática directa en RViz.
+	\end{enumerate}
+\end{itemize}
+
+En la Figura~\ref{fig:solver} se detalla la parametrización del \textit{solver} numérico. Se ha seleccionado un paso de tiempo fijo (\textit{Fixed-step}) con el algoritmo de integración \textit{ode14x}, estableciendo un tamaño de paso de $\Delta t = 0.01\text{ s}$ ($10\text{ ms}$). 
+
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=1.0\textwidth]{Pictures/solver}
+	\caption{Configuración del \textit{solver} con paso de tiempo fijo}
+	\label{fig:solver}
+\end{figure}
+\FloatBarrier
+
+Por otro lado, como se ilustra en la Figura~\ref{fig:hw_impl}, dentro del menú \textit{Hardware Implementation} se ha establecido como objetivo la plataforma \textit{Robot Operating System 2 (ROS 2)}. 
+
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=1.0\textwidth]{Pictures/hardware_implementation}
+	\caption{\textit{Hardware Implementation}}
+	\label{fig:hw_impl}
+\end{figure}
 \end{document}

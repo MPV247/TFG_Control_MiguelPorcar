@@ -1,3 +1,27 @@
-function tau_b = B(u)
-	tau_b = [1; 0]*u; .
+function msg = create_msg(blankMsg, q, time, start_time_epoch)
+	msg = blankMsg;
+	%Sincronizacion con el reloj interno de la máquina.
+	total_time = start_time_epoch + time;.
+	s = floor(total_time);
+	ns = (total_time - s) * 1e9;
+	msg.header.stamp.sec = int32(s);
+	msg.header.stamp.nanosec = uint32(ns);
+	% 1. Configurar NOMBRES (coinciden con URDF)
+	strArrayToAssign = {'cart_slider', 'pole_joint'};
+	positionsToAssign = [q(1), q(2)];
+	numStringsInArray = length(strArrayToAssign);
+	msg.name_SL_Info.CurrentLength = uint32(numStringsInArray);
+	for idx=1:numStringsInArray
+		str = strArrayToAssign{idx};
+		strLength = length(str);
+		msg.name(idx).data(1:strLength) = uint8(str);
+		msg.name(idx).data_SL_Info.CurrentLength = uint32(strLength);
+	end
+	% 2. POSICIONES (float64 array)
+	numPositions = length(positionsToAssign);
+	msg.position_SL_Info.CurrentLength = uint32(numPositions);
+	msg.position(1:numPositions) = positionsToAssign;
+	% 3. VELOCIDAD y ESFUERZO (vacíos)
+	msg.velocity_SL_Info.CurrentLength = uint32(0);
+	msg.effort_SL_Info.CurrentLength = uint32(0);
 end
