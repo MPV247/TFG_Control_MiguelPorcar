@@ -1273,7 +1273,8 @@ Esta ecuación gobierna el comportamiento del simulador en cada paso de tiempo y
 	\item $f(\mathbf{x}_k, u_k)$: Es la función que describe la \textbf{dinámica física del sistema}. Combina el estado actual $\mathbf{x}_k$ con la acción de control en ese momento ($u_k$) para devolver las velocidades y aceleraciones instantáneas del mecanismo.
 \end{itemize}
 
-Mientras que las velocidades se obtienen de forma directa, el cálculo de las aceleraciones dentro de la función $f(\mathbf{x}_k, u_k)$ requiere resolver algebraicamente las ecuaciones que definen la dinámica del sistema abordadas en la Sección \ref{cap:modelado_teoria}. El desarrollo matemático completo para resolver este sistema dinámico y su traducción algorítmica al código de simulación se detallan en el \textbf{Apéndice X}.
+Mientras que las velocidades se obtienen de forma directa, el cálculo de las aceleraciones dentro de la función $f(\mathbf{x}_k, u_k)$ requiere resolver algebraicamente las ecuaciones que definen la dinámica del sistema abordadas en la Sección \ref{cap:modelado_teoria}. El desarrollo matemático completo para resolver este sistema dinámico y su traducción algorítmica al código de simulación se detallan en el Apéndice \ref{apendice:desarrollo_euler}.
+
 \subsubsection{Problemas Encontrados y Compromiso del Periodo de Muestreo}
 
 El principal reto técnico durante el desarrollo de este entorno simulado fue la aparición de \textbf{inestabilidades numéricas artificiales}. El éxito de la simulación depende críticamente de la elección del periodo de muestreo ($T_s$). 
