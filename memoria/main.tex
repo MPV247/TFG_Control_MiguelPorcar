@@ -56,6 +56,7 @@
 \usepackage{placeins}
 \usepackage{algorithm}
 \usepackage{algpseudocode}
+\usepackage{algpseudocode}
 \usepackage{subcaption}
 \usepackage{listings}
 \usepackage{xcolor}
@@ -498,6 +499,7 @@ Para el sistema en concreto, las dimensiones de cada matriz son:
 Este enfoque matricial no solo facilita el análisis teórico, sino que permite realizar correcciones en la simulación del sistema muy fácilmente, ya que los parámetros que lo caracterizan (masas, longitudes, inercias, etc.) se encapsulan dentro de las propias matrices.  
 
 \subsection{Modelo dinámico del sistema}
+\label{cap:modelado_teoria}
 El primer paso para el modelado dinámico consiste en definir un sistema de referencia en el plano bidimensional $(x, y)$. Esto permite localizar la posición del centro de masas (CM) del péndulo en función de las coordenadas generalizadas del sistema: la posición lineal del carro ($x$) y la posición angular del péndulo ($\theta$).
 
 Considerando $l$ como la distancia desde el eje de rotación hasta el centro de masas del péndulo, sus coordenadas son:
@@ -1097,7 +1099,7 @@ En esta sección solamente hay que aportar la información técnica estrictament
 
 \subsection{Modelado del sistema en Simulink}
 \label{cap:modelado_sim}
-El punto de partida consistió en trasladar el modelo representado en la Ecuación \ref{eq:matrices_dinamica_desarrollada} hacia un entorno de simulación numérica en \textit{Matlab/Simulink}. Para una primera aproximación, se emplearon los parámetros de masas, longitudes, inercias y rozamientos proporcionados en la documentación original del fabricante, los cuales se detallan en la Tabla \ref{tab:parametros_fabricante}. No obstante, debido a que la unidad mecánica cuenta con más de 25 años de antigüedad, posteriormente se llevó a cabo la identificación experimental de sus parámetros reales.
+El punto de partida consistió en trasladar el modelo representado en la Ecuación \ref{eq:matrices_dinamica_desarrollada} hacia un entorno de simulación numérica en \textit{MATLAB/Simulink}. Para una primera aproximación, se emplearon los parámetros de masas, longitudes, inercias y rozamientos proporcionados en la documentación original del fabricante, los cuales se detallan en la Tabla \ref{tab:parametros_fabricante}. No obstante, debido a que la unidad mecánica cuenta con más de 25 años de antigüedad, posteriormente se llevó a cabo la identificación experimental de sus parámetros reales.
 
 \begin{table}[ht]
 	\centering
@@ -1197,7 +1199,7 @@ Una vez implementados ambos controladores por separado, para finalizar con la im
 La arquitectura implementada en \textit{Simulink} (Figura~\ref{fig:sim_control_conmutado}) representa el hito central del desarrollo de la simulación. Su diseño permite emular el comportamiento físico del péndulo e integrar de forma segura las estrategias de control antes de su transferencia al hardware real. Para facilitar su comprensión, el diagrama se divide en tres bloques funcionales:
 
 \begin{itemize}
-	\item \textbf{Modelo Dinámico de la Planta (Zona Derecha):} Representa el comportamiento mecánico del sistema real a través de su física matemática. El bloque \texttt{Inercias3} calcula la aceleración del sistema, la cual se integra sucesivamente para obtener en tiempo real la velocidad ($\dot{q}$) y la posición ($q$). Los bloques \texttt{Coriolis3} y \texttt{Gravedad3} calculan y realimentan continuamente las fuerzas de fricción y gravedad que afectan al movimiento.
+	\item \textbf{Modelo Dinámico de la Planta (Zona Derecha):} Tal y como se comentó durante el capítulo representa el comportamiento mecánico del sistema.
 	
 	\item \textbf{Algoritmos de Control (Zona Izquierda):} Resuelven el desafío de control mediante dos estrategias diferenciadas según el estado del péndulo:
 	\begin{itemize}
@@ -1209,10 +1211,11 @@ La arquitectura implementada en \textit{Simulink} (Figura~\ref{fig:sim_control_c
 \end{itemize}
 
 Tras la integración de la lógica de conmutación de ambos controles, la parte de cálculo numérico para las \textit{EDOs} queda resuelta, se pueden ajustar controladores y observar el comportamiento del sistema únicamente con esta implementación. No obstante, atendiendo a la Figura \ref{fig:arquitectura_sim} sobre la \textit{Arquitectura de la Simulación} falta implementar la conexión con el entorno de \textit{ROS} para la visualización del gemelo digital en \textit{RViz}. 
+\newpage
 
 \subsection{Comunicación con ROS y Visualización del Gemelo Digital}
 
-Una vez resuelto el cálculo dinámico y el control en Simulink, el siguiente hito fundamental consistió en establecer la infraestructura de comunicación con el ecosistema de ROS. Esta integración permite materializar el concepto de gemelo digital, facilitando la monitorización tridimensional del sistema en tiempo real.
+Una vez resuelto el cálculo dinámico y el control en Simulink, el siguiente hito fundamental consistió en establecer la infraestructura de comunicación con el ecosistema de ROS. Esta integración permite materializar el concepto de gemelo digital, facilitando la visualización tridimensional del sistema en tiempo real.
 
 Para articular esta conexión se empleó la herramienta \textit{ROS Toolbox}, estructurando el flujo de información bajo el paradigma de publicador/suscriptor:
 \begin{itemize}
@@ -1237,49 +1240,63 @@ Para articular esta conexión se empleó la herramienta \textit{ROS Toolbox}, es
 \end{figure}
 \FloatBarrier
 
-Durante la integración de esta arquitectura de red, surgieron dos problemas técnicos críticos que requirieron desviaciones de la configuración por defecto para estabilizar la plataforma:
+Durante la integración de esta arquitectura, surgieron dos problemas técnicos que requirieron desviaciones de la configuración por defecto para estabilizar la plataforma de simulación:
 \begin{itemize}
-	\item \textbf{Incompatibilidad en el Middleware (DDS):} Inicialmente se presentaron cortes intermitentes en la comunicación y pérdida de paquetes entre plataformas. El problema se resolvió modificando el estándar de comunicación de red hacia \textit{Cyclone DDS}, lo que garantizó un intercambio de datos robusto y compatible entre MATLAB y ROS.
+	\item \textbf{Incompatibilidad en el Middleware (DDS):} Inicialmente se presentaron cortes intermitentes en la comunicación y pérdida de paquetes entre plataformas. El problema se resolvió modificando el estándar de comunicación de red hacia \textit{Cyclone DDS}, lo que garantizó un intercambio de datos robusto y compatible entre MATLAB y ROS. Suele ser un problema muy común el la distribución \textit{Humble} que se empleó para el proyecto.
 	
-	\item \textbf{Sincronización del Solver de Simulink:} El motor de cálculo numérico de Simulink tendía a desfasarse de la frecuencia de actualización estricta que exige ROS para la publicación de sus tópicos. Para solucionarlo, se configuró el \textit{solver} en un paso de tiempo fijo discreto, forzando a la simulación a ejecutarse en perfecta sincronía con la tasa de muestreo de la red robótica.
+	\item \textbf{Sincronización del Solver de Simulink:} El motor de cálculo numérico de Simulink tendía a desfasarse de la frecuencia de actualización que exige ROS para la publicación de sus tópicos. Para solucionarlo, se configuró el \textit{solver} en un paso de tiempo fijo discreto.
 \end{itemize}
 
 Si se desea conocer en detalle la configuracíon de \textit{Simulink} así como la conversión de un vector numérico en un mensaje estándar de ROS, consulte el Anexo \ref{ap:conexion_ROS}. 
 
-\subsection{Simulaciones Discretas en Código y Algoritmos de Integración}
+\subsection{Simulaciones Recursivas}
 
-Para finalizar el bloque de simulación, se desarrolló una arquitectura alternativa basada en la programación estructurada de un bucle iterativo, prescindiendo de dependencias externas de entornos de simulación. El desarrollo de este entorno de simulación "en código" responde a tres objetivos:
+Para finalizar el bloque de simulación, se desarrolló una arquitectura alternativa basada en la programación estructurada de un bucle iterativo, prescindiendo de dependencias externas de entornos de simulación comerciales. El desarrollo de este entorno de simulación "en código" responde a dos objetivos fundamentales:
 
 \begin{itemize}[leftmargin=1cm, topsep=1mm, itemsep=0.5mm]
-	\item \textbf{Portabilidad:} El código fuente es reproducible y ejecutable en cualquier lenguaje de programación. Se decidió su implementación en MATLAB, pero es posible el diseño de un nodo de ROS en C++ o Python que emule el comportamiento del sistema y lo publique en un tópico. 
-	
-	\item \textbf{Transición natural hacia a la implementación real:} La estructura recursiva basada en un periodo de muestreo constante emula fielmente el bucle de control presente en un microcontrolador, facilitando la posterior migración de las leyes de control al hardware real.
+	\item \textbf{Portabilidad:} El código fuente es reproducible y ejecutable en cualquier plataforma. Aunque se implementó inicialmente en MATLAB para mantener la integración con el resto del proyecto, esta estructura facilita su futura migración a nodos de ROS en lenguajes como C++ o Python.
+	\item \textbf{Transición natural hacia la implementación real:} La estructura recursiva del código emula fielmente el bucle de control de un microcontrolador real (que trabaja a intervalos de tiempo fijos), simplificando el paso del software al hardware definitivo.
 \end{itemize}
 
-\subsubsection{Base Teórica y Aproximación Numérica de Euler}
-
-Para resolver este sistema de forma discreta a intervalos de tiempo constantes $T_s$, se implementó el método de integración de Euler de primer orden:
-\begin{equation}
-	\dot{\mathbf{x}}(t) \approx \frac{\mathbf{x}_{k+1} - \mathbf{x}_k}{T_s}
-\end{equation}
-
-Despejando el vector de estados para la iteración subsiguiente, se obtiene la expresión recursiva fundamental que gobierna el bucle de simulación:
+Para lograr esto de forma autónoma, se sustituyó el motor de física comercial por un algoritmo de integración numérica elemental (método de Euler de primer orden), los valores de los estados ($x_k = [x, \theta, \dot{x}, \dot{q}]^T$) en la siguiente iteración del bucle vienen dados por la expresión recursiva:
 \begin{equation}
 	\mathbf{x}_{k+1} = \mathbf{x}_k + T_s \cdot f(\mathbf{x}_k, u_k)
 \end{equation}
 
-En cada iteración $k$, el algoritmo evalúa en primer lugar las derivadas cinemáticas directas ($\dot{x} = x_3$, $\dot{\theta} = x_4$). Posteriormente, resuelve algebraicamente las aceleraciones generalizadas despejando el sistema matricial dinámico a partir de la inercia, las fuerzas de Coriolis y el par gravitatorio instantáneos:
+Esta ecuación gobierna el comportamiento del simulador en cada paso de tiempo y se compone de los siguientes elementos:
+\begin{itemize}[leftmargin=1cm, topsep=1mm, itemsep=0.5mm]
+	\item $\mathbf{x}_{k+1}$: Representa el \textbf{estado futuro} del sistema (posiciones y velocidades que tendrá el mecanismo en el siguiente instante).
+	\item $\mathbf{x}_k$: Es el \textbf{estado actual} conocido en la iteración presente.
+	\item $T_s$: Es el \textbf{periodo de muestreo}, es decir, el pequeño intervalo de tiempo que transcurre entre cada iteración del bucle.
+	\item $f(\mathbf{x}_k, u_k)$: Es la función que describe la \textbf{dinámica física del sistema}. Combina el estado actual $\mathbf{x}_k$ con la acción de control en ese momento ($u_k$) para devolver las velocidades y aceleraciones instantáneas del mecanismo.
+\end{itemize}
 
-\begin{equation}
-	\begin{bmatrix} \ddot{x}_k \\ \ddot{\theta}_k \end{bmatrix} = \mathbf{M}(\mathbf{q}_k)^{-1} \left( \mathbf{B}u_k - \mathbf{C}(\mathbf{q}_k, \dot{\mathbf{q}}_k)\dot{\mathbf{q}}_k - \mathbf{G}(\mathbf{q}_k) \right)
-\end{equation}
+Mientras que las velocidades se obtienen de forma directa, el cálculo de las aceleraciones dentro de la función $f(\mathbf{x}_k, u_k)$ requiere resolver algebraicamente las ecuaciones que definen la dinámica del sistema abordadas en la Sección \ref{cap:modelado_teoria}. El desarrollo matemático completo para resolver este sistema dinámico y su traducción algorítmica al código de simulación se detallan en el \textbf{Apéndice X}.
+\subsubsection{Problemas Encontrados y Compromiso del Periodo de Muestreo}
 
-\subsubsection{Limitaciones y Compromiso del Periodo de Muestreo}
+El principal reto técnico durante el desarrollo de este entorno simulado fue la aparición de \textbf{inestabilidades numéricas artificiales}. El éxito de la simulación depende críticamente de la elección del periodo de muestreo ($T_s$). 
 
-A pesar de la extrema simplicidad computacional del método de Euler, la aproximación asume que las derivadas del sistema permanecen constantes a lo largo de todo el intervalo $T_s$. 
+Debido a que el método de Euler asume de forma simplificada que las aceleraciones del sistema se mantienen constantes durante todo el intervalo $T_s$, se detectó que valores de tiempo excesivamente grandes entre iteraciones acumulaban un error de truncamiento que no correspondía con la realidad física. 
 
-Si el valor de $T_s$ es excesivamente grande el error de truncamiento local se acumula de manera exponencial. Esto degrada rápidamente la convergencia numérica del algoritmo, provocando divergencia o inestabilidad artificial que distorsiona por completo el comportamiento real del mecanismo físico. 
+\begin{figure}[ht]
+	\centering
+	\begin{subfigure}{0.48\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{Pictures/sim_discreta_10ms} % Foto de la electrónica vieja
+		\caption{Simulación con $T_s = 10 ms$}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{0.48\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{Pictures/sim_discreta_500ms} % Foto de la suciedad en el raíl
+		\caption{Simulación con $T_s = 500 ms$}
+	\end{subfigure}
+	\caption{Dependencia de $T_s$ en la simulación con expresiones recursivas}
+	\label{fig:Ts_dependencia}
+\end{figure}
 
+Para concluir, la Figura \ref{fig:Ts_dependencia} ilustra el impacto crítico del periodo de muestreo al aplicar el mismo control de posición por realimentación del estado. En ella se observa cómo un intervalo de $10\text{ ms}$ produce una respuesta estable y fiel al comportamiento real del sistema, mientras que elevar dicho periodo a $500\text{ ms}$ degrada por completo la convergencia numérica, provocando una respuesta oscilatoria e inestable que distorsiona la física del mecanismo. 
+\newpage
 
 \section{Sistema físico}
 
@@ -1373,9 +1390,9 @@ Este apéndice agrupa los bloques de código implementados en Simulink mediante 
 % ------------------------------------------------------------------
 \begin{matlabbox}{MATLAB Function $M(q)^{-1}$}
 	function Acel = Minv(q,par, J_p, M, m, l)
-	M = [M + m,          +m*l*cos(q(2));
-	+m*l*cos(q(2)),      J_p];
-	Acel = M\par; %Division de matrices.
+		M = [M + m,          +m*l*cos(q(2));
+		     +m*l*cos(q(2)),      J_p];
+		Acel = M\par; %Division de matrices.
 	end
 \end{matlabbox}
 Esta función calcula el vector de aceleraciones del sistema a partir de la inversión numérica de la matriz de inercia. Para optimizar el coste computacional, evita el cálculo explícito de la matriz inversa utilizando el operador de división a la izquierda.
@@ -1394,9 +1411,9 @@ Esta función calcula el vector de aceleraciones del sistema a partir de la inve
 % ------------------------------------------------------------------
 \begin{matlabbox}{{MATLAB Function $C(\dot{q}, q)$}}
 	function par_c = Cq(qdot, q, cx, ctheta, m, l)
-	C = [cx,   -m*l*qdot(2)*sin(q(2))
-	0,          ctheta        ];
-	par_c = C*qdot;
+		C = [cx,   -m*l*qdot(2)*sin(q(2))
+		      0,          ctheta        ];
+		par_c = C*qdot;
 	end
 \end{matlabbox}
 Esta función evalúa los efectos dinámicos asociados a las fuerzas centrífugas, de Coriolis y a los coeficientes de amortiguamiento viscoso presentes en las articulaciones del mecanismo.
@@ -1412,8 +1429,8 @@ Esta función evalúa los efectos dinámicos asociados a las fuerzas centrífuga
 % ------------------------------------------------------------------
 \begin{matlabbox}{{MATLAB Function $G(q)$}}
 	function par_g = Gq(q, m, g, l)
-	G = [0; m*g*l*sin(q(2))];
-	par_g = G;
+		G = [0; m*g*l*sin(q(2))];
+		par_g = G;
 	end
 \end{matlabbox}
 Esta función determina el par generado por el campo gravitatorio sobre el péndulo basándose en su posición angular.
@@ -1429,7 +1446,7 @@ Esta función determina el par generado por el campo gravitatorio sobre el pénd
 % ------------------------------------------------------------------
 \begin{matlabbox}{{MATLAB Function $B$}}
 	function tau_b = B(u)
-	tau_b = [1; 0]*u;
+		tau_b = [1; 0]*u;
 	end
 \end{matlabbox}
 Esta función mapea la acción de control hacia el espacio de coordenadas generalizadas del modelo dinámico (matriz de acoplamiento de la entrada).
