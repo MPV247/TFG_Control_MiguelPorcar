@@ -1246,7 +1246,40 @@ Durante la integración de esta arquitectura de red, surgieron dos problemas té
 
 Si se desea conocer en detalle la configuracíon de \textit{Simulink} así como la conversión de un vector numérico en un mensaje estándar de ROS, consulte el Anexo \ref{ap:conexion_ROS}. 
 
-\subsection{Simulaciones Discretas en Código}
+\subsection{Simulaciones Discretas en Código y Algoritmos de Integración}
+
+Para finalizar el bloque de simulación, se desarrolló una arquitectura alternativa basada en la programación estructurada de un bucle iterativo, prescindiendo de dependencias externas de entornos de simulación. El desarrollo de este entorno de simulación "en código" responde a tres objetivos:
+
+\begin{itemize}[leftmargin=1cm, topsep=1mm, itemsep=0.5mm]
+	\item \textbf{Portabilidad:} El código fuente es reproducible y ejecutable en cualquier lenguaje de programación. Se decidió su implementación en MATLAB, pero es posible el diseño de un nodo de ROS en C++ o Python que emule el comportamiento del sistema y lo publique en un tópico. 
+	
+	\item \textbf{Transición natural hacia a la implementación real:} La estructura recursiva basada en un periodo de muestreo constante emula fielmente el bucle de control presente en un microcontrolador, facilitando la posterior migración de las leyes de control al hardware real.
+\end{itemize}
+
+\subsubsection{Base Teórica y Aproximación Numérica de Euler}
+
+Para resolver este sistema de forma discreta a intervalos de tiempo constantes $T_s$, se implementó el método de integración de Euler de primer orden:
+\begin{equation}
+	\dot{\mathbf{x}}(t) \approx \frac{\mathbf{x}_{k+1} - \mathbf{x}_k}{T_s}
+\end{equation}
+
+Despejando el vector de estados para la iteración subsiguiente, se obtiene la expresión recursiva fundamental que gobierna el bucle de simulación:
+\begin{equation}
+	\mathbf{x}_{k+1} = \mathbf{x}_k + T_s \cdot f(\mathbf{x}_k, u_k)
+\end{equation}
+
+En cada iteración $k$, el algoritmo evalúa en primer lugar las derivadas cinemáticas directas ($\dot{x} = x_3$, $\dot{\theta} = x_4$). Posteriormente, resuelve algebraicamente las aceleraciones generalizadas despejando el sistema matricial dinámico a partir de la inercia, las fuerzas de Coriolis y el par gravitatorio instantáneos:
+
+\begin{equation}
+	\begin{bmatrix} \ddot{x}_k \\ \ddot{\theta}_k \end{bmatrix} = \mathbf{M}(\mathbf{q}_k)^{-1} \left( \mathbf{B}u_k - \mathbf{C}(\mathbf{q}_k, \dot{\mathbf{q}}_k)\dot{\mathbf{q}}_k - \mathbf{G}(\mathbf{q}_k) \right)
+\end{equation}
+
+\subsubsection{Limitaciones y Compromiso del Periodo de Muestreo}
+
+A pesar de la extrema simplicidad computacional del método de Euler, la aproximación asume que las derivadas del sistema permanecen constantes a lo largo de todo el intervalo $T_s$. 
+
+Si el valor de $T_s$ es excesivamente grande el error de truncamiento local se acumula de manera exponencial. Esto degrada rápidamente la convergencia numérica del algoritmo, provocando divergencia o inestabilidad artificial que distorsiona por completo el comportamiento real del mecanismo físico. 
+
 
 \section{Sistema físico}
 
