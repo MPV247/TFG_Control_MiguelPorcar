@@ -597,7 +597,7 @@ Finalmente, en la Figura \ref{fig:bloques_modelado} se muestra la representació
 
 \newpage
 \subsection{Estrategia de control Swing-up}
-
+\label{cap:swing_up}
 La primera ley de control se centra en el levantamiento del péndulo desde su posición estable ($\theta = 0\ rad$) hasta su posición inestable y punto en el que se conmuta al control de posición ($\theta = \pi\ rad$). 
 
 La idea intuitiva tras las matemáticas es simple, consiste en balancear el péndulo inyectando energía a favor del movimiento. El objetivo es llegar al punto de estabilización con pequeñas acciones de control que producen oscilaciones de amplitud creciente en el sistema. 
@@ -1092,6 +1092,7 @@ En esta sección solamente hay que aportar la información técnica estrictament
 \section{Trabajo de simulación}
 
 \subsection{Modelado del sistema en Simulink}
+\label{cap:modelado_sim}
 El punto de partida consistió en trasladar el modelo representado en la Ecuación \ref{eq:matrices_dinamica_desarrollada} hacia un entorno de simulación numérica en \textit{Matlab/Simulink}. Para una primera aproximación, se emplearon los parámetros de masas, longitudes, inercias y rozamientos proporcionados en la documentación original del fabricante, los cuales se detallan en la Tabla \ref{tab:parametros_fabricante}. No obstante, debido a que la unidad mecánica cuenta con más de 25 años de antigüedad, posteriormente se llevó a cabo la identificación experimental de sus parámetros reales.
 
 \begin{table}[ht]
@@ -1127,10 +1128,9 @@ La Figura~\ref{fig:sim_respuesta_libre} detalla la arquitectura implementada en 
 
 \subsubsection{Control de posición}
 Una vez modelada la dinámica del sistema de péndulo invertido sobre carro e implementada en \textit{Simulink}, el siguiente paso fue implementar un control de posición por realimentación del estado para mantener el sistema estable con el péndulo invertido ($\theta = \pi \ \mathrm{rad}$). 
-
 \begin{figure}[ht]
 	\centering
-	\includegraphics[width=1.0\textwidth]{Pictures/control_Kx_sim}
+	\includegraphics[width=0.9\textwidth]{Pictures/control_posicion}
 	\caption{Diagrama de bloques con control de posición por realimentación del estado}
 	\label{fig:sim_control_lqr}
 \end{figure}
@@ -1141,9 +1141,6 @@ La ley de control se reduce conceptualmente a una combinación lineal de los est
 
 Consecuentemente, como se aprecia en el detalle del diagrama de bloques, esta ley de control se materializa en \textit{Simulink} mediante un único bloque de ganancia matricial (denotado en la simulación como \texttt{K*u}).
 
-A su vez, con el propósito de demostrar la divergencia entre el modelo linealizado y la dinámica real de la planta cuando el sistema se aleja del punto de linealización, se integró en la simulación el modelo linealizado en $x = [0, \pi, 0, 0]^T$. Esta configuración permite contrastar, ante idénticas acciones de control $u$, el comportamiento del sistema lineal descrito en el espacio de estados mediante las matrices algebraicas $\{A, B, C, D\}$ frente a la respuesta del sistema real no lineal, denotado por el conjunto $\{M, C, G\}$.
-
-\newpage
 Para concluir, la obtención numérica de los vectores de ganancia $K$ dentro del entorno de \textit{MATLAB}, se optó por las dos metodologías clásicas de control propuestas en la Sección \ref{cap:control_kx}:
 \begin{itemize}[]
 	\item \textbf{Regulador Lineal Cuadrático (LQR):} se definieron las matrices de ponderación $Q$ y $R$ para sintonizar el comando \texttt{lqr()} \cite{matlab_lqr}.
@@ -1166,17 +1163,33 @@ Para concluir, la obtención numérica de los vectores de ganancia $K$ dentro de
 
 
 \subsubsection{Levantamiento de péndulo}
+El siguiente hito en el trabajo, fue conseguir levantar el péndulo con la técnica de \textit{Swing-Up} abordada de forma teórica en la Sección \ref{cap:swing_up}. Para conseguirlo se utilizó la misma metodología que para el control de posición del péndulo, se tiene un conjunto de bloques que representan la dinámica del sistema y un bloque para el controlador. 
 
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=1.0\textwidth]{Pictures/control_energia}
+	\caption{Diagrama de bloques con control de energía para el levantamiento del péndulo}
+	\label{fig:control_energia}
+\end{figure}
+\FloatBarrier
+
+Atendiendo a la Figura \ref{fig:control_energia} el bloque de simulación tiene dos subconjuntos claramente diferenciados:
+\begin{itemize}[]
+	\item \textbf{Control de energía (Zona Izquierda):} Se utiliza una \textit{MATLAB Function} para integrar de forma compacta la técnica de Swing-Up con PFL, tiene como entradas los estados del sistema ($q, \dot{q}$) y la energía de referencia ($E_{ref}$), como salida proporciona una acción de control ($u$) en forma de fuerza de empuje horizontal. Para conocer la implementación del controlador en más detalle consulte el Anexo \ref{anexo:control_energia}.
+	
+	\item \textbf{Modelo Dinámico (Zona Derecha):} Representa la planta del sistema con los parámetros que la caracterizan. Los detalles de la implementación y el bloque de código de cada función se abordan en la Sección \ref{cap:modelado_sim} y el Anexo \ref{ap:codigo_dinamica}.
+\end{itemize}
+\newpage
 \subsubsection{Conmutación entre controladores}
 Una vez implementados ambos controladores por separado, para finalizar con la implementación en \textit{Simulink} se aborda la lógica de conmutación explicada en la Sección \ref{cap:log_conmu}. 
 \begin{figure}[ht]
 	\centering
-	\includegraphics[width=1.0\textwidth]{Pictures/control_conmutado_sim}
+	\includegraphics[width=0.9\textwidth]{Pictures/conmutacion_controles}
 	\caption{Diagrama de bloques conmutación entre controles}
 	\label{fig:sim_control_conmutado}
 \end{figure}
 \FloatBarrier
-\newpage
+
 La arquitectura implementada en \textit{Simulink} (Figura~\ref{fig:sim_control_conmutado}) representa el hito central del desarrollo de la simulación. Su diseño permite emular el comportamiento físico del péndulo e integrar de forma segura las estrategias de control antes de su transferencia al hardware real. Para facilitar su comprensión, el diagrama se divide en tres bloques funcionales:
 
 \begin{itemize}
@@ -1184,11 +1197,11 @@ La arquitectura implementada en \textit{Simulink} (Figura~\ref{fig:sim_control_c
 	
 	\item \textbf{Algoritmos de Control (Zona Izquierda):} Resuelven el desafío de control mediante dos estrategias diferenciadas según el estado del péndulo:
 	\begin{itemize}
-		\item \textit{Control de Energía (Swing-up):} Actúa cuando el péndulo está hacia abajo, balanceándolo de un lado a otro para inyectarle la energía necesaria para elevarlo.
-		\item \textit{Control de Posición ($K*u$):} Actúa mediante realimentación de estados para mantener el péndulo en equilibrio estricto una vez ha alcanzado la posición vertical inestable.
+		\item \textbf{Control de Energía (Swing-up):} Actúa cuando el péndulo está hacia abajo, balanceándolo de un lado a otro para inyectarle la energía necesaria para elevarlo.
+		\item \textbf{Control de Posición:} Actúa mediante realimentación de estados para mantener el péndulo en equilibrio estricto una vez ha alcanzado la posición vertical inestable.
 	\end{itemize}
 	
-	\item \textbf{Lógica de Conmutación (Zona Central):} Es el componente que resuelve la transición automática entre ambos controladores. El bloque \texttt{q\_norm} evalúa constantemente el ángulo del péndulo; si este se encuentra lejos de la vertical, el interruptor (\texttt{Switch}) selecciona el control de energía. En el instante en que el péndulo entra en la zona de equilibrio, el dispositivo conmuta automáticamente al control de posición.
+	\item \textbf{Lógica de Conmutación (Zona Central):} Es el componente que resuelve la transición automática entre ambos controladores. El bloque \texttt{q\_norm} normaliza el ángulo del péndulo entre $[-\pi, \pi]$; si este se encuentra lejos de la vertical, el interruptor (\texttt{Switch}) selecciona el control de energía. En el instante en que el péndulo entra en la zona de equilibrio (supera cierto umbral angular), el dispositivo conmuta automáticamente al control de posición.
 \end{itemize}
 
 Tras la integración de la lógica de conmutación de ambos controles, la parte de cálculo numérico para las \textit{EDOs} queda resuelta, se pueden ajustar controladores y observar el comportamiento del sistema únicamente con esta implementación. No obstante, atendiendo a la Figura \ref{fig:arquitectura_sim} sobre la \textit{Arquitectura de la Simulación} falta implementar la conexión con el entorno de \textit{ROS} para la visualización del gemelo digital en \textit{RViz}. 
@@ -1197,19 +1210,28 @@ Tras la integración de la lógica de conmutación de ambos controles, la parte 
 
 Una vez resuelto el cálculo dinámico y el control en Simulink, el siguiente hito fundamental consistió en establecer la infraestructura de comunicación con el ecosistema de ROS. Esta integración permite materializar el concepto de gemelo digital, facilitando la monitorización tridimensional del sistema en tiempo real.
 
-Para articular esta conexión se empleó la herramienta \textit{ROS Toolbox}, estructurando el flujo de información bajo el paradigma clásico de publicador/suscriptor:
+Para articular esta conexión se empleó la herramienta \textit{ROS Toolbox}, estructurando el flujo de información bajo el paradigma de publicador/suscriptor:
 \begin{itemize}
-	\item \textbf{Lógica de Publicación (Nodo Publicador):} Como se ilustra en la Figura~\ref{fig:sim_nodo_publicador}, la interfaz desarrollada en Simulink toma de forma continua el vector con las posiciones $x$ y $\theta$ (\texttt{[q]}) y el tiempo de simulación para estructurar el envío de datos mediante un bloque de conversión (\texttt{MATLAB to ROS}). Esta información se acopla a la plantilla de un mensaje estándar de articulaciones (\texttt{sensor\_msgs/JointState}) y el bloque \texttt{Publish} la difunde activamente en la red bajo el tópico \texttt{/joint\_states}.
-	
-	\item \textbf{Modelado y Visualización en RViz:} Con el propósito de renderizar la planta virtual, se diseñó un archivo de descripción unificada de robots (URDF) que define la geometría y las articulaciones mecánicas del carro y el péndulo. La herramienta de visualización \textit{RViz} se suscribe al tópico generado por Simulink, traduciendo instantáneamente cada mensaje numérico recibido en movimiento visual sobre el modelo 3D.
+	\item \textbf{Lógica de Publicación (Nodo Publicador):} Como se ilustra en la Figura~\ref{fig:nodo_publicador}, el nodo desarrollado en Simulink toma de forma continua el vector con las posiciones $x$ y $\theta$ (\texttt{[q]}) y el tiempo de simulación para estructurar el envío de datos mediante un bloque de conversión (\texttt{MATLAB to ROS}). Esta información se encapsula en la estructura de un mensaje dedicado a articulaciones (\texttt{sensor\_msgs/JointState}) y el bloque \texttt{Publish} la difunde activamente en la red bajo el tópico \texttt{/joint\_states}.
 \end{itemize}
-
 \begin{figure}[ht]
 	\centering
-	\includegraphics[width=0.9\textwidth]{Pictures/nodo_publicador}
-	\caption{Arquitectura interna del nodo publicador en Simulink para la conversión y envío de datos a ROS}
-	\label{fig:sim_nodo_publicador}
+	\includegraphics[width=0.8\textwidth]{Pictures/nodo_publicador}
+	\caption{Nodo publicador en Simulink}
+	\label{fig:nodo_publicador}
 \end{figure}
+\FloatBarrier
+
+\begin{itemize}
+	\item \textbf{Modelado y Visualización en RViz:} Se diseñó un archivo \textit{URDF} que define la geometría y las articulaciones mecánicas del carro y el péndulo. La herramienta de visualización \textit{RViz} se suscribe al tópico generado por Simulink, traduciendo instantáneamente cada mensaje numérico recibido en movimiento visual sobre el modelo 3D.
+\end{itemize}
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=0.7\textwidth]{Pictures/modelo_3D}
+	\caption{Visualización del modelo 3D en RViz}
+	\label{fig:modelo_3D}
+\end{figure}
+\FloatBarrier
 
 Durante la integración de esta arquitectura de red, surgieron dos problemas técnicos críticos que requirieron desviaciones de la configuración por defecto para estabilizar la plataforma:
 \begin{itemize}
@@ -1312,39 +1334,33 @@ En este anexo se detalla el desarrollo matemático paso a paso del formalismo de
 \chapter{Dinámica en MATLAB Functions}
 \label{ap:codigo_dinamica}
 
-\section{Bloque de la Matriz de Inercia Inversa $M(q)^{-1}$} 
-\label{sec:ap-matriz-m}
 \begin{matlabbox}{MATLAB Function $M(q)^{-1}$}
-function M_inv = fcn(q, M, m, l, Jp)
-	% q(2) representa la posicion angular theta del pendulo
-	theta = q(2); 
-	
-	% Elementos de la matriz de inercia M(q)
-	m11 = M + m;
-	m12 = m * l * cos(theta);
-	m21 = m * l * cos(theta);
-	m22 = Jp + m * l^2;
-	
-	% Determinante de la matriz
-	det_M = (m11 * m22) - (m12 * m21);
-	
-	% Matriz inversa analitica
-	M_inv = (1 / det_M) * [m22, -m12; -m21, m11];
-end	
+function Acel = Minv(q,par, J_p, M, m, lcm)
+	M = [M + m,          +m*l*cos(q(2));
+	+m*l*cos(q(2)),      J_p];
+	Acel = M\par; %Division de matrices.
+end
 \end{matlabbox}
 
-\section{Bloque de la Matriz de Coriolis y Fuerzas Centrífugas $C(\dot{q}, q)$}
-\label{sec:ap-matriz-c}
-
 \begin{matlabbox}{{MATLAB Function $C(\dot{q}, q)$}}
-	function C_mat = fcn(q, q_dot, m, l)
-	theta = q(2);
-	theta_dot = q_dot(2);
-	
-	% Expresion simplificada de los coeficientes de Coriolis
-	C_mat = [0, -m * l * sin(theta) * theta_dot;
-	         0, 0];
-	end
+function par_c = Cq(qdot, q, cx, ctheta, m, l)
+	C = [cx,   -m*l*qdot(2)*sin(q(2))
+	0,          ctheta        ];
+	par_c = C*qdot;
+end
+\end{matlabbox}
+
+\begin{matlabbox}{{MATLAB Function $G(q)$}}
+function par_g = Gq(q, m, g, l)
+	G = [0; m*g*l*sin(q(2))];
+	par_g = G;
+end
+\end{matlabbox}
+
+\begin{matlabbox}{{MATLAB Function $B$}}
+function tau_b = B(u)
+	tau_b = [1; 0]*u; .
+end
 \end{matlabbox}
 
 \end{document}
