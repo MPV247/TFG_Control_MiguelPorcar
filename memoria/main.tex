@@ -61,6 +61,7 @@
 \usepackage{listings}
 \usepackage{xcolor}
 \usepackage{tcolorbox}
+\usepackage{hyperref}
 \tcbuselibrary{listings, skins}
 
 \floatname{algorithm}{Algoritmo}
@@ -119,6 +120,7 @@
 	bottom=1.5mm,             % Reduce espacio interno abajo del código
 	beforeafter skip=3mm      % Reduce drásticamente el espacio entre bloques sucesivos
 }
+
 \raggedbottom
 \begin{document}
 %----------------------------------------------------------------------------------------
@@ -274,13 +276,13 @@ Este equipo lleva en los laboratorios de la universidad más de 25 años. Debido
 	\begin{subfigure}{0.48\textwidth}
 		\centering
 		\includegraphics[width=\textwidth]{Pictures/unidad_mecanica_sin_reparar} % Foto de la electrónica vieja
-		\caption{Unidad mecánica con notable falta de mantenimiento}
+		\caption{Unidad mecánica con falta de mantenimiento}
 	\end{subfigure}
 	\hfill
 	\begin{subfigure}{0.48\textwidth}
 		\centering
 		\includegraphics[width=\textwidth]{Pictures/encoder_roto} % Foto de la suciedad en el raíl
-		\caption{Encoder del péndulo doblado y con pérdida de pulsos}
+		\caption{Disco óptico doblado y con pérdida de pulsos}
 	\end{subfigure}
 	\caption{Estado inicial de la unidad mecánica}
 	\label{fig:estado_unidad_mec}
@@ -1581,4 +1583,69 @@ Por otro lado, como se ilustra en la Figura~\ref{fig:hw_impl}, dentro del menú 
 	\caption{\textit{Hardware Implementation}}
 	\label{fig:hw_impl}
 \end{figure}
+\newpage
+
+\section{Desarrollo Dinámico y Programación del Bucle de Simulación}
+\label{apendice:desarrollo_euler}
+Para conectar la teoría matemática con la implementación en código, se parte de la definición $\dot{\mathbf{x}}(t) = f(\mathbf{x}(t), u(t))$. Al aproximar la derivada temporal mediante el método de Euler de primer orden para un periodo de muestreo constante $T$, se obtiene la siguiente relación discreta:
+
+\begin{equation}
+	\dot{\mathbf{x}}_k \approx \frac{\mathbf{x}_{k+1} - \mathbf{x}_k}{T} \implies \mathbf{x}_{k+1} = \mathbf{x}_k + T \cdot f(\mathbf{x}_k, u_k)
+\end{equation}
+
+Donde el vector de derivadas temporales $\mathbf{f} = [f_1, f_2, f_3, f_4]^T$ representa las velocidades y aceleraciones instantáneas del sistema en cada iteración $k$. Las velocidades se obtienen de forma directa como:
+\begin{align}
+	f_1 &= \dot{x}_k = x_3 \\
+	f_2 &= \dot{\theta}_k = x_4
+\end{align}
+
+Sin embargo, para obtener las aceleraciones ($f_3 = \ddot{x}_k$, $f_4 = \ddot{\theta}_k$), se debe aislar el vector de aceleraciones generalizadas del modelo dinámico:
+\begin{equation}
+	\mathbf{M}(\mathbf{q}_k)
+	\begin{bmatrix} 
+		\ddot{x}_k \\ 
+		\ddot{\theta}_k 
+	\end{bmatrix} 
+	+ 
+	\mathbf{C}(\mathbf{q}_k, \dot{\mathbf{q}}_k)\dot{\mathbf{q}}_k
+	+ 
+	\mathbf{G}(\mathbf{q}_k)
+	= 
+	\begin{bmatrix} 
+		1 \\ 
+		0 
+	\end{bmatrix} u_k
+\end{equation}
+
+\begin{equation}
+	\begin{bmatrix} f_3 \\ f_4 \end{bmatrix} = \begin{bmatrix} \ddot{x}_k \\ \ddot{\theta}_k \end{bmatrix} = \mathbf{M}(\mathbf{q}_k)^{-1} \left( \begin{bmatrix} u_k \\ 0 \end{bmatrix} - \mathbf{C}(\mathbf{q}_k, \dot{\mathbf{q}}_k)\dot{\mathbf{q}}_k - \mathbf{G}(\mathbf{q}_k) \right)
+\end{equation}
+
+La traducción de este modelo matemático al entorno algorítmico se realiza estructurando las ecuaciones anteriores dentro de un bucle \texttt{for}. El código fuente desarrollado se presenta a continuación:
+
+\begin{matlabbox} {Implementación en MATLAB}
+for k=1:N-1
+	% --- 1. CALCULO DE LA ACCION DE CONTROL ---
+	u(k) = control(x(:,k), ref); 
+	
+	% --- 2. DINAMICA (NO LINEAL) DEL SISTEMA ---
+	M_t = [M,          +mp*lcm*cos(x(2,k));
+	       +mp*lcm*cos(x(2,k)),      J];
+	
+	C_t = [cc,   -mp*lcm*x(4,k)*sin(x(2,k))
+	        0,          cp        ];
+	
+	G_t = [0; +mp*g*lcm*sin(x(2,k))];
+	
+	% --- 3. SIMULACION DE LA SIGUIENTE ITERACION ---
+	f1=x(3,k);
+	f2=x(4,k);
+	f34=M_t \ ([u(k);0]-C_t*x(3:4,k)-G_t);
+	
+	x(:,k+1)=x(:,k)+T*[f1;f2;f34];
+end
+\end{matlabbox}
+
+\vspace{0.3cm}
+\noindent El script completo de la simulación, junto con los parámetros reales del sistema y los controladores funcionales detallados, se encuentra disponible para su consulta y descarga en el repositorio del proyecto \cite{Porcar2026TFG}.
 \end{document}
