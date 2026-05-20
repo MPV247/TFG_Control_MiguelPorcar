@@ -1350,7 +1350,79 @@ Como se ejemplifica en la Figura~\ref{fig:CCS_IDE}, durante la depuración del p
 \FloatBarrier
 
 \newpage
+
 \subsubsection{Configuración de periféricos de hardware dedicados (ePWM y eQEP)}
+
+Una vez seleccionada la metodología de campos de bits para la programación, se desarrollaron las rutinas de configuración para los dos periféricos esenciales en el lazo de control: el módulo de modulación por ancho de pulsos (\textit{ePWM1}) para la actuación sobre el motor, y los módulos de decodificación en cuadratura (\textit{eQEP1} y \textit{eQEP2}) para la lectura de los encoders.
+
+Las funciones de configuración se dividen en tres pasos principales a realizar:
+\begin{enumerate}[]
+	\item \textbf{Señal de reloj del periférico:} \texttt{PCLKCR2} para el modulo \textit{ePWM1} y \texttt{PCLKCR4} para los módulos \textit{eQEP1} y \textit{eQEP2}. Se precisa de las instrucciones \texttt{EALLOW} y \texttt{EDIS} para acceder temporalmente al registro de control del sistema (\texttt{CpuSysRegs}) y poder habilitar las señales de reloj.
+	
+	\item \textbf{Configuración de los registros:} Atendiendo a las tablas de registros del \textit{datasheet} para obtener un comportamiento específico del periférico. Si se desea conocer en profundidad el mapa de memoria de cada periférico, se proporciona la información en el Anexo \ref{ap:registros}.
+	
+	\item \textbf{Habilitación del periférico:} Activación final de los módulos (como el bit \texttt{QPEN} en el caso del \textit{eQEP}) para indicar a la CPU que el periférico se encuentra operativo y dar comienzo a la computación por hardware. 
+\end{enumerate}
+
+\paragraph{Módulo ePWM1 (Actuación del Motor)}
+El módulo \textit{ePWM1} genera la señal de onda cuadrada necesaria para pilotar el puente en H del motor. La configuración de sus registros se ha diseñado para establecer una frecuencia de conmutación simétrica y estable a 10~kHz, tal y como se resume en la Tabla~\ref{tab:config_epwm}.
+
+\begin{table}[htbp]
+	\centering
+	\caption{Configuración final de los registros del módulo ePWM1.}
+	\label{tab:config_epwm}
+	\renewcommand{\arraystretch}{1.4}
+	\begin{tabularx}{\textwidth}{l l X}
+		\hline
+		\textbf{Registro / Campo} & \textbf{Valor Asignado} & \textbf{Justificación Técnica / Propósito} \\ \hline
+		\texttt{TBPRD} & \texttt{5000} & Periodo de conteo para obtener 10~kHz (con $SYSCLK = 100$~MHz). \\
+		\texttt{TBCTR} & \texttt{0} & Limpieza del contador de tiempo base por seguridad. \\
+		\texttt{TBCTL.bit.CTRMODE} & \texttt{TB\_COUNT\_UPDOWN} & Conteo triangular (Up-Down) para reducir armónicos. \\
+		\texttt{TBCTL.bit.HSPCLKDIV} & \texttt{5} & Divisor de reloj de alta velocidad. \\
+		\texttt{CMPA.bit.CMPA} & \texttt{0} & Ciclo de trabajo (\textit{duty cycle}) inicial en un estado seguro (0\,\%). \\
+		\texttt{AQCTLA.bit.CAU} & \texttt{AQ\_CLEAR} & Forza la señal a 0~V al cruzar \texttt{CMPA} de subida. \\
+		\texttt{AQCTLA.bit.CAD} & \texttt{AQ\_SET} & Forza la señal a 3.3~V al cruzar \texttt{CMPA} de bajada. \\ \hline
+	\end{tabularx}
+\end{table}
+\FloatBarrier
+
+\newpage
+\paragraph{Módulo eQEP (Lectura del Encoder)}
+
+La lectura de los encoders ópticos se delega en una máquina de estados integrada en el hardware del periférico \textit{eQEP}. Como se ilustra en la Figura~\ref{fig:eqep_funcionamiento}, las señales físicas de los canales \textit{QEPA} y \textit{QEPB} presentan un desfase eléctrico de 90$^\circ$. Al activar el modo de decodificación en cuadratura, el hardware detecta cada flanco de subida y bajada, lo que permite transitar por cuatro combinaciones binarias distintas \mbox{\texttt{(00, 10, 11, 01)}} por cada periodo de la señal. 
+
+Esta decodificación no solo cuadriplica ($\times$4) la resolución del encoder, sino que permite discernir instantáneamente el sentido de giro (horario o antihorario) según la secuencia de transición de los estados. 
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.85\textwidth]{Pictures/cuadratura} % Renombra tu imagen así en la carpeta
+	\caption{Máquina de estados, decodificación en cuadratura}
+	\label{fig:eqep_funcionamiento}
+\end{figure}
+\FloatBarrier
+
+En la Tabla~\ref{tab:config_eqep} se detalla la configuración final asignada a los campos de bits de este módulo para conseguir la decodificación en cuadratura por hardware externo a la CPU.
+
+\begin{table}[htbp]
+	\centering
+	\caption{Configuración final de los registros del módulo eQEP}
+	\label{tab:config_eqep}
+	\renewcommand{\arraystretch}{1.4}
+	\begin{tabularx}{\textwidth}{l l X}
+		\hline
+		\textbf{Registro / Campo} & \textbf{Valor Asignado} & \textbf{Justificación Técnica / Propósito} \\ \hline
+		\texttt{QDECCTL.bit.QSRC} & \texttt{0} & Modo cuadratura (resolución $\times$4). \\
+		\texttt{QEPCTL.bit.FREE\_SOFT} & \texttt{2} & El contador ignora los puntos de parada del \textit{debugger}. \\
+		\texttt{QPOSMAX} & \texttt{0xFFFFFFFF} & Límite máximo de conteo (rango completo de 32 bits). \\
+		\texttt{QPOSINIT} & \texttt{0} & Posición de inicialización. \\
+		\texttt{QPOSCNT} & \texttt{0} & Reset del contador de posición al arrancar. \\
+		\texttt{QEPCTL.bit.QPEN} & \texttt{1} & Habilitación del periférico. \\ \hline
+	\end{tabularx}
+\end{table}
+\FloatBarrier
+
+La asignación de un rango de 32 bits mediante \texttt{QPOSMAX} garantiza que el sistema pueda registrar el desplazamiento total del carro y la posición del péndulo sin riesgo de desbordamiento (\textit{overflow}). Además, la configuración actual del campo \texttt{FREE\_SOFT} está pensada para las fases de depuración: al indicarle al periférico que ignore los puntos de parada del entorno de desarrollo, se evita que el contador de posición se congele o pierda la sincronía con el estado físico real del sistema cuando se pausa manualmente la ejecución del programa.
+
 \subsubsection{Protocolo de comunicación serie y telemetría (SCI)}
 \subsubsection{Ejecución del lazo de control y determinismo temporal}
 1)Firmware, comentar como se programa una DSP de texas instruments mediante el uso del IDE CCS y la capa de HAL C2000-ware. Utilizar el datashet del fabricante para justificar la configuración de ciertos registros. Módulos Epwm y Eqep muy interesante ver como liberan a la CPU de estas tareas. Explicar la configuración de registros para conseguir cierto comportamiento en los periféricos así como explicar como se configuró el protocolo serie para la telemetría del sistema. 
