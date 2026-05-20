@@ -391,7 +391,7 @@ Cada tarea y subtarea tiene un objetivo asociado para facilitar el desarrollo de
 % el coste proporcional del equipo Feedback y el software MATLAB.
 
 \chapter{Análisis}
-
+\label{cap:analisis}
 En este capítulo se realiza un estudio detallado de los pilares que sustentan el desarrollo del sistema de control para el péndulo invertido. El análisis se articula en tres ejes fundamentales:
 
 \begin{itemize}
@@ -1304,6 +1304,51 @@ Para concluir, la Figura \ref{fig:Ts_dependencia} ilustra el impacto crítico de
 \section{Sistema físico}
 
 \subsection{Programación del microcontrolador}
+\subsubsection{Ecosistema de desarrollo}
+El desarrollo del firmware, como se comentó en el Capítulo~\ref{cap:analisis}, se apoya en el entorno de desarrollo integrado (IDE) oficial de Texas Instruments, \textbf{Code Composer Studio (CCS)} \cite{ti_ccs}. Este entorno optimiza la compilación para la arquitectura C28x y proporciona herramientas avanzadas de depuración (\textit{debug}). Gracias a ellas, es posible ejecutar el código línea por línea, así como inspeccionar y monitorizar el valor de los registros del sistema en tiempo real durante la ejecución del programa.
+
+Además para programar el microcontrolador \textbf{TMS320F280049C} en el IDE, se tiene la SDK \textbf{C2000Ware} que ofrece tres metodologías de acceso a los periféricos y registros de memoria, cada una con un compromiso (\textit{trade-off}) diferente entre nivel de abstracción, legibilidad y control sobre la programación: el acceso directo por dirección, el mapeo mediante estructuras de campos de bits (\textit{Bit-fields}) y el uso de la librería de funciones \textit{DriverLib} \cite{ti_c2000ware_drivers}. 
+
+\begin{figure}[ht]
+	\centering
+	\includegraphics{Pictures/capas_HAL}
+	\caption{Niveles de abstracción para programar el microcontrolador \cite{ti_c2000ware_drivers}}
+	\label{fig:HAL_C2000}
+\end{figure}
+\FloatBarrier
+
+El \textbf{Acceso Directo} ofrece un control absoluto pero con una dificultad de desarrollo muy alta y propensión a errores, al obligar a calcular manualmente máscaras binarias en hexadecimal. En el extremo opuesto, la librería \textbf{DriverLib} reduce la dificultad al mínimo mediante funciones abstractas de alto nivel, pero resta control directo al desarrollador sobre la configuración real de los registros del chip.
+
+Por este motivo, se ha seleccionado el enfoque intermedio de \textbf{Campos de bits (Bit-fields)}. Esta metodología permite mapear los registros físicos del \textit{datasheet} como estructuras de datos nativas en C. De este modo, se justifica su uso al garantizar un \textbf{control directo e inmediato sobre el hardware} bajo una dificultad moderada.
+
+\begin{table}[ht]
+	\centering
+	\caption{Comparativa de metodologías}
+	\label{tab:metodologia_programacion}
+	\begin{tabular}{llll}
+		\hline
+		\textbf{Metodología} & \textbf{Dificultad} & \textbf{Control del Hardware} & \textbf{Ejemplo de Sintaxis} \\ \hline
+		Acceso Directo & Alta & Absoluto (Manual) & \texttt{*CMPR1 = 0x1234;}\\
+		\textbf{Bit-fields} & \textbf{Media} & \textbf{Alto (Directo)} & \texttt{EPwm1Regs.CMPA.bit.CMPA = valor;} \\
+		DriverLib & Baja & Bajo (Abstracto) & \texttt{EPWM\_setCounterCompareValue()} \\ \hline
+	\end{tabular}
+\end{table}
+\FloatBarrier
+La correspondencia directa entre los registros de control del hardware y el entorno de desarrollo se valida visualmente durante las etapas de depuración. En la Figura~\ref{fig:CCS_IDE} se observa cómo el IDE proporciona el valor de los registros durante la depuración del código \texttt{control.c}, permitiendo inspeccionar en tiempo real el estado de variables y bits críticos. 
+
+\begin{figure}[ht]
+	\centering
+	\resizebox{\textwidth}{!}{%
+		\includegraphics{Pictures/CCS_IDE}
+	}
+	\caption{Depuración de código con CCS}
+	\label{fig:CCS_IDE}
+\end{figure}
+\FloatBarrier
+
+\subsubsection{Configuración de periféricos de hardware dedicados (ePWM y eQEP)}
+\subsubsection{Protocolo de comunicación serie y telemetría (SCI)}
+\subsubsection{Ejecución del lazo de control y determinismo temporal}
 1)Firmware, comentar como se programa una DSP de texas instruments mediante el uso del IDE CCS y la capa de HAL C2000-ware. Utilizar el datashet del fabricante para justificar la configuración de ciertos registros. Módulos Epwm y Eqep muy interesante ver como liberan a la CPU de estas tareas. Explicar la configuración de registros para conseguir cierto comportamiento en los periféricos así como explicar como se configuró el protocolo serie para la telemetría del sistema. 
 
 2)Explicar como se programo la DSP con timers para ejecutar el bucle de control en una rutina de interrupción periódica (implica determinismo, nada del loop de Arduino).
@@ -1321,7 +1366,7 @@ Para concluir, la Figura \ref{fig:Ts_dependencia} ilustra el impacto crítico de
 6)Implementación de algoritmos de control en el microcontrolador (lo tenemos todo dividido en funciones, explicar un poco que recibe y devuelve cada una y como se ajusta todo)
 
 
-Para la configuración de los periféricos se ha optado por el uso de estructuras de campos de bits (Bit-fields) proporcionadas por la SDK \textit{C2000Ware}. A diferencia de la librería de abstracción \textit{DriverLib}, este enfoque permite un acceso directo y optimizado a los registros del procesador mediante el uso de punteros a estructuras mapeadas en memoria. Esta elección garantiza la máxima eficiencia en la ejecución, reduciendo la sobrecarga de funciones (\textit{overhead}) y facilitando el control preciso de registros críticos como los de los módulos \textit{eQEP} y \textit{ePWM}.
+
 
 \chapter{Resultados}
 
