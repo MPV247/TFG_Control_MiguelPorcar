@@ -1334,7 +1334,10 @@ Por este motivo, se ha seleccionado el enfoque intermedio de \textbf{Campos de b
 	\end{tabular}
 \end{table}
 \FloatBarrier
-La correspondencia directa entre los registros de control del hardware y el entorno de desarrollo se valida visualmente durante las etapas de depuración. En la Figura~\ref{fig:CCS_IDE} se observa cómo el IDE proporciona el valor de los registros durante la depuración del código \texttt{control.c}, permitiendo inspeccionar en tiempo real el estado de variables y bits críticos. 
+
+La principal ventaja práctica de esta elección se manifiesta durante las etapas de depuración. Al haber programado utilizando los nombres nativos de los registros, el mapa de variables que despliega el IDE es plenamente inteligible y mantiene una trazabilidad directa con el código fuente; un beneficio que se perdería drásticamente si se empleara la abstracción de \textit{DriverLib}. 
+
+Como se ejemplifica en la Figura~\ref{fig:CCS_IDE}, durante la depuración del programa \texttt{control.c}, el entorno de desarrollo permite inspeccionar y monitorizar en tiempo real el valor exacto de los bits y registros críticos del sistema. 
 
 \begin{figure}[ht]
 	\centering
@@ -1346,6 +1349,7 @@ La correspondencia directa entre los registros de control del hardware y el ento
 \end{figure}
 \FloatBarrier
 
+\newpage
 \subsubsection{Configuración de periféricos de hardware dedicados (ePWM y eQEP)}
 \subsubsection{Protocolo de comunicación serie y telemetría (SCI)}
 \subsubsection{Ejecución del lazo de control y determinismo temporal}
