@@ -1898,8 +1898,83 @@ end
 \end{figure}
 \FloatBarrier
 
+\clearpage
 \section{Registros del módulo eQEP}
 \label{ap:registros_eQEP}
+
+En primer lugar, se proporciona el mapa de memoria global del módulo de hardware para la lectura de encoders (\textit{eQEP}), el cual delimita las direcciones base del periférico y sus registros de control asociados. 
+\begin{figure}[!ht] % [!ht] fuerza a buscar espacio inmediatamente aquí
+	\centering
+	\includegraphics[width=\textwidth]{Pictures/mapa_memoria_eqep}
+	\caption{Mapa de memoria del periférico \textit{eQEP} \cite{ti_f28004x_trm}}
+	\label{fig:memoria_eQEP}
+\end{figure}
+\FloatBarrier
+
+Debido a la gran densidad de funciones integradas en el periférico y con el propósito de optimizar la lectura técnica de este documento, en las secciones siguientes se desglosa la estructura interna de bits únicamente de aquellos registros de control modificados de forma explícita en la rutina de inicialización. Este análisis selectivo justifica el impacto funcional de cada campo binario configurado sobre el comportamiento dinámico de la planta.
+
+El primer bloque crítico modificado en el código fuente corresponde al registro \texttt{QDECCTL}. En la Figura~\ref{fig:bits_qdecctl} se detalla la distribución y propósito de sus campos binarios según la documentación oficial del fabricante.
+\begin{figure}[!ht]
+	\centering
+	\includegraphics[width=\textwidth]{Pictures/qdecctl_general} % Aquí cargas la imagen de tus campos de bits
+	\caption{Registro \texttt{QDECCTL} \cite{ti_f28004x_trm}.}
+	\label{fig:bits_qdecctl_gen}
+\end{figure}
+\FloatBarrier
+
+\begin{figure}[!ht]
+	\centering
+	\includegraphics[width=\textwidth]{Pictures/qedecctl1} % Aquí cargas la imagen de tus campos de bits
+	\caption{Distribución de campos y bits de configuración del registro \texttt{QDECCTL} \cite{ti_f28004x_trm}.}
+	\label{fig:bits_qdecctl}
+\end{figure}
+\FloatBarrier
+\begin{figure}[!ht]
+	\centering
+	\ContinuedFloat
+	\includegraphics[width=\textwidth]{Pictures/qdecctl2} % Aquí cargas la imagen de tus campos de bits
+	\caption{Distribución de campos y bits de configuración del registro \texttt{QDECCTL} \cite{ti_f28004x_trm} (continuación).}
+	\label{fig:bits_qdecctl2}
+\end{figure}
+\FloatBarrier
+
+A partir de la distribución expuesta en la Figura~\ref{fig:bits_qdecctl}, las asignaciones lógicas realizadas en el código se justifican técnicamente de la siguiente manera:
+\begin{itemize}
+	\item \textbf{\texttt{QDECCTL.bit.QSRC = 0h}:} Configura el modo de conteo en cuadratura pura (\textit{Quadrature count mode}). 
+	\item \textbf{\texttt{QDECCTL.bit.SWAP = 0h}:} Determina que las entradas de reloj y dirección no se intercambian por hardware (\textit{Not swapped}). Esto asegura la concordancia directa entre el sentido de giro real del eje y el incremento del contador de posición.
+\end{itemize}
+
+Finalmente, para el registro \texttt{QEPCTL} se detalla la distribución y propósito de sus campos binarios según la documentación oficial del fabricante.
+\begin{figure}[!ht]
+	\centering
+	\includegraphics[width=\textwidth]{Pictures/qepctl_general} % Aquí cargas la imagen de tus campos de bits
+	\caption{Registro \texttt{QEPCTL} \cite{ti_f28004x_trm}.}
+	\label{fig:bits_qepctl_gen}
+\end{figure}
+\FloatBarrier
+
+\begin{figure}[!ht]
+	\centering
+	\includegraphics[width=\textwidth]{Pictures/qepctl1} % Aquí cargas la imagen de tus campos de bits
+	\caption{Distribución de campos y bits de configuración del registro \texttt{QEPCTL} \cite{ti_f28004x_trm}.}
+	\label{fig:bits_qepctl}
+\end{figure}
+\FloatBarrier
+\begin{figure}[!ht]
+	\centering
+	\ContinuedFloat
+	\includegraphics[width=\textwidth]{Pictures/qepctl2} % Aquí cargas la imagen de tus campos de bits
+	\caption{Distribución de campos y bits de configuración del registro \texttt{QEPCTL} \cite{ti_f28004x_trm} (continuación).}
+	\label{fig:bits_qepctl2}
+\end{figure}
+\FloatBarrier
+
+A partir de la distribución expuesta en la Figura~\ref{fig:bits_qepctl}, las configuraciones aplicadas en el firmware se justifican técnicamente de la siguiente manera:
+\begin{itemize}
+	\item \textbf{\texttt{QEPCTL.bit.FREE\_SOFT = 2h}:} Impide que el contador de posición se detenga debido a un punto de ruptura en la depuración.
+	
+	\item \textbf{\texttt{QEPCTL.bit.QPEN = 1h}:} Habilita formalmente el contador de posición del eQEP (\textit{eQEP Position Counter Enable}).
+\end{itemize}
 
 \section{Registros del módulo ePWM}
 \label{ap:registros_ePWM}
