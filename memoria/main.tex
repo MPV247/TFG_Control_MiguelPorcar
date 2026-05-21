@@ -1355,40 +1355,39 @@ Como se muestra en la Figura~\ref{fig:CCS_IDE}, durante la depuración del progr
 \newpage
 \paragraph{Mapeo de periféricos y asignación de pines (PINOUT)}
 
-Antes de proceder con el desarrollo software, se define la interfaz física del sistema (\textit{PINOUT}). El microcontrolador \textbf{TMS320F280049C} cuenta con un mecanismo interno de multiplexado para optimizar el uso de sus pines físicos, es decir, un mismo pin físico puede enrutarse internamente hacia módulos digitales independientes, entradas analógicas o funciones de propósito general (GPIO). La tabla completa de multiplexado del chip se proporciona en el Anexo~\ref{ap:tabla_mux}.
+Antes de proceder con el desarrollo software, se define la interfaz física del sistema (\textit{PINOUT}). El microcontrolador \textbf{TMS320F280049C} cuenta con un mecanismo interno de multiplexado para optimizar el uso de sus pines físicos, es decir, un mismo pin físico puede enrutarse internamente hacia módulos digitales independientes, entradas analógicas o funciones de propósito general (GPIO). La tabla completa de multiplexado del chip se proporciona en el Anexo~\ref{ap:tabla_mux}. Para la realización de este proyecto se emplea la tarjeta de desarrollo oficial \textbf{LAUNCHXL-F280049C}. La distribución espacial y función de los pines se ilustra en la Figura~\ref{fig:launchpad_pinout}.
 
-Para la realización de este proyecto se emplea la tarjeta de desarrollo oficial \textbf{LAUNCHXL-F280049C}. La distribución espacial y función de los pines se ilustra en la Figura~\ref{fig:launchpad_pinout}.
-
-\begin{figure}[htbp]
+\begin{figure}[ht] % <-- Cambiado a [ht] para mayor prioridad de colocación
 	\centering
-	\includegraphics[width=0.95\textwidth]{Pictures/pinmap}
+	\includegraphics[width=0.82\textwidth]{Pictures/pinmap} % <-- Reducido ligeramente de 0.95 a 0.82
+	\vspace{-2mm} % <-- Reduce espacio muerto debajo de la imagen
 	\caption{Mapa de pines y asignación de periféricos de la tarjeta LAUNCHXL-F280049C.}
 	\label{fig:launchpad_pinout}
 \end{figure}
-\FloatBarrier
 
-Esta figura permite apreciar el mecanismo de multiplexado de pines, ya que cada terminal físico dispone de múltiples funciones alternativas configurables por software.
-
-\begin{table}[htbp]
+A partir de la distribución espacial provista por el fabricante y considerando los requerimientos operativos (actuación del motor, lectura de encoders y comunicación externa), se seleccionan los pines atendiendo a funcionalidad y localización en la tarjeta de desarrollo. En la Tabla~\ref{tab:pinout_sistema} se consolida el mapeo definitivo de pines
+\begin{table}[ht] % <-- Cambiado a [ht]
 	\centering
-	\caption{Entradas y salidas}
+	\caption{Mapeo definitivo de entradas y salidas}
 	\label{tab:pinout_sistema}
-	\renewcommand{\arraystretch}{1.3}
+	\small % <-- Reduce ligeramente el tamaño de fuente de la tabla para ganar altura vital
+	\renewcommand{\arraystretch}{1.1} % <-- Reducido el espaciado de filas de 1.3 a 1.1
 	\begin{tabularx}{\textwidth}{l l l l X}
 		\hline
-		\textbf{Señal Física} & \textbf{Pin Interno} & \textbf{GPIO} & \textbf{Mux Value} & \textbf{Descripción Técnica / Propósito} \\ \hline
+		\textbf{Señal Física} & \textbf{Conexión LaunchPad} & \textbf{GPIO} & \textbf{Mux Value} & \textbf{Descripción Técnica / Propósito} \\ \hline
 		\texttt{EPWM1A} & Pin 80 (J8) & \texttt{GPIO0} & \texttt{1} (\textit{ePWM}) & Señal de modulación de potencia (\textit{ENA} del puente H). \\
 		\texttt{MOTOR\_IN1} & Pin 79 (J8) & \texttt{GPIO1} & \texttt{0} (\textit{GPIO}) & Control de dirección del motor (\textit{IN1} del puente H). \\
-		\texttt{MOTOR\_IN2} & Pin 74 (J8) & \texttt{GPIO6} & \texttt{0} (\textit{GPIO}) & Control de dirección del motor (\textit{IN2} del puente H). \\
-		\texttt{EQEP1A} & Pin 40 (J4) & \texttt{GPIO10} & \texttt{5} (\textit{eQEP}) & Entrada del Canal A para el encoder de posición del carro de la planta. \\
-		\texttt{EQEP1B} & Pin 39 (J4) & \texttt{GPIO11} & \texttt{5} (\textit{eQEP}) & Entrada del Canal B para el encoder de posición del carro de la planta. \\
-		\texttt{EQEP2A} & Pin 72 (J8) & \texttt{GPIO14} & \texttt{10} (\textit{eQEP}) & Entrada del Canal A para el encoder de posición del péndulo. \\
-		\texttt{EQEP2B} & Pin 71 (J8) & \texttt{GPIO15} & \texttt{10} (\textit{eQEP}) & Entrada del Canal B para el encoder de posición del péndulo. \\
-		\texttt{SCIRXDA} & Pin 43 (J5) & \texttt{GPIO28} & \texttt{1} (\textit{SCI}) & Entrada de recepción de comandos vía serie (UART) desde el PC. \\
-		\texttt{SCITXDA} & Pin 44 (J5) & \texttt{GPIO29} & \texttt{1} (\textit{SCI}) & Salida de transmisión de datos de telemetría hacia el entorno externo (PC). \\ \hline
+		\texttt{MOTOR\_IN2} & Pin 78 (J8) & \texttt{GPIO6} & \texttt{0} (\textit{GPIO}) & Control de dirección del motor (\textit{IN2} del puente H). \\
+		\texttt{EQEP1A} & Pin 40 (J4) & \texttt{GPIO10} & \texttt{5} (\textit{eQEP}) & Entrada del Canal A para el encoder del carro. \\
+		\texttt{EQEP1B} & Pin 39 (J4) & \texttt{GPIO11} & \texttt{5} (\textit{eQEP}) & Entrada del Canal B para el encoder del carro. \\
+		\texttt{EQEP2A} & Pin 72 (J8) & \texttt{GPIO14} & \texttt{10} (\textit{eQEP}) & Entrada del Canal A para el encoder del péndulo. \\
+		\texttt{EQEP2B} & Pin 73 (J8) & \texttt{GPIO15} & \texttt{10} (\textit{eQEP}) & Entrada del Canal B para el encoder del péndulo. \\
+		\texttt{SCIRXDA} & Enrutamiento interno\footnotemark & \texttt{GPIO28} & \texttt{1} (\textit{SCI}) & Entrada de recepción de comandos desde el PC. \\
+		\texttt{SCITXDA} & Enrutamiento interno\footnotemark[\value{footnote}] & \texttt{GPIO29} & \texttt{1} (\textit{SCI}) & Salida de transmisión de telemetría hacia el PC. \\ \hline
 	\end{tabularx}
 \end{table}
-\FloatBarrier
+\footnotetext{Las señales del módulo SCI (UART) se encuentran interconectadas por hardware en el circuito de la placa LAUNCHXL-F280049C hacia el depurador XDS110. Esto permite la comunicación bidireccional con el PC a través del puerto JTAG con un único cable USB.}
+\FloatBarrier % <-- Solo una barrera al final del conjunto completo
 
 
 \paragraph{Configuración general de periféricos hardware dedicados (ePWM y eQEP)}
