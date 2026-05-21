@@ -916,7 +916,7 @@ La Figura \ref{fig:arquitectura_sim} detalla la arquitectura de software diseña
 
 \newpage
 \subsection{Arquitectura del sistema real}
-
+\label{cap:implement_real}
 \begin{figure}[ht]
 	\centering
 	\resizebox{\textwidth}{!}{%
@@ -1301,10 +1301,12 @@ Debido a que el método de Euler asume de forma simplificada que las aceleracion
 Para concluir, la Figura \ref{fig:Ts_dependencia} ilustra el impacto crítico del periodo de muestreo al aplicar el mismo control de posición por realimentación del estado. En ella se observa cómo un intervalo de $10\text{ ms}$ produce una respuesta estable y fiel al comportamiento real del sistema, mientras que elevar dicho periodo a $500\text{ ms}$ degrada por completo la convergencia numérica, provocando una respuesta oscilatoria e inestable que distorsiona la física del mecanismo. 
 \newpage
 
-\section{Sistema físico}
+\section{Programación del microcontrolador}
+En esta sección se detalla el desarrollo e implementación del firmware encargado de ejecutar las tareas de control en tiempo real. En primer lugar, se describe de forma breve el ecosistema de desarrollo empleado, la asignación física de los pines (PINOUT) y la forma general de configurar los periféricos involucrados. 
 
-\subsection{Programación del microcontrolador}
-\subsubsection{Ecosistema de desarrollo}
+Posteriormente, se desglosa con mayor detalle la configuración a bajo nivel de los periféricos críticos de actuación (ePWM) y captura de datos (eQEP), para finalizar con el diseño del canal de telemetría (SCI) y la sincronización de la interrupción periódica del sistema (rutina de control).
+
+\paragraph{Ecosistema de desarrollo}
 El desarrollo del firmware, como se comentó en el Capítulo~\ref{cap:analisis}, se apoya en el entorno de desarrollo integrado (IDE) oficial de Texas Instruments, \textbf{Code Composer Studio (CCS)} \cite{ti_ccs}. Este entorno optimiza la compilación para la arquitectura C28x y proporciona herramientas avanzadas de depuración (\textit{debug}). Gracias a ellas, es posible ejecutar el código línea por línea, así como inspeccionar y monitorizar el valor de los registros del sistema en tiempo real durante la ejecución del programa.
 
 Además para programar el microcontrolador \textbf{TMS320F280049C} en el IDE, se tiene la SDK \textbf{C2000Ware} que ofrece tres metodologías de acceso a los periféricos y registros de memoria, cada una con un compromiso (\textit{trade-off}) diferente entre nivel de abstracción, legibilidad y control sobre la programación: el acceso directo por dirección, el mapeo mediante estructuras de campos de bits (\textit{Bit-fields}) y el uso de la librería de funciones \textit{DriverLib} \cite{ti_c2000ware_drivers}. 
@@ -1317,6 +1319,7 @@ Además para programar el microcontrolador \textbf{TMS320F280049C} en el IDE, se
 \end{figure}
 \FloatBarrier
 
+\newpage
 El \textbf{Acceso Directo} ofrece un control absoluto pero con una dificultad de desarrollo muy alta y propensión a errores, al obligar a calcular manualmente máscaras binarias en hexadecimal. En el extremo opuesto, la librería \textbf{DriverLib} reduce la dificultad al mínimo mediante funciones abstractas de alto nivel, pero resta control directo al desarrollador sobre la configuración real de los registros del chip.
 
 Por este motivo, se ha seleccionado el enfoque intermedio de \textbf{Campos de bits (Bit-fields)}. Esta metodología permite mapear los registros físicos del \textit{datasheet} como estructuras de datos nativas en C. De este modo, se justifica su uso al garantizar un \textbf{control directo e inmediato sobre el hardware} bajo una dificultad moderada.
@@ -1337,7 +1340,7 @@ Por este motivo, se ha seleccionado el enfoque intermedio de \textbf{Campos de b
 
 La principal ventaja práctica de esta elección se manifiesta durante las etapas de depuración. Al haber programado utilizando los nombres nativos de los registros, el mapa de variables que despliega el IDE es plenamente inteligible y mantiene una trazabilidad directa con el código fuente; un beneficio que se perdería drásticamente si se empleara la abstracción de \textit{DriverLib}. 
 
-Como se ejemplifica en la Figura~\ref{fig:CCS_IDE}, durante la depuración del programa \texttt{control.c}, el entorno de desarrollo permite inspeccionar y monitorizar en tiempo real el valor exacto de los bits y registros críticos del sistema. 
+Como se muestra en la Figura~\ref{fig:CCS_IDE}, durante la depuración del programa \texttt{control.c}, el entorno de desarrollo permite inspeccionar y monitorizar en tiempo real el valor exacto de los bits y registros críticos del sistema. 
 
 \begin{figure}[ht]
 	\centering
@@ -1350,21 +1353,60 @@ Como se ejemplifica en la Figura~\ref{fig:CCS_IDE}, durante la depuración del p
 \FloatBarrier
 
 \newpage
+\paragraph{Mapeo de periféricos y asignación de pines (PINOUT)}
 
-\subsubsection{Configuración de periféricos de hardware dedicados (ePWM y eQEP)}
+Antes de proceder con el desarrollo software, se define la interfaz física del sistema (\textit{PINOUT}). El microcontrolador \textbf{TMS320F280049C} cuenta con un mecanismo interno de multiplexado para optimizar el uso de sus pines físicos, es decir, un mismo pin físico puede enrutarse internamente hacia módulos digitales independientes, entradas analógicas o funciones de propósito general (GPIO). La tabla completa de multiplexado del chip se proporciona en el Anexo~\ref{ap:tabla_mux}.
 
-Una vez seleccionada la metodología de campos de bits para la programación, se desarrollaron las rutinas de configuración para los dos periféricos esenciales en el lazo de control: el módulo de modulación por ancho de pulsos (\textit{ePWM1}) para la actuación sobre el motor, y los módulos de decodificación en cuadratura (\textit{eQEP1} y \textit{eQEP2}) para la lectura de los encoders.
+Para la realización de este proyecto se emplea la tarjeta de desarrollo oficial \textbf{LAUNCHXL-F280049C}. La distribución espacial y función de los pines se ilustra en la Figura~\ref{fig:launchpad_pinout}.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.95\textwidth]{Pictures/pinmap}
+	\caption{Mapa de pines y asignación de periféricos de la tarjeta LAUNCHXL-F280049C.}
+	\label{fig:launchpad_pinout}
+\end{figure}
+\FloatBarrier
+
+Esta figura permite apreciar el mecanismo de multiplexado de pines, ya que cada terminal físico dispone de múltiples funciones alternativas configurables por software.
+
+\begin{table}[htbp]
+	\centering
+	\caption{Entradas y salidas}
+	\label{tab:pinout_sistema}
+	\renewcommand{\arraystretch}{1.3}
+	\begin{tabularx}{\textwidth}{l l l l X}
+		\hline
+		\textbf{Señal Física} & \textbf{Pin Interno} & \textbf{GPIO} & \textbf{Mux Value} & \textbf{Descripción Técnica / Propósito} \\ \hline
+		\texttt{EPWM1A} & Pin 80 (J8) & \texttt{GPIO0} & \texttt{1} (\textit{ePWM}) & Señal de modulación de potencia (\textit{ENA} del puente H). \\
+		\texttt{MOTOR\_IN1} & Pin 79 (J8) & \texttt{GPIO1} & \texttt{0} (\textit{GPIO}) & Control de dirección del motor (\textit{IN1} del puente H). \\
+		\texttt{MOTOR\_IN2} & Pin 74 (J8) & \texttt{GPIO6} & \texttt{0} (\textit{GPIO}) & Control de dirección del motor (\textit{IN2} del puente H). \\
+		\texttt{EQEP1A} & Pin 40 (J4) & \texttt{GPIO10} & \texttt{5} (\textit{eQEP}) & Entrada del Canal A para el encoder de posición del carro de la planta. \\
+		\texttt{EQEP1B} & Pin 39 (J4) & \texttt{GPIO11} & \texttt{5} (\textit{eQEP}) & Entrada del Canal B para el encoder de posición del carro de la planta. \\
+		\texttt{EQEP2A} & Pin 72 (J8) & \texttt{GPIO14} & \texttt{10} (\textit{eQEP}) & Entrada del Canal A para el encoder de posición del péndulo. \\
+		\texttt{EQEP2B} & Pin 71 (J8) & \texttt{GPIO15} & \texttt{10} (\textit{eQEP}) & Entrada del Canal B para el encoder de posición del péndulo. \\
+		\texttt{SCIRXDA} & Pin 43 (J5) & \texttt{GPIO28} & \texttt{1} (\textit{SCI}) & Entrada de recepción de comandos vía serie (UART) desde el PC. \\
+		\texttt{SCITXDA} & Pin 44 (J5) & \texttt{GPIO29} & \texttt{1} (\textit{SCI}) & Salida de transmisión de datos de telemetría hacia el entorno externo (PC). \\ \hline
+	\end{tabularx}
+\end{table}
+\FloatBarrier
+
+
+\paragraph{Configuración general de periféricos hardware dedicados (ePWM y eQEP)}
+
+Se desarrollaron las rutinas de configuración para los dos periféricos esenciales en el lazo de control: el módulo de modulación por ancho de pulsos (\textit{ePWM1}) para la actuación sobre el motor, y los módulos de decodificación en cuadratura (\textit{eQEP1} y \textit{eQEP2}) para la lectura de los encoders.
 
 Las funciones de configuración se dividen en tres pasos principales a realizar:
 \begin{enumerate}[]
-	\item \textbf{Señal de reloj del periférico:} \texttt{PCLKCR2} para el modulo \textit{ePWM1} y \texttt{PCLKCR4} para los módulos \textit{eQEP1} y \textit{eQEP2}. Se precisa de las instrucciones \texttt{EALLOW} y \texttt{EDIS} para acceder temporalmente al registro de control del sistema (\texttt{CpuSysRegs}) y poder habilitar las señales de reloj.
+	\item \textbf{Señal de reloj del periférico:} \texttt{PCLKCR2} para el modulo \textit{ePWM1} y \texttt{PCLKCR4} para los módulos \textit{eQEP1} y \textit{eQEP2}. Para su habilitación, se precisa de las instrucciones \texttt{EALLOW} y \texttt{EDIS} para acceder temporalmente al registro de control del sistema (\texttt{CpuSysRegs}).
 	
 	\item \textbf{Configuración de los registros:} Atendiendo a las tablas de registros del \textit{datasheet} para obtener un comportamiento específico del periférico. Si se desea conocer en profundidad el mapa de memoria de cada periférico, se proporciona la información en el Anexo \ref{ap:registros}.
 	
 	\item \textbf{Habilitación del periférico:} Activación final de los módulos (como el bit \texttt{QPEN} en el caso del \textit{eQEP}) para indicar a la CPU que el periférico se encuentra operativo y dar comienzo a la computación por hardware. 
 \end{enumerate}
 
-\paragraph{Módulo ePWM1 (Actuación del Motor)}
+Dada la importancia de ambos módulos, en futuras secciones se aborda su implementación y funcionamiento interno con mayor detalle. 
+
+\subsection{Módulo ePWM1 (Actuación del Motor)}
 
 Para comprender la flexibilidad del periférico \textit{ePWM}, es necesario analizar tanto su infraestructura interna como el comportamiento dinámico de su temporizador principal. En la Figura~\ref{fig:epwm_arquitectura} se presenta el diagrama de bloques general del módulo. Como se observa, el periférico no es un simple temporizador, sino un ecosistema compuesto por varios submódulos especializados en cascada (Time-base, Counter-compare, Action-qualifier, Dead-band, etc.).
 
@@ -1429,9 +1471,11 @@ En la Tabla~\ref{tab:config_epwm} se sintetiza la configuración final implement
 \end{table}
 \FloatBarrier
 
+\subsubsection{Problemas con la zona muerta}
+3)Ajuste de la ZM del actuador, explicar técnicas que se han utilizado para reducirla y compensarla. Compensación de ZM y ajuste de la frecuencia de la PWM para obtener menor zona muerta y mayor linealidad.
 
 \newpage
-\paragraph{Módulo eQEP (Lectura del Encoder)}
+\subsection{Módulo eQEP (Lectura del Encoder)}
 
 La lectura de los encoders ópticos se delega en una máquina de estados integrada en el hardware del periférico \textit{eQEP}. Como se ilustra en la Figura~\ref{fig:eqep_funcionamiento}, las señales físicas de los canales \textit{QEPA} y \textit{QEPB} presentan un desfase eléctrico de 90$^\circ$. Al activar el modo de decodificación en cuadratura, el hardware detecta cada flanco de subida y bajada, lo que permite transitar por cuatro combinaciones binarias distintas \mbox{\texttt{(00, 10, 11, 01)}} por cada periodo de la señal. 
 
@@ -1467,22 +1511,18 @@ En la Tabla~\ref{tab:config_eqep} se detalla la configuración final asignada a 
 
 La asignación de un rango de 32 bits mediante \texttt{QPOSMAX} garantiza que el sistema pueda registrar el desplazamiento total del carro y la posición del péndulo sin riesgo de desbordamiento (\textit{overflow}). Además, la configuración actual del campo \texttt{FREE\_SOFT} está pensada para las fases de depuración: al indicarle al periférico que ignore los puntos de parada del entorno de desarrollo, se evita que el contador de posición se congele o pierda la sincronía con el estado físico real del sistema cuando se pausa manualmente la ejecución del programa.
 
-\subsubsection{Protocolo de comunicación serie y telemetría (SCI)}
-\subsubsection{Ejecución del lazo de control y determinismo temporal}
+\subsection{Protocolo de comunicación serie y telemetría (SCI)}
+\subsection{Rutina de interrupción periódica}
 1)Firmware, comentar como se programa una DSP de texas instruments mediante el uso del IDE CCS y la capa de HAL C2000-ware. Utilizar el datashet del fabricante para justificar la configuración de ciertos registros. Módulos Epwm y Eqep muy interesante ver como liberan a la CPU de estas tareas. Explicar la configuración de registros para conseguir cierto comportamiento en los periféricos así como explicar como se configuró el protocolo serie para la telemetría del sistema. 
 
 2)Explicar como se programo la DSP con timers para ejecutar el bucle de control en una rutina de interrupción periódica (implica determinismo, nada del loop de Arduino).
 
-\subsection{Problemas con la zona muerta}
-
-3)Ajuste de la ZM del actuador, explicar técnicas que se han utilizado para reducirla y compensarla. Compensación de ZM y ajuste de la frecuencia de la PWM para obtener menor zona muerta y mayor linealidad. 
-
-\subsection{Identificación de parámetros}
+\section{Identificación de parámetros}
 4)Razonar experimentos de identificación de parámetros del sistema. La justificación es que los parámetros del fabricante no sabemos si son del todo ciertos al ser una máquina de hace 25 años. Algunos experimentos: Conversión de voltios a fuerza horizontal (encontrar la constante que relaciona ambas magnitudes), Identificación del rozamiento horizontal del carro, identificación del rozamiento y la inercia del péndulo. 
 
 5)Simular de nuevo con los parámetros obtenidos mediante identificación. 
 
-\subsection{Algoritmo de control en el microcontrolador}
+\section{Implementación del algoritmo de control}
 6)Implementación de algoritmos de control en el microcontrolador (lo tenemos todo dividido en funciones, explicar un poco que recibe y devuelve cada una y como se ajusta todo)
 
 
