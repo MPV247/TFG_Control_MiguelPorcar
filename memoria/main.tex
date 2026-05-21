@@ -1392,88 +1392,18 @@ A partir de la distribución espacial provista por el fabricante y considerando 
 
 \paragraph{Configuración general de periféricos hardware dedicados (ePWM y eQEP)}
 
-Se desarrollaron las rutinas de configuración para los dos periféricos esenciales en el lazo de control: el módulo de modulación por ancho de pulsos (\textit{ePWM1}) para la actuación sobre el motor, y los módulos de decodificación en cuadratura (\textit{eQEP1} y \textit{eQEP2}) para la lectura de los encoders.
+La utilidad de este apartado radica en exponer el procedimiento que se ha diseñado en el firmware para la correcta habilitación, inicialización y puesta en marcha de los periféricos esenciales del sistema. Así, se desarrollaron las rutinas de configuración tanto para el módulo de modulación por ancho de pulsos (\textit{ePWM1}) —encargado de la actuación sobre el motor— como para los bloques de decodificación en cuadratura (\textit{eQEP1} y \textit{eQEP2}) dedicados a la lectura de los encoders. Con el fin de estructurar el código de manera eficiente, el proceso de inicialización de cada módulo consta de tres fases fundamentales:
 
-Las funciones de configuración se dividen en tres pasos principales a realizar:
-\begin{enumerate}[]
-	\item \textbf{Señal de reloj del periférico:} \texttt{PCLKCR2} para el modulo \textit{ePWM1} y \texttt{PCLKCR4} para los módulos \textit{eQEP1} y \textit{eQEP2}. Para su habilitación, se precisa de las instrucciones \texttt{EALLOW} y \texttt{EDIS} para acceder temporalmente al registro de control del sistema (\texttt{CpuSysRegs}).
+\begin{itemize}
+	\item \textbf{Habilitación del reloj del periférico:} Se activa la señal de reloj específica a través de los registros de control del sistema (\texttt{CpuSysRegs.PCLKCR2} para el módulo \textit{ePWM1} y \texttt{CpuSysRegs.PCLKCR4} para los módulos \textit{eQEP}). Debido a que estos registros están protegidos, se requiere el uso de las instrucciones de ensamblador \texttt{EALLOW} y \texttt{EDIS} para su modificación segura.
 	
-	\item \textbf{Configuración de los registros:} Atendiendo a las tablas de registros del \textit{datasheet} para obtener un comportamiento específico del periférico. Si se desea conocer en profundidad el mapa de memoria de cada periférico, se proporciona la información en el Anexo \ref{ap:registros}.
+	\item \textbf{Configuración de registros internos:} Ajuste de los registros del modulo de acuerdo con las especificaciones del fabricante para obtener el comportamiento deseado. Para facilitar la lectura del texto principal, la descripción exhaustiva del mapa de memoria de cada bloque se ha desplazado al Anexo~\ref{ap:registros_eQEP} (eQEP) y al Anexo\ref{ap:registros_ePWM} (ePWM).
 	
-	\item \textbf{Habilitación del periférico:} Activación final de los módulos (como el bit \texttt{QPEN} en el caso del \textit{eQEP}) para indicar a la CPU que el periférico se encuentra operativo y dar comienzo a la computación por hardware. 
-\end{enumerate}
-
-Dada la importancia de ambos módulos, en futuras secciones se aborda su implementación y funcionamiento interno con mayor detalle. 
-
-\subsection{Módulo ePWM1 (Actuación del Motor)}
-
-Para comprender la flexibilidad del periférico \textit{ePWM}, es necesario analizar tanto su infraestructura interna como el comportamiento dinámico de su temporizador principal. En la Figura~\ref{fig:epwm_arquitectura} se presenta el diagrama de bloques general del módulo. Como se observa, el periférico no es un simple temporizador, sino un ecosistema compuesto por varios submódulos especializados en cascada (Time-base, Counter-compare, Action-qualifier, Dead-band, etc.).
-
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[width=0.85\textwidth]{Pictures/arquitectura_epwm} 
-	\caption{Diagrama de bloques y submódulos del periférico ePWM \cite{ti_f28004x_trm}.}
-	\label{fig:epwm_arquitectura}
-\end{figure}
-\FloatBarrier
-
-El funcionamiento principal del periférico se rige por sus tres primeros submódulos:
-
-\subsubsection{1. Submódulo de Tiempo Base (Time-Base Submodule)}
-Determina la simetría, la resolución y la frecuencia de la señal PWM. La Figura~\ref{fig:epwm_modos_conteo} ilustra los tres modos de operación del contador principal (\texttt{TBCTR}): 
-\begin{itemize}[]
-	\item Conteo hacia arriba (\textit{Up-count}).
-	\item Conteo hacia abajo (\textit{Down-count}).
-	\item Conteo simétrico triangular (\textit{Up-Down count}).
+	\item \textbf{Activación final del módulo:} Modificación del bit de habilitación global por hardware (como el bit \texttt{QPEN} en el caso de la lógica \textit{eQEP}) para indicar a la CPU que el periférico se encuentra plenamente operativo.
 \end{itemize}
 
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[width=0.85\textwidth]{Pictures/frec_pwm} 
-	\caption{Modos de conteo del submódulo Time-base (TB) y ecuaciones de periodo \cite{ti_f28004x_trm}.}
-	\label{fig:epwm_modos_conteo}
-\end{figure}
-\FloatBarrier
+Dada la relevancia de estos submódulos, en los siguientes apartados se analiza con detalle su implementación y funcionamiento interno. 
 
-Como se detalla en la Figura~\ref{fig:epwm_modos_conteo}, la elección del modo afecta directamente a la ecuación utilizada para calcular el periodo de la señal ($T_{PWM}$). En el modo seleccionado para este proyecto (\textit{Up-Down count}), el contador incrementa su valor hasta alcanzar el límite cargado en el registro \texttt{TBPRD} y luego desciende simétricamente hasta cero, duplicando la duración del periodo respecto a los modos unidireccionales. 
-
-Cabe destacara el compromiso técnico en la elección de \texttt{TBPRD}: a mayor valor del registro se obtiene una resolución digital mayor para determinar el ciclo de trabajo (\textit{duty cycle}), pero en contraposición la frecuencia de la señal disminuye. 
-
-Por otro lado, el registro de control \texttt{TBCTL} regula la velocidad de conteo mediante los pre-escaladores \texttt{CLKDIV} y \texttt{HSPCLKDIV}, dividen la frecuencia de la señal de reloj del sistema ($SYSCLK$) para establecer la frecuencia de reloj propia para el módulo ($TBCLK$).
-
-\newpage
-
-\subsubsection{2. Submódulo de Comparación (Counter-Compare Submodule)}
-Una vez establecido el periodo de la rampa triangular, el submódulo de comparación se encarga de supervisar el valor instantáneo de la cuenta mediante los registros independientes \texttt{CMPA} y \texttt{CMPB}. Dado que cada módulo ePWM físico de la tarjeta dispone de dos salidas de potencia diferenciadas (\texttt{ePWMxA} y \texttt{ePWMxB}), la existencia de dos comparadores de hardware idénticos resulta imprescindible para modificar y gobernar los ciclos de trabajo de ambos canales de manera totalmente autónoma.
-
-\subsubsection{3. Submódulo Calificador de Acción (Action-Qualifier Submodule)}
-Finalmente, la transición de los voltajes y la generación real de la onda cuadrada se delega en el submódulo de acción a través del registro \texttt{AQCTLA} (y correspondientemente \texttt{AQCTLB} para el canal secundario). Este bloque evalúa constantemente las coincidencias lógicas del hardware: cuando el valor del contador dinámico \texttt{TBCTR} intersecta el valor estático del comparador \texttt{CMPA}, el periférico altera de forma instantánea el estado del pin físico sin intervención de la CPU, forzando un nivel lógico bajo (\texttt{AQ\_CLEAR}) durante la fase de subida o un nivel alto (\texttt{AQ\_SET}) durante la fase de bajada para consolidar la modulación por ancho de pulsos.
-
-En la Tabla~\ref{tab:config_epwm} se sintetiza la configuración final implementada en el código fuente para coordinar de forma armónica estos tres submódulos operando a una frecuencia real de 500~Hz.
-
-\begin{table}[htbp]
-	\centering
-	\caption{Configuración final de los registros del módulo ePWM1.}
-	\label{tab:config_epwm}
-	\renewcommand{\arraystretch}{1.4}
-	\begin{tabularx}{\textwidth}{l l X}
-		\hline
-		\textbf{Registro / Campo} & \textbf{Valor Asignado} & \textbf{Justificación Técnica / Propósito} \\ \hline
-		\texttt{TBPRD} & \texttt{5000} & Periodo de conteo para obtener 1~kHz (con $SYSCLK = 100$~MHz). \\
-		\texttt{TBCTR} & \texttt{0} & Limpieza del contador de tiempo base por seguridad. \\
-		\texttt{TBCTL.bit.CTRMODE} & \texttt{TB\_COUNT\_UPDOWN} & Conteo triangular (Up-Down). \\
-		\texttt{TBCTL.bit.HSPCLKDIV} & \texttt{5} & Divisor de reloj de alta velocidad. \\
-		\texttt{CMPA.bit.CMPA} & \texttt{0} & Ciclo de trabajo (\textit{duty cycle}) inicial en un estado seguro (0\,\%). \\
-		\texttt{AQCTLA.bit.CAU} & \texttt{AQ\_CLEAR} & Forza la señal a 0~V al cruzar \texttt{CMPA} de subida. \\
-		\texttt{AQCTLA.bit.CAD} & \texttt{AQ\_SET} & Forza la señal a 3.3~V al cruzar \texttt{CMPA} de bajada. \\ \hline
-	\end{tabularx}
-\end{table}
-\FloatBarrier
-
-\subsubsection{Problemas con la zona muerta}
-3)Ajuste de la ZM del actuador, explicar técnicas que se han utilizado para reducirla y compensarla. Compensación de ZM y ajuste de la frecuencia de la PWM para obtener menor zona muerta y mayor linealidad.
-
-\newpage
 \subsection{Módulo eQEP (Lectura del Encoder)}
 
 La lectura de los encoders ópticos se delega en una máquina de estados integrada en el hardware del periférico \textit{eQEP}. Como se ilustra en la Figura~\ref{fig:eqep_funcionamiento}, las señales físicas de los canales \textit{QEPA} y \textit{QEPB} presentan un desfase eléctrico de 90$^\circ$. Al activar el modo de decodificación en cuadratura, el hardware detecta cada flanco de subida y bajada, lo que permite transitar por cuatro combinaciones binarias distintas \mbox{\texttt{(00, 10, 11, 01)}} por cada periodo de la señal. 
@@ -1488,7 +1418,7 @@ Esta decodificación no solo cuadriplica ($\times$4) la resolución del encoder,
 \end{figure}
 \FloatBarrier
 
-En la Tabla~\ref{tab:config_eqep} se detalla la configuración final asignada a los campos de bits de este módulo para conseguir la decodificación en cuadratura.
+En la Tabla~\ref{tab:config_eqep} se detalla la configuración final asignada a los campos de bits de este módulo para conseguir la decodificación en cuadratura. Si se desea conocer en detalle el mapa de memoria y configuraciones alternativas consulte el Anexo \ref{ap:registros}.
 
 \begin{table}[htbp]
 	\centering
@@ -1509,6 +1439,88 @@ En la Tabla~\ref{tab:config_eqep} se detalla la configuración final asignada a 
 \FloatBarrier
 
 La asignación de un rango de 32 bits mediante \texttt{QPOSMAX} garantiza que el sistema pueda registrar el desplazamiento total del carro y la posición del péndulo sin riesgo de desbordamiento (\textit{overflow}). Además, la configuración actual del campo \texttt{FREE\_SOFT} está pensada para las fases de depuración: al indicarle al periférico que ignore los puntos de parada del entorno de desarrollo, se evita que el contador de posición se congele o pierda la sincronía con el estado físico real del sistema cuando se pausa manualmente la ejecución del programa.
+
+\subsection{Módulo ePWM1 (Actuación del Motor)}
+
+Para comprender el funcionamiento del periférico \textit{ePWM}, es necesario analizar tanto su infraestructura interna como el comportamiento de su temporizador principal. En la Figura~\ref{fig:epwm_arquitectura} se presenta el diagrama de bloques general del módulo. Como se observa, el periférico no es un simple temporizador, sino un ecosistema compuesto por varios submódulos especializados.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.65\textwidth]{Pictures/arquitectura_epwm} 
+	\caption{Diagrama de bloques y submódulos del periférico ePWM \cite{ti_f28004x_trm}.}
+	\label{fig:epwm_arquitectura}
+\end{figure}
+\FloatBarrier
+
+El comportamiento de la señal de modulación se rige principalmente por la acción combinada de sus tres primeros submódulos: 
+\begin{itemize}[]
+	\item \textbf{Time-base (TB) submodule}
+	\item \textbf{Counter-compare (CC) submodule}
+	\item \textbf{Action-qualifier (AC) submodule}
+\end{itemize}
+
+El \textbf{Submódulo Time-base} determina la simetría, la resolución y la frecuencia de la señal PWM. Como ilustra la Figura~\ref{fig:epwm_modos_conteo}, se ha seleccionado el modo simétrico triangular o conteo hacia arriba y hacia abajo (\textit{Up-Down count}). En este modo, el contador dinámico \texttt{TBCTR} incrementa su valor hasta alcanzar el límite cargado en el registro de periodo \texttt{TBPRD} y luego desciende simétricamente hasta cero, duplicando la duración del periodo de la señal PWM respecto a los modos unidireccionales. 
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.82\textwidth]{Pictures/frec_pwm} 
+	\caption{Modos de conteo del submódulo Time-base (TB) y ecuaciones de periodo \cite{ti_f28004x_trm}.}
+	\label{fig:epwm_modos_conteo}
+\end{figure}
+\FloatBarrier
+
+A partir de la rampa triangular establecida, el \textbf{Submódulo de Comparación (\textit{Counter-compare})} supervisa en tiempo real el valor instantáneo del contador \texttt{TBCTR} y lo contrasta con el registro \texttt{CMPA}. 
+
+La generación real de la onda cuadrada se delega posteriormente en el \textbf{Submódulo Calificador de Acción (\textit{Action-qualifier})}. Cuando \texttt{TBCTR} intersecta el valor de \texttt{CMPA}, el periférico altera instantáneamente el estado del pin físico sin intervención de la CPU, forzando un nivel lógico bajo (\texttt{LOW}) durante la fase de subida (\textit{Up-count}) y un nivel alto (\texttt{HIGH}) durante la fase de bajada (\textit{Down-count}).
+
+\newpage
+Debido a esta combinación de eventos implementada en el firmware, el ciclo de trabajo (\textit{duty cycle}) de la señal resultante guarda una relación lineal y directamente proporcional con el valor cargado en \texttt{CMPA}:
+
+\begin{itemize}
+	\item \textbf{\texttt{CMPA} = 0:} Las intersecciones ocurren en el origen de la rampa. Al iniciar la pendiente ascendente, el evento de subida (\texttt{CAU}) fuerza de inmediato la señal a nivel bajo, manteniéndola de forma continua en 0~V, lo que equivale a un \textbf{ciclo de trabajo del 0\,\%} (motor completamente detenido).
+	
+	\item \textbf{\texttt{CMPA} = \texttt{TBPRD} / 2:} Las intersecciones ocurren exactamente en el punto medio de ambas pendientes, generando una onda perfectamente simétrica con un \textbf{ciclo de trabajo del 50\,\%} (el motor recibe la mitad de la tensión eficaz).
+	
+	\item \textbf{\texttt{CMPA} = \texttt{TBPRD}:} El umbral de comparación se sitúa en el vértice superior de la rampa triangular, maximizando el tiempo en que la señal permanece en nivel lógico alto. Esto se traduce en un \textbf{ciclo de trabajo del 100\,\%} (el motor opera a su máxima velocidad de giro al recibir el valor eficaz completo de la fuente).
+\end{itemize}
+
+En la Tabla~\ref{tab:config_epwm} se sintetiza la configuración definitiva cargada en los campos de bits de la instancia \texttt{EPwm1Regs} para establecer una frecuencia de conmutación de $1~\text{kHz}$ con conteo simétrico.
+
+\begin{table}[htbp]
+	\centering
+	\caption{Configuración final de los registros de control del módulo ePWM1.}
+	\label{tab:config_epwm}
+	\renewcommand{\arraystretch}{1.3}
+	\small
+	\begin{tabularx}{\textwidth}{l l X}
+		\hline
+		\textbf{Registro / Campo} & \textbf{Valor Asignado} & \textbf{Justificación Técnica / Propósito} \\ \hline
+		\texttt{TBPRD} & \texttt{5000} & Resolución para modular el ciclo de trabajo\\
+		\texttt{TBCTR} & \texttt{0} & Inicialización y limpieza preventiva del contador de tiempo base. \\
+		\texttt{TBCTL.bit.CTRMODE} & \texttt{2} & Configuración de conteo triangular simétrico. \\
+		\texttt{TBCTL.bit.HSPCLKDIV} & \texttt{5} & Pre-escalador de reloj, alta velocidad $TBCLK = SYSCLK / (HSPCLKDIV \cdot CLKDIV)$. \\
+		\texttt{TBCTL.bit.CLKDIV} & \texttt{1} & Pre-escalador de reloj secundario. \\
+		\texttt{CMPA.bit.CMPA} & \texttt{0} & Ciclo de trabajo (\textit{duty cycle}) inicial en un estado seguro del 0\,\%. \\
+		\texttt{AQCTLA.bit.CAU} & \texttt{1} & Fuerza la señal a 0~V al cruzar el umbral \texttt{CMPA} en la fase de subida. \\
+		\texttt{AQCTLA.bit.CAD} & \texttt{2} & Fuerza la señal a 3.3~V al cruzar el umbral \texttt{CMPA} en la fase de bajada. \\ \hline
+	\end{tabularx}
+\end{table}
+\FloatBarrier
+
+\subsubsection{Compensación y caracterización de la zona muerta}
+
+Un desafío crítico en el control del motor de corriente continua mediante el puente en H es la presencia de la \textbf{zona muerta (\textit{dead-band})}. Debido a los tiempos de conmutación físicos e inercias eléctricas de los transistores Mosfet o transistores de potencia del driver, existe un rango mínimo de tensión (ciclo de trabajo muy bajo) en el cual la corriente aplicada no es capaz de vencer la fricción ni activar el movimiento, rompiendo la linealidad del actuador en las inmediaciones del cero.
+
+Para mitigar este efecto no lineal y maximizar la respuesta en baja velocidad del carro, se aplicaron dos técnicas de diseño coordinadas:
+
+\begin{enumerate}
+	\item \textbf{Ajuste empírico de la frecuencia PWM:} Al consolidar la frecuencia en $10~\text{kHz}$, se balancea el compromiso dinámico. Frecuencias excesivamente altas empeoran los efectos de la zona muerta por las pérdidas en conmutación, mientras que frecuencias muy bajas introducen oscilaciones indeseadas en el par motor.
+	
+	\item \textbf{Algoritmo de compensación por software:} Se implementó una rutina en el bucle cerrado encargada de monitorizar el signo de la acción de control calculada. Si la ley de control exige un valor absoluto inferior al umbral mínimo caracterizado de la zona muerta, el software inyecta un escalón de pre-activación constante (\textit{offset}) que desplaza el punto de operación dinámico directamente hacia la zona lineal del driver, eliminando el estancamiento del sistema.
+\end{enumerate}
+
+\newpage
+
 
 \subsection{Protocolo de comunicación serie y telemetría (SCI)}
 \subsection{Rutina de interrupción periódica}
@@ -1855,9 +1867,41 @@ end
 \noindent El script completo de la simulación, junto con los parámetros reales del sistema y los controladores funcionales detallados, se encuentra disponible para su consulta y descarga en el repositorio del proyecto \cite{Porcar2026TFG}.
 \newpage
 
-\section{Registros del TMS32F280049C}
-\label{ap:registros}
+\section{Tabla de Multiplexación Completa del TMS32F280049C} \label{ap:tabla_mux}
 
-\subsection{Módulo eQEP}
+% --- PÁGINA 1: ENTRARÁ EL TÍTULO Y LA PRIMERA TABLA MUX1 ---
+\begin{figure}[!ht] % [!ht] fuerza a buscar espacio inmediatamente aquí
+	\centering
+	\includegraphics[width=\textwidth]{mux1}
+	\caption{\textit{GPIO Muxed Pins}, Parte I: \texttt{GPIO0} a \texttt{GPIO15} \cite{ti_f28004x_trm}}
+	\label{fig:mux_completo_p1}
+\end{figure}
+\FloatBarrier % Forzamos el renderizado de mux1 en esta primera hoja
+
+% --- PÁGINA 2: ENTRARÁ MUX2 DE FORMA NATURAL ---
+\begin{figure}[!ht]
+	\centering
+	\ContinuedFloat % Mantiene la coherencia de la numeración si usas el mismo label maestro
+	\includegraphics[width=\textwidth]{mux2}
+	\caption{\textit{GPIO Muxed Pins}, Parte II: \texttt{GPIO16} a \texttt{GPIO37} (continuación) \cite{ti_f28004x_trm}}
+	\label{fig:mux_completo_p2}
+\end{figure}
+\FloatBarrier % Forzamos el renderizado de mux2 en su hoja
+
+% --- PÁGINA 3: ENTRARÁ MUX3 ---
+\begin{figure}[!ht]
+	\centering
+	\ContinuedFloat
+	\includegraphics[width=\textwidth]{mux3}
+	\caption{\textit{GPIO Muxed Pins}, Parte III: \texttt{GPIO39} a \texttt{GPIO59} (continuación) \cite{ti_f28004x_trm}}
+	\label{fig:mux_completo_p3}
+\end{figure}
+\FloatBarrier
+
+\section{Registros del módulo eQEP}
+\label{ap:registros_eQEP}
+
+\section{Registros del módulo ePWM}
+\label{ap:registros_ePWM}
 
 \end{document}
