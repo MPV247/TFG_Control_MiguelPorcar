@@ -1978,5 +1978,83 @@ A partir de la distribución expuesta en la Figura~\ref{fig:bits_qepctl}, las co
 
 \section{Registros del módulo ePWM}
 \label{ap:registros_ePWM}
+Se proporciona el mapa de memoria global del módulo de hardware para la modulación por ancho de pulso (\textit{ePWM}), el cual delimita las direcciones base del periférico y sus registros de control asociados. 
+\begin{figure}[!ht] % [!ht] fuerza a buscar espacio inmediatamente aquí
+	\centering
+	\includegraphics[width=\textwidth]{Pictures/mapa_memoria_epwm}
+	\caption{Mapa de memoria del periférico \textit{ePWM} \cite{ti_f28004x_trm}}
+	\label{fig:memoria_ePWM}
+\end{figure}
+\FloatBarrier
+
+Se desglosa la estructura interna de bits únicamente de aquellos registros de control modificados de forma explícita en la rutina de inicialización. Para el caso concreto de este periférico se abordan los registros: \texttt{TBCTL} y \texttt{AQCTLA}.
+
+\newpage
+El primer bloque crítico modificado en el código fuente corresponde al registro \texttt{TBCTL}. En la Figura~\ref{fig:bits_tbctl} se detalla la distribución y propósito de sus campos binarios según la documentación oficial del fabricante.
+\begin{figure}[!ht]
+	\centering
+	\includegraphics[width=\textwidth]{Pictures/tbctl_general} % Aquí cargas la imagen de tus campos de bits
+	\caption{Registro \texttt{TBCTL} \cite{ti_f28004x_trm}.}
+	\label{fig:bits_tbctl_gen}
+\end{figure}
+\FloatBarrier
+
+\begin{figure}[!ht]
+	\centering
+	\includegraphics[width=\textwidth]{Pictures/tbctl1} % Aquí cargas la imagen de tus campos de bits
+	\caption{Distribución de campos y bits de configuración del registro \texttt{TBCTL} \cite{ti_f28004x_trm}}
+	\label{fig:bits_tbctl}
+\end{figure}
+\FloatBarrier
+\begin{figure}[!ht]
+	\centering
+	\ContinuedFloat
+	\includegraphics[width=\textwidth]{Pictures/tbctl2} % Aquí cargas la imagen de tus campos de bits
+	\caption{Distribución de campos y bits de configuración del registro \texttt{TBCTL} \cite{ti_f28004x_trm} (continuación)}
+	\label{fig:bits_tbctl2}
+\end{figure}
+\FloatBarrier
+
+Valores modificados en la función de inicalización para obtener un comportamiento de señal determinado: 
+\begin{itemize}
+	\item \textbf{\texttt{TBCTL.bit.CTRMODE = 2h} (\texttt{TB\_COUNT\_UPDOWN}):} Establece el modo de conteo triangular simétrico (ascendente-descendente). 
+		
+	\item \textbf{\texttt{TBCTL.bit.HSPCLKDIV = 5h}:} El valor numérico \texttt{5h} actúa como un índice de configuración por hardware que le indica al microcontrolador que debe aplicar un divisor de frecuencia real entre 10 sobre el reloj principal del sistema.
+	
+	\item \textbf{\texttt{TBCTL.bit.CLKDIV = 1h}:} El valor numérico \texttt{1h} indica un divisor de 2 para la frecuencia base. (CORREGIR ESTO)
+\end{itemize}
+
+\newpage
+Finalmente, para el registro \texttt{AQCTLA} se detalla la distribución y propósito de sus campos binarios según la documentación oficial del fabricante.
+\begin{figure}[!ht]
+	\centering
+	\includegraphics[width=\textwidth]{Pictures/aqctl_general} % Aquí cargas la imagen de tus campos de bits
+	\caption{Registro \texttt{AQCTLA} \cite{ti_f28004x_trm}.}
+	\label{fig:bits_aqctla_gen}
+\end{figure}
+\FloatBarrier
+
+\begin{figure}[!ht]
+	\centering
+	\includegraphics[width=\textwidth]{Pictures/aqctl1} % Aquí cargas la imagen de tus campos de bitsa
+	\caption{Distribución de campos y bits de configuración del registro \texttt{AQCTLA} \cite{ti_f28004x_trm}}
+	\label{fig:bits_aqctla}
+\end{figure}
+\FloatBarrier
+\begin{figure}[!ht]
+	\centering
+	\ContinuedFloat
+	\includegraphics[width=\textwidth]{Pictures/aqctl2} % Aquí cargas la imagen de tus campos de bits
+	\caption{Distribución de campos y bits de configuración del registro \texttt{AQCTLA} \cite{ti_f28004x_trm} (continuación)}
+	\label{fig:bits_aqctla2}
+\end{figure}
+\FloatBarrier
+
+A partir de la distribución expuesta en la Figura~\ref{fig:bits_aqctla}, los eventos lógicos configurados en el firmware se justifican técnicamente de la siguiente manera:
+\begin{itemize}
+	\item \textbf{\texttt{AQCTLA.bit.CAU = 1h} (\texttt{AQ\_CLEAR}):} Fuerza de forma síncrona el pin físico a un nivel lógico bajo (0~V) cuando el contador de tiempo base (\texttt{TBCTR}) se encuentra en su fase ascendente (\textit{Up-count}) e intersecta exactamente el valor numérico umbral almacenado en el registro comparador \texttt{CMPA}.
+	
+	\item \textbf{\texttt{AQCTLA.bit.CAD = 2h} (\texttt{AQ\_SET}):} Fuerza el pin físico a un nivel lógico alto (3.3~V) cuando el contador de tiempo base (\texttt{TBCTR}) cambia a su fase descendente (\textit{Down-count}) e intersecta nuevamente el valor guardado en el comparador \texttt{CMPA}.
+\end{itemize}
 
 \end{document}
