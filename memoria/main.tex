@@ -1537,12 +1537,133 @@ En la Tabla~\ref{tab:config_epwm} se sintetiza la configuración definitiva carg
 \end{table}
 \FloatBarrier
 
+\newpage
 \subsection{Protocolo de comunicación serie y telemetría (SCI)}
-\subsection{Rutina de interrupción periódica}
-1)Firmware, comentar como se programa una DSP de texas instruments mediante el uso del IDE CCS y la capa de HAL C2000-ware. Utilizar el datashet del fabricante para justificar la configuración de ciertos registros. Módulos Epwm y Eqep muy interesante ver como liberan a la CPU de estas tareas. Explicar la configuración de registros para conseguir cierto comportamiento en los periféricos así como explicar como se configuró el protocolo serie para la telemetría del sistema. 
+\label{ssec:comunicacion_sci}
 
-2)Explicar como se programo la DSP con timers para ejecutar el bucle de control en una rutina de interrupción periódica (implica determinismo, nada del loop de Arduino).
+La integración de un canal de comunicación serie responde a la necesidad de adquirir y monitorizar desde el PC en tiempo real la telemetría del sistema de péndulo invertido sobre carro. Disponer de un flujo constante de datos es un requisito fundamental para validar el correcto desempeño del bucle de control, ya que permite monitorizar las variables críticas del sistema ($x, \theta, u$). 
 
+Con el propósito de garantizar la interoperabilidad con las herramientas de análisis de datos (como \textit{MATLAB} o \textit{Python}) y agilizar la posterior generación de gráficas de rendimiento, la trama de datos se estructura y transmite en formato \textit{CSV} (\textit{Comma-Separated Values}). A continuación se describen los conceptos elementales de la comunicación serie implementada.
+
+\subsubsection{Arquitectura general del módulo SCI}
+
+El periférico \textit{SCI} (\textit{Serial Communications Interface}) integrado en el \textbf{TMS320F280049C} opera como un módulo de comunicación asíncrona de dos canales (\textit{UART}). Para comprender su funcionamiento de forma general, la estructura interna del periférico se puede simplificar en el diagrama de bloques presentado en la Figura~\ref{fig:sci_arquitectura_bloques}.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.75\textwidth]{Pictures/arquitectura_SCI} % Reemplaza con la ruta real de tu archivo de imagen
+	\caption{Diagrama de bloques y conexiones principales del periférico SCI \cite{ti_f28004x_trm}}
+	\label{fig:sci_arquitectura_bloques}
+\end{figure}
+\FloatBarrier
+
+Como se observa en el esquema, el funcionamiento del módulo con el resto del microcontrolador se rige bajo cuatro ejes principales:
+
+\begin{itemize}
+	\item \textbf{Conexión con la CPU y Buses:} El núcleo del procesador (\textit{CPU}) se comunica de forma directa con los registros internos del módulo \textit{SCI} a través del bus periférico (\textit{Peripheral Bus}). 
+	
+	\item \textbf{Sincronización de Reloj (\textit{Bit Clock}):} El módulo de comunicaciones depende de la señal de reloj \textit{LSPCLK} (\textit{Low Speed Peripheral Clock}). El acceso a esta señal está condicionado por una compuerta lógica controlada por el registro de control \texttt{PCLKCR7}, se debe configurar para habilitar poder activar el periférico.
+	
+	\item \textbf{Enrutamiento Externo (\textit{GPIO MUX}):} Las señales del periférico (\texttt{SCITXD} para transmitir y \texttt{SCIRXD} para recibir) pasan primero por el multiplexor de pines (\textit{GPIO MUX}), que se encarga de dirigir físicamente estas líneas hacia los pines externos de la placa.
+	
+	\item \textbf{Gestor de Interrupciones (\textit{PIE}):} Para evitar que la CPU consuma ciclos de trabajo revisando continuamente el envio de una trama, el módulo \textit{SCI} cuenta con líneas de aviso directo hacia el periférico de interrupciones (\textit{PIE}) mediante las señales \texttt{RXINT} y \texttt{TXINT}, alertando al procesador únicamente cuando ocurre un evento en el canal de comunicaciones.
+\end{itemize}
+
+\subsubsection{Tasa de baudios (Baudrate)}
+
+La tasa de baudios o \textit{baudrate} define la velocidad a la que se transmite la información a través del puerto serie, expresada en bits por segundo (bps). Para la comunicación de la telemetría en este proyecto, se ha seleccionado una velocidad estándar y alta de \textbf{115200 bps}. Esta elección responde a un compromiso: es lo suficientemente rápida como para transmitir todas las variables de estado del péndulo sin acumular retrasos en la rutina de control, pero no lo bastante alta como para sufrir pérdidas durante la transmisión.
+
+Para que el módulo \textit{SCI} interno funcione a esta velocidad exacta, el hardware necesita dividir la frecuencia de su reloj de entrada. Como se observaba en el diagrama general, el periférico se alimenta de la señal de baja velocidad \textit{LSPCLK}, la cual trabaja a una frecuencia fija de $25\,\text{MHz}$ (derivada de los $100\,\text{MHz}$ del reloj principal del sistema o \textit{SYSCLK}) \cite{ti_f28004x_trm}. 
+
+La configuración de esta velocidad en el firmware se realiza dividiendo el valor de configuración en dos registros de 8 bits (\texttt{SCIHBAUD} y \texttt{SCILBAUD}) \cite{ti_f28004x_trm}. Para obtener la tasa de baudios deseada se asignan los siguientes valores:
+
+\begin{itemize}
+	\item \texttt{SciaRegs.SCIHBAUD.all = 0x0000;} — Configura la parte alta del divisor a cero.
+	\item \texttt{SciaRegs.SCILBAUD.all = 0x001A;} — Carga el valor hexadecimal \texttt{0x1A} (26 en sistema decimal) en la parte baja del divisor.
+\end{itemize}
+
+La combinación de estos registros genera un factor de división por hardware que adapta los $25\,\text{MHz}$ del reloj interno para aproximar la comunicación lo máximo posible a los $115200\,\text{bps}$ teóricos. El desglose detallado del cálculo se detalla paso a paso en el Anexo~\ref{ap:registros_sci}.
+
+\subsubsection{Formato de la trama}  
+La comunicación asíncrona requiere que el emisor y el receptor acuerden de antemano la estructura bit a bit de la palabra que viaja por la línea. 
+
+En el firmware desarrollado, la definición la trama se gestiona a través del registro de control \texttt{SCICCR}. Al cargar el valor hexadecimal \texttt{0x0007} (equivalente al binario \texttt{00000111b}), se configuran la trama con:
+\begin{itemize}[]
+	\item 1 bit de parada.
+	\item 8 bits de datos.
+	\item Sin bit de paridad.
+\end{itemize}
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\textwidth]{Pictures/scicr} % Reemplaza con la ruta de tu archivo image_0a5aa7.png
+	\caption{Formato de la trama según el registro \texttt{SCICCR} \cite{ti_f28004x_trm}}
+	\label{fig:sci_trama_ti}
+\end{figure}
+\FloatBarrier
+
+\newpage
+\subsubsection{Implementación del envío de datos}
+
+Una vez establecida la configuración de bajo nivel del periférico, es necesario abordar la lógica de software encargada de explotar el puerto serie. La función \texttt{puerto\_serie()}, detallada en el Bloque de Código~\ref{code:puerto_serie}, constituye la interfaz de alto nivel desarrollada para empaquetar y transferir las variables dinámicas del sistema desde el microcontrolador hacia el ordenador en tiempo real.
+
+\begin{lstlisting}[style=estiloC, caption={Envío de la telemetría vía puerto serie en formato CSV.}, label={code:puerto_serie}]
+	void puerto_serie(void)
+	{
+		float_parts p_x     = desglosar_float(x);
+		float_parts p_theta = desglosar_float(theta);
+		float_parts p_u     = desglosar_float(u); 
+		
+		// Formato CSV: x, theta, u
+		sprintf(txBuffer, "%c%d.%04d,%c%d.%04d,%c%d.%04d\r\n",
+		p_x.signo,     p_x.entero,     p_x.decimal,
+		p_theta.signo, p_theta.entero, p_theta.decimal,
+		p_u.signo,     p_u.entero,     p_u.decimal);
+		
+		transmitSCIAMessage((unsigned char *)txBuffer);
+	}
+\end{lstlisting}
+
+El funcionamiento interno de esta rutina se estructura bajo una secuencia de tres etapas orientadas a optimizar el uso de la CPU y estandarizar la salida:
+
+\begin{enumerate}
+	\item \textbf{Descomposición de variables:} Las variables fundamentales (la posición del carro $x$, el ángulo de la varilla $\theta$ y la acción de control calculada $u$) se gestionan internamente en formato de punto flotante (\texttt{float}). Debido a que el uso nativo de operaciones flotantes con \texttt{\%f} dentro de \texttt{sprintf} consume un número excesivo de ciclos de reloj, se invoca inicialmente la rutina auxiliar \texttt{desglosar\_float()}. Esta extrae de forma aislada el signo (carácter \texttt{'+'} o \texttt{'-'}), la parte entera y los primeros cuatro dígitos de la parte decimal, empaquetándolos como enteros independientes en la estructura personalizada \texttt{float\_parts}.
+	
+	\item \textbf{Formato CSV:} Con los datos ya divididos en formato de caracteres y enteros simples, la función estándar \texttt{sprintf} concatena los campos de manera eficiente dentro del búfer global de transmisión \texttt{txBuffer}. El uso de los formateadores \texttt{\%c} y \texttt{\%d} garantiza un coste de cómputo mínimo. Además, las variables se separan estrictamente por comas (\texttt{,}) y la línea se remata mediante los caracteres de escape de retorno de carro y salto de línea (\texttt{\textbackslash r\textbackslash n}). Esto genera una hilera de texto plano bajo el estándar CSV.
+	
+	\item \textbf{Transmisión:} Finalmente, la cadena de caracteres alojada en \texttt{txBuffer} se transfiere a la función de bajo nivel \texttt{transmitSCIAMessage()}. Esta rutina recorre el vector y deposita los caracteres directamente en el búfer del periférico \textit{SCI-A} para su posterior envío físico por la línea de transmisión.
+\end{enumerate}
+
+
+Como resultado directo de este hito de software, se logró capturar de forma transparente la dinámica real del sistema y almacenarla en archivos CSV. Esta disponibilidad de los datos no solo facilitó la posterior supervisión del sistema, sino que constituyó la herramienta analítica esencial para abordar con éxito las etapas de calibración de sensores, la caracterización del actuador así como la identificación experimental de los parámetros del sistema.
+
+
+\subsection{Rutina de interrupción periódica y determinismo temporal}
+\label{ssec:interrupcion_periodica}
+
+En el diseño de sistemas de control digital, el cumplimiento estricto del periodo de muestreo ($T$) es fundamental. La ley de control asume que los estados se miden y las acciones de control se actualizan a intervalos de tiempo perfectamente uniformes y constantes. En este proyecto, se ha establecido un periodo de muestreo de 10 ms ($100\,\text{Hz}$).
+
+Si el cálculo de la acción de control se ejecutara dentro de un bucle convencional \texttt{while(1)} mediante retardos por software (\textit{delays}), cualquier proceso secundario —como el formateo de la telemetría analizado en el apartado anterior— alteraría sutilmente el tiempo de ciclo. Esta fluctuación temporal (\textit{jitter}), degrada el comportamiento del controlador y puede provocar la inestabilidad del péndulo. 
+
+Para garantizar el \textbf{determinismo temporal}, el sistema delega la sincronización en un temporizador hardware (\textit{timer}) y en el sistema de interrupciones del microcontrolador. Es decir, cuando el temporizador llega a 10 ms genera una "alerta" en el sistema que produce la ejecución de la rutina de control. 
+
+\subsubsection{Configuración del timer}
+
+Se desarrolló la rutina de configuración \texttt{setup\_TimeInterrupt()}. Esta función actúa como una capa de abstracción que vincula el temporizador de hardware con el algoritmo de control. El desglose exhaustivo de la función, se detalla en el Anexo~\ref{ap:interrupciones_timer} para su consulta técnica.
+
+La función se invoca de manera limpia desde el archivo principal \texttt{control.c} mediante la siguiente instrucción:
+
+\begin{lstlisting}[style=estiloC, caption={Configuración del timer desde el programa principal}]
+	// Asociar la rutina "control" al periodo T
+	setup_TimeInterrupt(&control, T);
+\end{lstlisting}
+
+Al pasar como argumentos la dirección de memoria de la función de control (\texttt{\&control}) y el periodo de muestreo deseado ($T = 10000\,\mu\text{s}$), el firmware realiza una preparación interna estructurada en tres etapas operativas:
+(DOCUMENTAR MEJOR)
+
+El resultado final de esta configuración es que el sistema se vuelve predecible y robusto. No importa qué tarea secundaria esté realizando el microcontrolador (como preparar el texto de la telemetría o comunicarse con el PC); cada vez que el temporizador cumple los 10~ms, la CPU pausa inmediatamente lo que está haciendo, ejecuta de forma prioritaria el algoritmo de control para estabilizar el péndulo y, una vez terminado, regresa a sus tareas secundarias sin haber acumulado ni un solo milisegundo de retraso.
+
+\newpage
 \section{Compensación y caracterización de la zona muerta}
 \label{cap:zona_muerta}
 
@@ -1573,7 +1694,7 @@ Uno de los problemas abordados durante el desarrollo de este proyecto es la pres
 	}
 \end{lstlisting}
 
-El Bloque de Código~\ref{code:corrige_zm} implementa un algoritmo de corrección de la zona muerta mediante la inyección de un desfase (\textit{offset}). De este modo, la señal "salta" de forma instantánea la banda de no-linealidad del actuador, garantizando que el puente en H conmute desde el primer instante un voltaje efectivo capaz de mover el motor. 
+El Bloque de Código~\ref{code:corrige_zm} implementa un algoritmo de corrección de la zona muerta mediante la inyección de un desfase (\textit{offset}). De este modo, la señal "salta" la banda de no-linealidad del actuador, garantizando que el puente en H conmute desde el primer instante un voltaje efectivo capaz de mover el motor. 
 
 Además, destaca la necesidad de diferenciar analíticamente entre un umbral hacia adelante (\texttt{ZM\_FWD}) y otro hacia atrás (\texttt{ZM\_BWD}) responde a las asimetría de la fricción estática en el motor real. 
 
