@@ -2340,5 +2340,66 @@ A partir de la distribución expuesta en la Figura~\ref{fig:bits_aqctla}, los ev
 	
 	\item \textbf{\texttt{AQCTLA.bit.CAD = 2h} (\texttt{AQ\_SET}):} Fuerza el pin físico a un nivel lógico alto (3.3~V) cuando el contador de tiempo base (\texttt{TBCTR}) cambia a su fase descendente (\textit{Down-count}) e intersecta nuevamente el valor guardado en el comparador \texttt{CMPA}.
 \end{itemize}
+\newpage
 
+\section{Tasa de baudios del SCI}
+\label{ap:registros_sci}
+En este anexo se detalla el cálculo y la configuración de los registros \texttt{SCIHBAUD} y \texttt{SCILBAUD} del periférico \textit{SCI} para configurar la tasa de baudios en la comunicación serie. Antes de desarrollar el cálculo dado el valor de ambos registros se dispone de la descripciones de cada registro proporcionadas por \textit{Texas Instruments}. 
+
+\begin{figure}[!ht]
+	\centering
+	\includegraphics[width=\textwidth]{Pictures/hbaud} % Aquí cargas la imagen de tus campos de bitsa
+	\caption{Descripción del registro \texttt{SCIHBAUD} \cite{ti_f28004x_trm}}
+	\label{fig:bits_hbaud}
+\end{figure}
+
+\begin{figure}[!ht]
+	\centering
+	\includegraphics[width=\textwidth]{Pictures/lbaud} % Aquí cargas la imagen de tus campos de bitsa
+	\caption{Descripción del registro \texttt{SCILBAUD} \cite{ti_f28004x_trm}}
+	\label{fig:bits_lbaud}
+\end{figure}
+
+A partir de las especificaciones de los registros ilustradas en la Figura~\ref{fig:bits_hbaud} y la Figura~\ref{fig:bits_lbaud}, se observa que ambos bloques de 8 bits se combinan internamente para formar una única palabra de 16 bits encargada de almacenar el divisor de velocidad, denominado operativamente como \textit{Baud Rate Register} ($BRR$) \cite{ti_f28004x_trm}. 
+
+Tomando como base las asignaciones hexadecimales implementadas en el firmware de inicialización de este proyecto:
+\begin{lstlisting}[style=estiloC]
+	SciaRegs.SCIHBAUD.all = 0x0000; // Configura el MSByte del divisor
+	SciaRegs.SCILBAUD.all = 0x001A; // Configura el LSByte del divisor
+\end{lstlisting}
+
+La tasa de baudios a partir del valor almacenado en ambos registros se obtiene del siguiente modo \cite{ti_f28004x_trm}:
+
+\begin{equation}
+	BRR = (\texttt{SCIHBAUD} \ll 8) + \texttt{SCILBAUD}
+\end{equation}
+
+Sustituyendo los valores cargados en el código:
+\begin{equation}
+	BRR = (\texttt{0x00} \ll 8) + \texttt{0x1A} = \texttt{0x001A} = 26\,\text{(en base decimal)}
+\end{equation}
+
+Según la Figura \ref{fig:bits_hbaud} la tasa de baudios en función de \texttt{BRR} se define con la siguiente operación matemática \cite{ti_f28004x_trm}:
+
+\begin{equation}
+	\text{Baud} = \frac{f_{\text{LSPCLK}}}{(BRR + 1) \times 8}
+\end{equation}
+
+Finalmente, considerando el reloj del periférico SCI en $f_{\text{LSPCLK}} = 25\,\text{MHz}$, y aplicando el valor decimal calculado para el divisor ($BRR = 26$), se determina la tasa de baudios real:
+
+\begin{equation}
+	\text{Baud Real} = \frac{25000000}{(26 + 1) \times 8} = \frac{25000000}{27 \times 8} = \frac{25000000}{216} \approx 115740.74\,\text{bps}
+\end{equation}
+
+Notemos que el valor obtenido no es exactamente de $115200\,\text{bps}$, luego error cometido respecto a la tasa teórica deseada de  es:
+
+\begin{equation}
+	\text{Error (\%)} = \left| \frac{\text{Baud Teórico} - \text{Baud Real}}{\text{Baud Teórico}} \right| \times 100
+\end{equation}
+
+\begin{equation}
+	\text{Error (\%)} = \left| \frac{115200 - 115740.74}{115200} \right| \times 100 = \left| \frac{-540.74}{115200} \right| \times 100 \approx 0.469\%
+\end{equation}
+
+Este porcentaje de error es mínimo y no representa un problema de sincronismo entre emisión y recepción en la comunicación UART. 
 \end{document}
