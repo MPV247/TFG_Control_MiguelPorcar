@@ -1795,6 +1795,62 @@ Se determinó que la frecuencia óptima de operación para el proyecto es de \te
 
 \section{Identificación de parámetros}
 \subsection{Relación entre fuerza y voltaje}
+\label{sub:fuerza_voltaje}
+
+La acción de control calculada por los algoritmos digitales del microcontrolador se traduce finalmente en una tensión de alimentación ($u$) aplicada al motor DC. No obstante, las ecuaciones analíticas que gobiernan la dinámica del carro suspendido en el raíl requieren como entrada una fuerza horizontal neta ($F$) expresada en Newtons. Por consiguiente, resulta imperativo deducir y validar experimentalmente la ganancia estática de conversión que vincula ambas variables.
+
+\subsubsection{Modelado teórico a partir de parámetros del fabricante}
+
+En condiciones estáticas o de velocidad reducida (donde la fuerza electromotriz inversa es despreciable, $e_b \approx 0$), la corriente que circula por el devanado del inducido está gobernada por la ley de Ohm en función de la resistencia óhmica interna ($R$). A partir de la constante de par del motor ($K_t$), el par electromecánico desarrollado ($\tau$) se define teóricamente como:
+\begin{equation}
+	\tau = K_t \cdot I = \frac{K_t}{R} \cdot u
+\end{equation}
+
+Considerando que el acoplamiento entre el eje del motor y el carro se realiza mediante un sistema de polea y correa síncrona de radio efectivo $r$, la transformación de par rotacional a fuerza lineal horizontal ($F$) responde a la relación:
+\begin{equation}
+	F = \frac{\tau}{r} = \frac{K_t}{r \cdot R} \cdot u
+\end{equation}
+
+Sustituyendo los parámetros nominales provistos por el fabricante recopilados en la Tabla~\ref{tab:datos_motor} ($K_t = 0.068\,\text{Nm/A}$, $R = 5.5\,\Omega$ y un radio medido de la polea de $r = 0.025\,\text{m}$), se obtiene la función de transferencia estática idealizada:
+\begin{equation}
+	F_{\text{teórica}} = \frac{0.068}{0.025 \cdot 5.5} \cdot u \approx 0.4945 \cdot u
+\end{equation}
+
+Esta aproximación lineal asume una eficiencia mecánica ideal del $100\%$ y un comportamiento libre de pérdidas por fricción. En un escenario dinámico completo, la ecuación física extendida adopta la forma:
+\begin{equation}
+	F = \frac{K_t}{r \cdot R} \left( u - K_e \cdot \omega \right) - F_{\text{fricción}}(\omega)
+\end{equation}
+Donde $K_e$ representa la constante de fuerza electromotriz (FEM) y $\omega$ la velocidad angular del eje.
+
+\subsubsection{Diseño del ensayo experimental de balance de carga}
+
+Con el propósito de caracterizar la ganancia real del actuador y validar los datos nominales, se diseñó un banco de ensayos mecánico basado en el principio del momento de fuerzas. El montaje consiste en acoplar rígidamente al eje del motor una palanca de longitud conocida ($L = 0.114\,\text{m}$), en cuyo extremo opuesto se suspenden de forma secuencial una serie de masas calibradas ($m \in \{10, 20, 50, 100\}\,\text{g}$).
+
+El experimento se abordó mediante dos estrategias de control en bucle cerrado programadas en la DSP, orientadas a contrarrestar el par gravitatorio inducido por la carga flotante y mantener la posición angular fija en el origen ($\theta = 0\,\text{rad}$):
+
+\begin{enumerate}
+	\item \textbf{Ensayo mediante Acción Proporcional-Integral (PI):} El propósito de la componente integral consiste en garantizar un error de posición en régimen permanente estrictamente nulo ($e_{ss} = 0$). De este modo, la acción de control medida en bornes del motor iguala con exactitud el voltaje necesario para equilibrar el par estático de la masa suspendida.
+	\item \textbf{Ensayo mediante Acción Proporcional (P):} Prescindiendo de la acción integral, este enfoque se utilizó para observar la desviación angular elástica del sistema ante incrementos discretos de carga, aislando posibles efectos dinámicos acumulativos del integrador.
+\end{enumerate}
+
+Los algoritmos de control aplicados sobre el hardware se detallan en el repositorio del proyecto, empleando los scripts de análisis desarrollados en MATLAB \cite{Porcar2026TFG} para el procesamiento de los vectores de telemetría guardados en los archivos \texttt{experimento\_PI.pdf} y \texttt{experimento\_P.pdf}.
+
+\subsubsection{Resultados y deducción de la ganancia real}
+
+Tras correlacionar mediante regresión lineal los valores de voltaje medidos frente al par gravitatorio real ejercido por las masas ($\tau_{\text{ext}} = m \cdot g \cdot L$), se dedujeron las siguientes ecuaciones empíricas de acoplamiento:
+\begin{equation}
+	\begin{cases}
+		\tau_{\text{PI}} = 0.015 \cdot u \\
+		\tau_{\text{P}} = 0.016 \cdot u
+	\end{cases}
+\end{equation}
+
+Tomando como referencia el modelo obtenido mediante el control Proporcional ($\tau = 0.016 \cdot u$) por presentar menor dispersión frente a la fricción remanente, se proyecta dicha ganancia sobre el radio de la polea real del carro ($r = 0.025\,\text{m}$) para consolidar la transformación a fuerza lineal:
+\begin{equation}
+	F = \frac{\tau}{r} = \frac{0.016}{0.025} \cdot u = 0.64 \cdot u
+\end{equation}
+
+Este resultado concluye que, bajo condiciones de operación en la plataforma física, \textbf{por cada voltio aplicado al actuador se genera una fuerza horizontal efectiva de $0.64\,\text{N}$ sobre el carro}. La sutil divergencia respecto al valor teórico ($0.4945\,\text{N/V}$) queda plenamente justificada por el par de despegue necesario para vencer la inercia del inducido y las pérdidas menores en la transmisión por correa.
 \subsection{Masa y rozamiento del carro}
 \subsection{Rozamiento del péndulo}
 \section{Implementación del algoritmo de control}
