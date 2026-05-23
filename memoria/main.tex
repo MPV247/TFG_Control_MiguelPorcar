@@ -62,6 +62,8 @@
 \usepackage{xcolor}
 \usepackage{tcolorbox}
 \usepackage{hyperref}
+\usepackage{amssymb}
+
 \tcbuselibrary{listings, skins}
 
 \floatname{algorithm}{Algoritmo}
@@ -1677,15 +1679,19 @@ Como resultado, cada vez que el temporizador indica que han transcurrido los 10~
 
 Una vez finalizada la programación del microcontrolador, uno de los problemas durante el desarrollo de este proyecto fue la presencia de la \textit{zona muerta} (\textit{dead-band}) en el motor DC. Manifestándose como un intervalo de voltajes cercanos a cero en los cuales el motor es incapaz de vencer su propia fricción estática y la inercia inicial, permaneciendo completamente en reposo. 
 
-En la Figura~\ref{fig:concepto_zona_muerta} se ilustra de manera conceptual esta no-linealidad, donde se aprecia la banda muerta central en la relación entre el voltaje aplicado y la velocidad angular resultante.
-
 \begin{figure}[htbp]
 	\centering
-	\includegraphics[width=0.60\textwidth]{Pictures/concepto_zona_muerta} % Deberás crear o añadir una gráfica sencilla de este estilo
-	\caption{Representación conceptual de la zona muerta en un actuador de corriente continua.}
+	\resizebox{0.55\textwidth}{!}{
+		\input{Pictures/figuras/zm.tex}%
+	}
+	\caption{Representación conceptual de la zona muerta}
 	\label{fig:concepto_zona_muerta}
 \end{figure}
 \FloatBarrier
+
+En la Figura~\ref{fig:concepto_zona_muerta} se ilustra de manera conceptual esta no-linealidad, donde se aprecia la banda muerta central en la relación entre el voltaje aplicado ($u$) y la velocidad angular resultante ($\omega$).
+
+El Bloque de Código~\ref{code:corrige_zm} implementa la corrección de la zona muerta mediante por software. La señal "salta" la banda de no-linealidad del actuador, garantizando que el puente en H conmute desde el primer instante un voltaje efectivo capaz de mover el motor. 
 
 \begin{lstlisting}[style=estiloC, caption={Compensación de la zona muerta por código}, label={code:corrige_zm}]
 	
@@ -1712,126 +1718,80 @@ En la Figura~\ref{fig:concepto_zona_muerta} se ilustra de manera conceptual esta
 	}
 \end{lstlisting}
 
-El Bloque de Código~\ref{code:corrige_zm} implementa un algoritmo de corrección de la zona muerta mediante la inyección de un desfase (\textit{offset}). De este modo, la señal "salta" la banda de no-linealidad del actuador, garantizando que el puente en H conmute desde el primer instante un voltaje efectivo capaz de mover el motor. 
+Destaca la necesidad de diferenciar analíticamente entre un umbral hacia adelante (\texttt{ZM\_FWD}) y otro hacia atrás (\texttt{ZM\_BWD}) responde a las asimetría de la fricción estática en el motor real. 
 
-Además, destaca la necesidad de diferenciar analíticamente entre un umbral hacia adelante (\texttt{ZM\_FWD}) y otro hacia atrás (\texttt{ZM\_BWD}) responde a las asimetría de la fricción estática en el motor real. 
+\subsection{Metodología de caracterización experimental}
 
-Por otro lado, para reducir la zona muerta a compensar por software, una estrategia es bajar la frecuencia de la señal \textit{PWM}. En las siguientes secciones se aborda el fundamento teórico tras esta estrategia y el análisis experimental obtenido sobre el motor real.
+Para determinar con precisión los valores numéricos de los umbrales \texttt{ZM\_FWD} y \texttt{ZM\_BWD}, se diseñó un experimento en forma de máquina de estados finita (Código \ref{code:ident_zm}). El experimento se fundamenta en un ensayo que sigue la secuencia temporal descrita a continuación:
 
-\subsection{Análisis de la dinámica eléctrica}
-Si se quiere determinar la frecuencia óptima de operación, se debe analizar en primer lugar la constante de tiempo eléctrica ($\tau_e$) del actuador a partir de su circuito equivalente R-L, si atendemos a los parámetros del fabricante (Tabla \ref{tab:datos_motor}):
-
-\begin{equation}
-	\tau_e = \frac{L}{R} = \frac{7.2\,\text{mH}}{5.5\,\Omega} \approx 1.3\,\text{ms}
-\end{equation}
-
-Considerando que se requiere un intervalo mínimo de $5\tau_e$ para que la variable eléctrica alcance el régimen permanente ante un escalón de tensión. El periodo mínimo teórico de la señal \textit{PWM} ($T_{\text{PWM}}$) para despreciar la inductancia de la bobina del motor es:
-
-\begin{equation}
-	T_{\text{PWM}} \ge 5\tau_e = 6.5\,\text{ms}
-\end{equation}
-
-Lo que define una frecuencia límite superior teórica de conmutación de:
-
-\begin{equation}
-	f_{\text{PWM, límite}} = \frac{1}{T_{\text{PWM}}} = \frac{1}{6.5 \cdot 10^{-3}\,\text{s}} \approx 153.84\,\text{Hz}
-\end{equation}
-
-Desde el punto de vista del comportamiento estático del motor, trabajar a frecuencias bajas próximas a este límite ofrece la ventaja de reducir la zona muerta del actuador, ya que proporciona el tiempo necesario para que la corriente se establezca y venza la fricción estática. 
-\begin{figure}[ht]
-	\centering
-	\begin{subfigure}{0.48\textwidth}
-		\centering
-		\includegraphics[width=\textwidth]{Pictures/circuito_equivalente} % Foto de la electrónica vieja
-		\caption{Circuito RL equivalente a un motor DC}
-	\end{subfigure}
-	\hfill
-	\begin{subfigure}{0.48\textwidth}
-		\centering
-		\includegraphics[width=\textwidth]{Pictures/dinamica_RL} % Foto de la suciedad en el raíl
-		\caption{Respuesta temporal de la corriente}
-	\end{subfigure}
-	\caption{Circuito equivalente de un circuito motor DC y su dinámica ante entrada escalón}
-	\label{fig:equiv_motor}
-\end{figure}
-
-No obstante, operar el puente en H a frecuencias tan reducidas resulta complicado para el bucle de control debido a ciertas restricciones:
-
-\begin{enumerate}
-	\item \textbf{Acoplamiento con la frecuencia de muestreo ($f_{\text{control}}$):} Para asegurar la estabilidad y el determinismo del bucle cerrado, la frecuencia del control debe ser significativamente menor que la frecuencia de conmutación del actuador. Estableciendo un periodo de muestreo para la rutina de control de $T_s = 10\,\text{ms}$ ($f_{\text{control}} = 100\,\text{Hz}$), una frecuencia de \textit{PWM} cercana a $100\,\text{Hz}$ se encuentra demasiado en el límite para interferir en el bucle de control.
+\begin{itemize}
+	\item \textbf{Incremento escalonado:} Partiendo del reposo absoluto ($u = 0$), la acción de control inyectada al actuador se incrementa de manera progresiva en escalones discretos de $10$ unidades digitales de PWM.
 	
-	\item \textbf{Sobrecalentamiento por rizado de corriente:} Las frecuencias bajas inducen un rizado de corriente severo incrementando las pérdidas óhmicas en el devanado ($\Delta P = I_{\text{rms}}^2 \cdot R$), derivando en una alta disipación térmica. Aunque para la plataforma experimental este factor no es destructivo (experimentos del orden de un par de minutos), degrada la eficiencia del sistema.
+	\item \textbf{Ventana de estabilización:} Cada escalón de tensión se mantiene constante durante un intervalo estricto de $0.5\,\text{s}$. 
 	
-	\item \textbf{Contaminación acústica:} Las frecuencias del espectro audible humano se situan entre $20\,\text{Hz}$ y $20\,\text{kHz}$, con la banda de máxima sensibilidad entre $2\,\text{kHz}$ y $4\,\text{kHz}$.
-\end{enumerate}
+	\item \textbf{Inversión de marcha (Asimetría):} Tras finalizar el experimento en el sentido de giro positivo, el proceso se replica de forma idéntica inyectando valores decrecientes y negativos. De este modo, se evalúa el comportamiento en sentido inverso.
+\end{itemize}
 
-\newpage
-\subsection{Implementación en el TMS320F280049C}
+\begin{lstlisting}[style=estiloC, caption={Identificación de la zona muerta por código}, label={code:ident_zm}]
+__interrupt void ident_zona_muerta(void){
+	// --- 1. Lectura encoder, obtencion velocidad angular ---
+	mide_encoder(); 
+	
+	// --- 2. Experimento zona muerta ---
+	switch(estado_test) {
+		case 0:  //Adelante
+		u = u + 10; 
+		if (u > 2500) { //50% del ciclo de trabajo
+			u = 0; 
+			estado_test = 1; 
+		} break;
+		case 1:  //Detener motor por completo
+			u = 0; // Motor apagado
+			if (w == 0.0f) { 
+				estado_test = 2;
+			} break;
+		case 2:  //Atras
+			u = u - 10; 
+			if (u < -2500) { //50% del ciclo de trabajo
+				u = 0; 
+				estado_test = 3; 
+			}
+			break;
+		case 3:  //Detener motor por completo
+			u = 0; // Motor apagado
+			if (w == 0.0f) { 
+				estado_test = 0; // Reinicia el ciclo continuo
+			} break;
+	}
+	
+	// --- 3. Driver, puente H ---
+	ataca_motor(u); 
+}
+\end{lstlisting}
 
-Como se indicó en la Sección \ref{cap:epwm}, la generación física de la señal \textit{PWM} en el microcontrolador requiere configurar el registro de periodo de la base de tiempo (\texttt{TBPRD}) y los divisores de reloj del registro de control (\texttt{TBCTL}). Con el propósito de obtener una alta resolución en la modulación del ciclo de trabajo (\textit{duty cycle}), se fija de forma estricta el valor del periodo en $\texttt{TBPRD} = 5000$ cuentas digitales. 
+\subsection{Influencia de la frecuencia de PWM y selección de diseño}
 
-Para un modo de conteo simétrico triangular (\textit{Up-Down Mode}), la frecuencia final de la señal ($f_{\text{PWM}}$) queda gobernada según las siguientes expresiones:
-\begin{equation}
-	\begin{cases}
-	f_{\text{base}} = \frac{f_{\text{CLK}}}{\text{CLKDIV} \cdot \text{HSPCLKDIV}} \\
-	f_{\text{PWM}} = \frac{f_{\text{base}}}{2 \cdot \text{TBPRD}}
-	\end{cases}\label{eq:frec}
-\end{equation}
+Por cuestiones físicas intrínsecas al bobinado del motor DC, la frecuencia de la señal PWM modifica el umbral de la zona muerta. Un análisis detallado de la constante de tiempo eléctrica del motor ($\tau_e = L/R$) revela un límite teórico de conmutación de $153.84\,\text{Hz}$ para que la corriente se establezca plenamente en cada ciclo, tal y como se justifica analíticamente en el Anexo~\ref{ap:dinamica_electrica}. 
 
-Donde $f_{\text{CLK}}$ representa la frecuencia del reloj principal de la CPU ($100\,\text{MHz}$). Evaluando diferentes combinaciones de pre-escalado en el registro \texttt{TBCTL}, se barren las frecuencias de operación reflejadas en la Tabla~\ref{tab:comparativa_frecuencias}. Consulte el Anexo \ref{ap:registros_ePWM} para configurar el registro \texttt{TBCTL}.
+Para contrastar este principio y seleccionar la mejor configuración para el bucle de control, se ejecutó el protocolo de caracterización barriendo cinco frecuencias diferentes mediante la manipulación de los registros de pre-escalado del periférico \texttt{ePWM1} (ver Anexo~\ref{ap:registros_ePWM}). Las curvas experimentales resultantes se exponen en la Figura~\ref{fig:curvas_zona_muerta}.
 
-\begin{table}[htbp]
+\begin{figure}[htbp]
 	\centering
-	\caption{Configuración de registros del módulo ePWM1 para diferentes frecuencias de ensayo.}
-	\label{tab:comparativa_frecuencias}
-	\renewcommand{\arraystretch}{1.2}
-	\begin{tabular}{l l l l}
-		\hline
-		\textbf{Frecuencia ($f_{\text{PWM}}$)} & \textbf{Periodo (\texttt{TBPRD})} & \textbf{Divisor Clásico (\texttt{CLKDIV})} & \textbf{Divisor Alta Vel. (\texttt{HSPCLKDIV})} \\ \hline
-		$208.33\,\text{Hz}$ & 5000 & 8 & 6 \\
-		$\mathbf{1000.00\,\text{Hz}}$ & $\mathbf{5000}$ & $\mathbf{1}$ & $\mathbf{10}$ \\
-		$2500.00\,\text{Hz}$ & 5000 & 1 & 4 \\
-		$5000.00\,\text{Hz}$ & 5000 & 1 & 2 \\
-		$10000.00\,\text{Hz}$ & 5000 & 1 & 1 \\ \hline
-	\end{tabular}
-\end{table}
-\FloatBarrier
-
-
-\subsection{Análisis experimental y selección final de la frecuencia de la señal PWM}
-
-\begin{figure}[!ht]
-	\centering
-	\includegraphics[width=0.72\textwidth]{Pictures/comparativa_frecuencias_pwm}
-	\caption{Efecto de la frecuencia de PWM en la zona muerta}
+	\includegraphics[width=0.75\textwidth]{Pictures/comparativa_frecuencias_pwm}
+	\caption{Caracterización empírica de la zona muerta del motor en función de la frecuencia del PWM.}
 	\label{fig:curvas_zona_muerta}
 \end{figure}
 \FloatBarrier
-Para construir las curvas de caracterización mostradas en la Figura~\ref{fig:curvas_zona_muerta}, se diseñó un código en el microcontrolador disponible en el repositorio del proyecto \cite{Porcar2026TFG}. 
 
-El protocolo de adquisición de datos se ejecutó bajo la siguiente secuencia temporal programada:
-\begin{itemize}
-	\item \textbf{Incremento escalonado:} Partiendo del reposo absoluto ($u = 0$), la acción de control se incrementa de manera progresiva en escalones discretos de $10$ unidades digitales.
-	\item \textbf{Tiempo de estabilización:} Cada escalón se mantiene constante durante una ventana temporal estricta de $0.5\,\text{s}$ para asegurar que la velocidad está en régimen permanente.
-	
-	\item \textbf{Inversión de marcha:} El proceso se replica de forma idéntica inyectando valores negativos para evaluar el comportamiento en sentido inverso y detectar asimetrías.
-\end{itemize}
+Se determinó que la frecuencia óptima de operación para el proyecto es de \textbf{1~kHz}. Esta decisión de diseño representa un punto de equilibrio técnico justificado por tres criterios:
 
-Cabe destacar que el experimento se prolongó de forma deliberada hasta alcanzar los $\pm 2500$ valores digitales de \textit{PWM}. Ya que el propósito no era tanto acotar el valor de zona muerta exacta, sino determinar la mejor frecuencia para la señal \textit{PWM} de acuerdo a criterios de linealidad y menor zona muerta.
-
-Finalmente, se determina que la frecuencia óptima para el desarrollo del proyecto es de \textbf{1~kHz}, basando la elección en los siguientes criterios:
-
-\begin{itemize}
-	\item \textbf{Optimización de la zona muerta y linealidad:} Como se aprecia en la Figura~\ref{fig:curvas_zona_muerta}, la curva correspondiente a $200\,\text{Hz}$ presenta la menor zona muerta, pero la respuesta a $1\,\text{kHz}$ ofrece el segundo mejor umbral de zona muerta, manteniendo una pendiente más lineal y predecible a lo largo de todo el rango operativo.
+\begin{enumerate}
+	\item \textbf{Optimización de la linealidad frente a zona muerta:} Si bien la curva de $200\,\text{Hz}$ registra la menor zona muerta física, la respuesta a $1\,\text{kHz}$ exhibe el segundo mejor umbral de arranque y  ofrece una pendiente mucho más lineal.
 	
 	\item \textbf{Limitación tecnológica del Driver (Optoacopladores):} Aunque las respuestas teóricas a $5\,\text{kHz}$ y $10\,\text{kHz}$ mitigarían por completo el ruido acústico y aparentemente presentan menor zona muerta, la gráfica desvela que su comportamiento es incorrecto. Esto es debido a que el \textit{driver} tiene un límite de conmutación de $5\,\text{kHz}$ \cite{handson_aqmh2407nd}, provocando una distorsión en la transferencia de voltaje eficaz en bornes del motor.
 	
 	\item \textbf{Frecuencia del lazo de control:} Una frecuencia de señal de $1\,\text{kHz}$ resulta exactamente 10 veces superior a la tasa de muestreo del lazo digital ($100\,\text{Hz}$). Este margen asegura que la dinámica transitoria del actuador se estabilice mucho antes de que el algoritmo de control en la CPU calcule e inyecte la siguiente acción de control.
-\end{itemize}
-
-
-
-\subsection{Obtención del valor de la Zona Muerta}
+\end{enumerate}
 
 \section{Identificación de parámetros}
 \subsection{Relación entre fuerza y voltaje}
@@ -2490,6 +2450,51 @@ En el Bloque de Código~\ref{code:low_level_timer} se expone el código de bajo 
 	\item \textbf{Configuración de Máscaras Jerárquicas (\texttt{IER} y \texttt{PIEIER1}):} El pulso de interrupción debe atravesar la arquitectura en cascada. La instrucción \texttt{PieCtrlRegs.PIEIER1.bit.INTx7 = 1} abre la compuerta específica para el Timer 0 dentro del Grupo 1 del multiplexor de interrupciones. Posteriormente, la línea de código \texttt{IER |= M\_INT1} habilita el paso del Grupo 1 completo directamente hacia el núcleo de procesamiento de la CPU.
 	
 	\item \textbf{Líneas de Ejecución (\texttt{EINT} / \texttt{ERTM}):} La macro \texttt{EINT} activa de forma global todas las interrupciones del microcontrolador. Por su parte, \texttt{ERTM} (\textit{Enable Real-Time Mode}) es una directiva fundamental para las herramientas de depuración en tiempo real; permite que, incluso si el microcontrolador está conectado al ordenador enviando datos de telemetría o monitorizando variables, la interrupción del temporizador mantenga su máxima prioridad física de ejecución.
+\end{enumerate}
+
+\section{Análisis de la dinámica eléctrica del actuador}
+\label{ap:dinamica_electrica}
+Si se quiere determinar la frecuencia óptima de operación, se debe analizar en primer lugar la constante de tiempo eléctrica ($\tau_e$) del actuador a partir de su circuito equivalente R-L, si atendemos a los parámetros del fabricante (Tabla \ref{tab:datos_motor}):
+
+\begin{equation}
+	\tau_e = \frac{L}{R} = \frac{7.2\,\text{mH}}{5.5\,\Omega} \approx 1.3\,\text{ms}
+\end{equation}
+
+Considerando que se requiere un intervalo mínimo de $5\tau_e$ para que la variable eléctrica alcance el régimen permanente ante un escalón de tensión. El periodo mínimo teórico de la señal \textit{PWM} ($T_{\text{PWM}}$) para despreciar la inductancia de la bobina del motor es:
+
+\begin{equation}
+	\begin{cases}
+		T_{\text{PWM}} &\ge 5\tau_e = 6.5\,\text{ms} \\
+		f_{\text{PWM, límite}} &= \frac{1}{T_{\text{PWM}}} = \frac{1}{6.5 \cdot 10^{-3}\,\text{s}} \approx 153.84\,\text{Hz}
+	\end{cases}
+\end{equation}
+
+Desde el punto de vista del comportamiento estático del motor, trabajar a frecuencias bajas próximas a este límite ofrece la ventaja de reducir la zona muerta del actuador, ya que proporciona el tiempo necesario para que la corriente se establezca y venza la fricción estática. 
+\begin{figure}[ht]
+	\centering
+	\begin{subfigure}{0.48\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{Pictures/circuito_equivalente} % Foto de la electrónica vieja
+		\caption{Circuito RL equivalente a un motor DC}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{0.48\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{Pictures/dinamica_RL} % Foto de la suciedad en el raíl
+		\caption{Respuesta temporal de la corriente}
+	\end{subfigure}
+	\caption{Circuito equivalente de un circuito motor DC y su dinámica ante entrada escalón}
+	\label{fig:equiv_motor}
+\end{figure}
+
+No obstante, operar el puente en H a frecuencias tan reducidas resulta complicado para el bucle de control debido a ciertas restricciones:
+
+\begin{enumerate}
+	\item \textbf{Acoplamiento con la frecuencia de muestreo ($f_{\text{control}}$):} Para asegurar la estabilidad y el determinismo del bucle cerrado, la frecuencia del control debe ser significativamente menor que la frecuencia de conmutación del actuador. Estableciendo un periodo de muestreo para la rutina de control de $T_s = 10\,\text{ms}$ ($f_{\text{control}} = 100\,\text{Hz}$), una frecuencia de \textit{PWM} cercana a $100\,\text{Hz}$ se encuentra demasiado en el límite para interferir en el bucle de control.
+	
+	\item \textbf{Sobrecalentamiento por rizado de corriente:} Las frecuencias bajas inducen un rizado de corriente severo incrementando las pérdidas óhmicas en el devanado ($\Delta P = I_{\text{rms}}^2 \cdot R$), derivando en una alta disipación térmica. Aunque para la plataforma experimental este factor no es destructivo (experimentos del orden de un par de minutos), degrada la eficiencia del sistema.
+	
+	\item \textbf{Contaminación acústica:} Las frecuencias del espectro audible humano se situan entre $20\,\text{Hz}$ y $20\,\text{kHz}$, con la banda de máxima sensibilidad entre $2\,\text{kHz}$ y $4\,\text{kHz}$.
 \end{enumerate}
 
 \end{document}
