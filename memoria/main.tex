@@ -1448,7 +1448,7 @@ Esta decodificación no solo cuadriplica ($\times$4) la resolución del encoder,
 \end{figure}
 \FloatBarrier
 
-En la Tabla~\ref{tab:config_eqep} se detalla la configuración final asignada a los campos de bits de este módulo para conseguir la decodificación en cuadratura. Si se desea conocer en detalle el mapa de memoria y configuraciones alternativas consulte el Anexo \ref{ap:registros}.
+En la Tabla~\ref{tab:config_eqep} se detalla la configuración final asignada a los campos de bits de este módulo para conseguir la decodificación en cuadratura. Si se desea conocer en detalle el mapa de memoria y configuraciones alternativas consulte el Anexo \ref{ap:registros_eQEP}.
 
 \begin{table}[htbp]
 	\centering
@@ -1649,25 +1649,43 @@ Para garantizar el \textbf{determinismo temporal}, el sistema delega la sincroni
 
 \subsubsection{Configuración del timer}
 
-Se desarrolló la rutina de configuración \texttt{setup\_TimeInterrupt()}. Esta función actúa como una capa de abstracción que vincula el temporizador de hardware con el algoritmo de control. El desglose exhaustivo de la función, se detalla en el Anexo~\ref{ap:interrupciones_timer} para su consulta técnica.
+Se desarrolló la rutina de configuración \texttt{setup\_TimeInterrupt()}. Esta función actúa como una capa de abstracción que vincula el temporizador de hardware con el algoritmo de control. La función se invoca de manera limpia desde el archivo principal \texttt{control.c} mediante la siguiente instrucción:
 
-La función se invoca de manera limpia desde el archivo principal \texttt{control.c} mediante la siguiente instrucción:
-
-\begin{lstlisting}[style=estiloC, caption={Configuración del timer desde el programa principal}]
+\begin{lstlisting}[style=estiloC, caption={Configuración del timer desde el programa principal, más información en el Anexo~\ref{ap:interrupciones_timer}.}]
 	// Asociar la rutina "control" al periodo T
 	setup_TimeInterrupt(&control, T);
 \end{lstlisting}
 
-Al pasar como argumentos la dirección de memoria de la función de control (\texttt{\&control}) y el periodo de muestreo deseado ($T = 10000\,\mu\text{s}$), el firmware realiza una preparación interna estructurada en tres etapas operativas:
-(DOCUMENTAR MEJOR)
+Al recibir como argumentos la dirección de memoria de la función de control (\texttt{\&control}) y el periodo de muestreo deseado ($T$), el hardware coordina un canal de comunicación directo con la CPU. El flujo simplificado de esta señal de alerta se ilustra en el esquema de la Figura~\ref{fig:timer_routing}.
 
-El resultado final de esta configuración es que el sistema se vuelve predecible y robusto. No importa qué tarea secundaria esté realizando el microcontrolador (como preparar el texto de la telemetría o comunicarse con el PC); cada vez que el temporizador cumple los 10~ms, la CPU pausa inmediatamente lo que está haciendo, ejecuta de forma prioritaria el algoritmo de control para estabilizar el péndulo y, una vez terminado, regresa a sus tareas secundarias sin haber acumulado ni un solo milisegundo de retraso.
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.75\textwidth]{Pictures/timers} % Ruta de la primera imagen de interrupciones
+	\caption{Rutas de las señales de interrupción asociadas a los TIMERS \cite{ti_f28004x_trm}.}
+	\label{fig:timer_routing}
+\end{figure}
+\FloatBarrier
+
+El \texttt{TIMER0} genera de forma autónoma la señal de aviso \texttt{TINT0} cada vez que expiran los 10~ms. Esta alerta es recogida por el periférico de interrupciones (\textit{PIE}), el cual se encarga de canalizarla y enviarla hacia la línea prioritaria \texttt{INT1} de la CPU. 
+
+Como resultado, cada vez que el temporizador indica que han transcurrido los 10~ms, la CPU pausa la ejecución de cualquier tarea secundaria (como la preparación de las tramas serie), ejecuta de manera estrictamente prioritaria el algoritmo de control y regresa a sus funciones de fondo sin haber introducido retrasos en el bucle de control.
+
 
 \newpage
 \section{Compensación y caracterización de la zona muerta}
 \label{cap:zona_muerta}
 
-Uno de los problemas abordados durante el desarrollo de este proyecto es la presencia de la \textit{zona muerta} (\textit{dead-band}) en el motor DC. Manifestándose como un intervalo de voltajes cercanos a cero en los cuales el motor es incapaz de vencer su propia fricción estática y la inercia inicial, permaneciendo completamente en reposo. Este fenómeno se puede compensar por software:
+Una vez finalizada la programación del microcontrolador, uno de los problemas durante el desarrollo de este proyecto fue la presencia de la \textit{zona muerta} (\textit{dead-band}) en el motor DC. Manifestándose como un intervalo de voltajes cercanos a cero en los cuales el motor es incapaz de vencer su propia fricción estática y la inercia inicial, permaneciendo completamente en reposo. 
+
+En la Figura~\ref{fig:concepto_zona_muerta} se ilustra de manera conceptual esta no-linealidad, donde se aprecia la banda muerta central en la relación entre el voltaje aplicado y la velocidad angular resultante.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.60\textwidth]{Pictures/concepto_zona_muerta} % Deberás crear o añadir una gráfica sencilla de este estilo
+	\caption{Representación conceptual de la zona muerta en un actuador de corriente continua.}
+	\label{fig:concepto_zona_muerta}
+\end{figure}
+\FloatBarrier
 
 \begin{lstlisting}[style=estiloC, caption={Compensación de la zona muerta por código}, label={code:corrige_zm}]
 	
@@ -1810,6 +1828,8 @@ Finalmente, se determina que la frecuencia óptima para el desarrollo del proyec
 	
 	\item \textbf{Frecuencia del lazo de control:} Una frecuencia de señal de $1\,\text{kHz}$ resulta exactamente 10 veces superior a la tasa de muestreo del lazo digital ($100\,\text{Hz}$). Este margen asegura que la dinámica transitoria del actuador se estabilice mucho antes de que el algoritmo de control en la CPU calcule e inyecte la siguiente acción de control.
 \end{itemize}
+
+
 
 \subsection{Obtención del valor de la Zona Muerta}
 
@@ -2086,7 +2106,7 @@ Por otro lado, como se ilustra en la Figura~\ref{fig:hw_impl}, dentro del menú 
 \end{figure}
 \newpage
 
-\section{Desarrollo Dinámico y Programación del Bucle de Simulación}
+\section{Desarrollo Dinámico y Programación de Simulaciones}
 \label{apendice:desarrollo_euler}
 Para conectar la teoría matemática con la implementación en código, se parte de la definición $\dot{\mathbf{x}}(t) = f(\mathbf{x}(t), u(t))$. Al aproximar la derivada temporal mediante el método de Euler de primer orden para un periodo de muestreo constante $T$, se obtiene la siguiente relación discreta:
 
@@ -2402,4 +2422,74 @@ Notemos que el valor obtenido no es exactamente de $115200\,\text{bps}$, luego e
 \end{equation}
 
 Este porcentaje de error es mínimo y no representa un problema de sincronismo entre emisión y recepción en la comunicación UART. 
+
+\newpage
+
+\section{Configuración del Temporizador y Jerarquía de Interrupciones}
+\label{ap:interrupciones_timer}
+
+En este anexo se desglosa el funcionamiento interno del bloque de temporizadores de la CPU del \textbf{TMS320F280049C} y se detalla el firmware de bajo nivel desarrollado para establecer el determinismo temporal del sistema.
+
+\paragraph{Arquitectura interna y registros del CPU-Timer}
+
+El microcontrolador dispone de tres temporizadores de 32 bits de propósito general (\texttt{TIMER0/1/2}), cuyo esquema lógico de bloques de Texas Instruments se detalla en la Figura~\ref{fig:cpu_timer_hardware}.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\textwidth]{Pictures/timers_detalles}
+	\caption{Diagrama lógico de bloques y registros asociados de los CPU Timers \cite{ti_f28004x_trm}}
+	\label{fig:cpu_timer_hardware}
+\end{figure}
+\FloatBarrier
+
+Como se observa en el diagrama de la Figura~\ref{fig:cpu_timer_hardware}, la base de tiempo se rige por un contador decreciente de 32 bits compuesto por los registros \texttt{TIMH:TIM} \cite{ti_f28004x_trm}. El funcionamiento del hardware se describe bajo los siguientes parámetros de control:
+\begin{itemize}
+	\item \textbf{Registro de Periodo (\texttt{PRDH:PRD}):} Almacena el valor máximo de la cuenta atrás que equivale al periodo deseado ($10\,\text{ms}$). Cada vez que el contador principal llega a cero, los registros de periodo vuelven a cargar el valor original de manera automática si se activa la señal de \textit{Timer reload}.
+	\item \textbf{Pre-escalador (\texttt{TDDRH:TDDR} y \texttt{PSCH:PSC}):} Permiten dividir la frecuencia del reloj principal del sistema (\texttt{SYSCLKOUT}) para ralentizar la velocidad de la cuenta si la aplicación requiriese periodos extremadamente largos. En este diseño, se configura para que el temporizador decrezca a la frecuencia nativa del procesador ($100\,\text{MHz}$).
+	\item \textbf{Generación de Alerta (\texttt{TINT}):} Cuando el contador decrementa y alcanza el valor cero, se produce un evento de desbordamiento por préstamo (\textit{Borrow}). Este flanco lógico es el encargado de disparar la señal de interrupción física hacia el procesador.
+\end{itemize}
+
+\newpage
+\paragraph{Firmware de inicialización de bajo nivel}
+
+En el Bloque de Código~\ref{code:low_level_timer} se expone el código de bajo nivel encargado de manipular los registros internos del microcontrolador.
+
+\begin{lstlisting}[style=estiloC, caption={Rutina de bajo nivel para la inicialización del Timer 0}, label={code:low_level_timer}]
+	void setup_TimeInterrupt(void (*isr_ptr)(void), uint32_t T)
+	{
+		EALLOW;
+		// 1. Redireccion en la Tabla de Vectores del PIE
+		PieVectTable.TIMER0_INT = isr_ptr;  
+		EDIS; 
+		
+		// 2. Inicializacion y carga del periodo
+		InitCpuTimers();
+		// Reloj a 100 MHz, Periodo T en us.
+		ConfigCpuTimer(&CpuTimer0, 100, T); 
+		
+		// 3. Configuracion del registro TCR
+		CpuTimer0Regs.TCR.all = 0x4000; 
+		
+		// 4. Apertura de compuertas en el modulo PIE y la CPU
+		IER |= M_INT1; 
+		PieCtrlRegs.PIEIER1.bit.INTx7 = 1;
+		
+		// 5. Activacion global del tiempo real
+		EINT;
+		ERTM;
+	}
+\end{lstlisting}
+
+\subsubsection{Análisis de las instrucciones críticas de registro}
+
+\begin{enumerate}
+	\item \textbf{Protección de Memoria (\texttt{EALLOW} / \texttt{EDIS}):} La tabla de vectores que contiene las direcciones de las interrupciones críticas está protegida por hardware contra escrituras accidentales. La instrucción en ensamblador \texttt{EALLOW} deshabilita temporalmente esta protección, permitiendo sobreescribir la posición de memoria \texttt{PieVectTable.TIMER0\_INT} con el puntero de nuestra función \texttt{control}, cerrando el acceso seguro inmediatamente después con \texttt{EDIS}.
+	
+	\item \textbf{Habilitación en el registro de control (\texttt{CpuTimer0Regs.TCR.all = 0x4000}):} Al cargar el valor hexadecimal \texttt{0x4000}, se establece a \texttt{1} exclusivamente el bit número 14 del registro, correspondiente al bit \texttt{TIE} (\textit{Timer Interrupt Enable}). Este bit le da permiso explícito al temporizador para generar un pulso de hardware en el pin interno \texttt{TINT} cada vez que la cuenta regresiva toque el cero.
+	
+	\item \textbf{Configuración de Máscaras Jerárquicas (\texttt{IER} y \texttt{PIEIER1}):} El pulso de interrupción debe atravesar la arquitectura en cascada. La instrucción \texttt{PieCtrlRegs.PIEIER1.bit.INTx7 = 1} abre la compuerta específica para el Timer 0 dentro del Grupo 1 del multiplexor de interrupciones. Posteriormente, la línea de código \texttt{IER |= M\_INT1} habilita el paso del Grupo 1 completo directamente hacia el núcleo de procesamiento de la CPU.
+	
+	\item \textbf{Líneas de Ejecución (\texttt{EINT} / \texttt{ERTM}):} La macro \texttt{EINT} activa de forma global todas las interrupciones del microcontrolador. Por su parte, \texttt{ERTM} (\textit{Enable Real-Time Mode}) es una directiva fundamental para las herramientas de depuración en tiempo real; permite que, incluso si el microcontrolador está conectado al ordenador enviando datos de telemetría o monitorizando variables, la interrupción del temporizador mantenga su máxima prioridad física de ejecución.
+\end{enumerate}
+
 \end{document}
