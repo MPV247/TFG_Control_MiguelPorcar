@@ -1948,7 +1948,7 @@ Finalmente, al comparar las funciones de transferencia estáticas obtenidas expe
 \subsection{Masa y rozamiento del carro}
 \label{sub:masa_rozamiento_carro}
 
-Debido a que el carro mecánico de la plataforma presenta un recorrido lineal acotado por los extremos físicos del raíl, la ejecución de ensayos de identificación en bucle abierto conlleva el riesgo de colisionar con los finales de carrera. Por este motivo, se optó por un enfoque de \textbf{identificación en bucle cerrado}.
+Debido a que el carro de la plataforma presenta un recorrido lineal acotado por los extremos físicos del raíl, la ejecución de ensayos de identificación en bucle abierto (idea inicial) conlleva el riesgo de colisionar con los finales de carrera. Por este motivo, se optó por un enfoque alternativo de \textbf{identificación en bucle cerrado} \cite{Penarrocha_Tema1} para lograr el cometido.
 
 \begin{figure}[ht]
 	\centering
@@ -1959,13 +1959,100 @@ Debido a que el carro mecánico de la plataforma presenta un recorrido lineal ac
 	\label{fig:ident_BC}
 \end{figure} 
 
-\subsubsection{Diseño del experimento}
+El procedimiento consiste en inyectar una señal de referencia de posición $r(t)$. Mientras el controlador proporcional ($K_p$) actúa para estabilizar el sistema y confinar el carro dentro de los límites de seguridad del raíl, se registra la posición del carro sobre el riel $y(t)$. 
+
+A partir de estas dos señales ($r(t)$ e $y(t)$), las herramientas de identificación no proporcionan directamente el comportamiento físico de la planta ($G(s)$), sino la función de transferencia del bucle cerrado, denotada como $M(s)$ \cite{Penarrocha_Tema1}:
+\begin{equation}
+	M(s) = \frac{Y(s)}{R(s)} = \frac{K_p \cdot G(s)}{1 + K_p \cdot G(s)}
+\end{equation}
+
+Una vez caracterizada la dinámica matemática de $M(s)$ , se extrae la función de transferencia aislada de la planta, $G(s)$ \cite{Penarrocha_Tema1}:
+\begin{equation}
+	G(s) = \frac{M(s)}{K_p \cdot (1 - M(s))}
+	\label{eq:despeja_g}
+\end{equation}
+
+A partir de $G(s)$ se puede deducir el rozamiento viscoso del sistema completa y la masa del carro. Seguidamente se muestra la metodología seguida para la identificación en bucle cerrado, la dinámica obtenida experimentalmente y los parámetros finalmente caracterizados. 
+
+\newpage
+\subsubsection{Diseño del experimento y adquisición de datos}
+
+Para materializar la metodología de identificación expuesta y excitar la dinámica del carro de forma segura, se implementó en el microcontrolador una rutina periódica en base a una máquina de estados temporizada \cite{Porcar2026TFG}. El ensayo práctico se estructuró bajo las siguientes directrices:
+\begin{itemize}
+	\item \textbf{Entradas escalón:} La referencia de posición del raíl ($r(t)$) conmuta en magnitudes discretas de $\pm 10\,\text{cm}$ ($\pm 0.1\,\text{m}$) cada $10\,\text{s}$. Esta ventana temporal de diez segundos se seleccionó estratégicamente para garantizar que el sistema consiga llegar a la posición objetivo.
+	
+	\item \textbf{Instrumentación y almacenamiento:} Las variables críticas monitorizadas por el microcontrolador —la referencia, la posición real obtenida a través del encoder y la acción de control calculada— se estructuraron en un vector de telemetría síncrono con la rutina de control y en formato \textit{CSV}. Esta trama se transmitió en tiempo real mediante el periférico UART-SCI hacia el ordenador con una tasa de muestreo fija de $100\,\text{Hz}$ ($T = 10\,\text{ms}$).
+	
+	\item \textbf{Procesamiento de los datos:} El archivo de datos históricos fue importado en la herramienta especializada \texttt{systemIdentification} de MATLAB. A través de este entorno se deduce de forma empírica la función de transferencia global del bucle cerrado ($M(s)$).
+\end{itemize}
+
+Fijada la constante del controlador de posición en un valor estricto de $K_p = 80$ durante el ensayo físico, el último paso metodológico consistió en aplicar la relación analítica \ref{eq:despeja_g} para aislar la dinámica de la planta $G(s)$. 
 
 \subsubsection{Comportamiento del sistema en BC}
 
-\subsubsection{Identificación de la planta}
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.75\textwidth]{Pictures/BC_carro_KP_80}
+	\caption{Dinámica $M(s)$ obtenida experimentalmente}
+	\label{fig:BC_ident}
+\end{figure}
+\FloatBarrier
 
-\subsubsection{Comparación con los datos del fabricante}
+Tras procesar los datos de la telemetría en MATLAB se obtiene la Figura~\ref{fig:BC_ident}, muestra que el control de posición del carro con $K_p = 80$ describe una \textbf{respuesta de segundo orden subamortiguada} ante cada escalón de la referencia, estabilizándose por completo antes de los $10\,\text{s}$ programados. 
+
+\subsubsection{Identificación de la planta}
+La dinámica en bucle cerrado obtenida mediante la herramienta \texttt{systemIdentification} de MATLAB es la siguiente:
+\begin{equation}
+	M(s) = \frac{51.02}{s^2 + 5.714\,s + 51.02}
+\end{equation}
+
+Si se emplea la expresión para aislar la dinámica en bucle abierto $G(s)$ \ref{eq:despeja_g}. Se llega a obtener la siguiente función de transferencia:
+\begin{equation}
+	G(s) = \frac{0.6378}{s(s + 5.714)} = \frac{0.11}{s(1 + 0.18s)} = \frac{K}{s(1 + \tau s)} 
+\end{equation}
+
+En primera instancia, la expresión abstracta de $G(s)$ en el dominio de \textit{Laplace} describe el comportamiento dinámico global del sistema, pero no aporta información directa sobre las magnitudes físicas reales de la plataforma. Sin embargo, si se contrasta con el modelado derivado de las ecuaciones de Newton (el principio físico de masa-amortiguador del carro), es posible desglosar el sistema e identificar la masa y su coeficiente de rozamiento viscoso.
+
+\subsubsection{Aislamiento analítico de los parámetros físicos}
+
+La ecuación diferencial Newtoniana que gobierna el desplazamiento lineal del carro en el plano horizontal responde a la expresión:
+\begin{equation}
+	F(t) = M \cdot \ddot{x}(t) + c_x \cdot \dot{x}(t)
+\end{equation}
+
+Al aplicar la transformada de Laplace considerando condiciones iniciales nulas, la transferencia teórica entre la posición del carro y la fuerza ejercida por la correa adopta la forma:
+\begin{equation}
+	G(s) = \frac{X(s)}{F(s)} = \frac{1}{s(M \cdot s + c_x)} = \frac{1/c_x}{s\left(1 + \frac{M}{c_x}s \right)}
+\end{equation}
+
+Por los ensayos del apartado anterior, la relación entre la tensión del motor y la fuerza neta es $F(s) = K_m \cdot U(s)$ (donde $K_m = 0.64\,\text{N/V}$), la función de transferencia de voltaje a posición:
+\begin{equation}
+	G(s) = \frac{X(s)}{U(s)} = K_m\frac{X(s)}{F(s)} = \frac{K_m/c_x}{s\left(1 + \frac{M}{c_x}s \right)}
+\end{equation}
+
+Conocida la ganancia del sistema ($K = 0.1116\,\text{m/(V}\cdot\text{s)}$)  y  su constante de tiempo ($\tau = 0.1750\,\text{s}$), se plantea el siguiente sistema de ecuaciones:
+\begin{equation}
+	\begin{cases}
+		\dfrac{K_m}{c_x} = K \vspace{2mm}\\
+		\dfrac{M}{c_x} = \tau
+	\end{cases}
+	\implies
+	\begin{cases}
+		\dfrac{0.64}{c_x} = 0.1116 \vspace{2mm}\\
+		\dfrac{M}{c_x} = 0.1750
+	\end{cases}
+\end{equation}
+
+Resolviendo en primera instancia para el coeficiente de rozamiento viscoso equivalente ($c_x$) que experimenta la guía lineal frente al avance, se obtiene:
+\begin{equation}
+	c_x = \frac{0.64}{0.1116} \approx 5.7348\,\text{Ns/m}
+\end{equation}
+
+Una vez determinada la magnitud del amortiguamiento, se sustituye dicho valor en la segunda relación para aislar y calcular de forma unívoca la masa total efectiva del carro móvil ($M$):
+\begin{equation}
+	M = \tau \cdot c_x = 0.1750 \cdot 5.7348 \approx 1.0036\,\text{Kg}
+\end{equation}
+
 
 \subsection{Rozamiento del péndulo}
 \section{Implementación del algoritmo de control}
