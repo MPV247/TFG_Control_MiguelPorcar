@@ -1794,50 +1794,73 @@ Se determinó que la frecuencia óptima de operación para el proyecto es de \te
 \end{enumerate}
 
 \section{Identificación de parámetros}
+Tal como se adelantó en el capítulo introductorio, la plataforma experimental constituye un sistema antiguo cuyo desgaste físico y uso prolongado distan de las condiciones ideales de fábrica. Luego, resulta indispensable identificar de manera empírica ciertos parámetros de la planta para otorgar validez al modelo dinámico y garantizar el ajuste de las simulaciones. 
+
 \subsection{Relación entre fuerza y voltaje}
 \label{sub:fuerza_voltaje}
 
-La acción de control calculada por los algoritmos digitales del microcontrolador se traduce finalmente en una tensión de alimentación ($u$) aplicada al motor DC. No obstante, las ecuaciones analíticas que gobiernan la dinámica del carro suspendido en el raíl requieren como entrada una fuerza horizontal neta ($F$) expresada en Newtons. Por consiguiente, resulta imperativo deducir y validar experimentalmente la ganancia estática de conversión que vincula ambas variables.
+El motivo de esta sección dentro del capítulo es que la acción de control calculada en el microcontrolador se traduce en una tensión ($u$) aplicada al motor DC. No obstante, las ecuaciones que gobiernan la dinámica \ref{eq:ec_movimiento_final} requieren como entrada una fuerza horizontal neta ($F$) expresada en Newtons.
 
-\subsubsection{Modelado teórico a partir de parámetros del fabricante}
+\subsubsection{Modelo teórico a partir de parámetros del fabricante}
 
-En condiciones estáticas o de velocidad reducida (donde la fuerza electromotriz inversa es despreciable, $e_b \approx 0$), la corriente que circula por el devanado del inducido está gobernada por la ley de Ohm en función de la resistencia óhmica interna ($R$). A partir de la constante de par del motor ($K_t$), el par electromecánico desarrollado ($\tau$) se define teóricamente como:
+A bajas revoluciones (donde la fuerza electromotriz inversa es despreciable), la corriente que circula por el motor está gobernada por la ley de Ohm en función de su resistencia interna ($R$). A partir de la constante de par del motor ($K_t$), el par  desarrollado ($\tau$) se define teóricamente como:
 \begin{equation}
 	\tau = K_t \cdot I = \frac{K_t}{R} \cdot u
 \end{equation}
 
-Considerando que el acoplamiento entre el eje del motor y el carro se realiza mediante un sistema de polea y correa síncrona de radio efectivo $r$, la transformación de par rotacional a fuerza lineal horizontal ($F$) responde a la relación:
+Como la transmisión  es un sistema de correa dentada y polea de radio efectivo $r$, la relación par-fuerza ($F$) responde a:
 \begin{equation}
 	F = \frac{\tau}{r} = \frac{K_t}{r \cdot R} \cdot u
 \end{equation}
 
-Sustituyendo los parámetros nominales provistos por el fabricante recopilados en la Tabla~\ref{tab:datos_motor} ($K_t = 0.068\,\text{Nm/A}$, $R = 5.5\,\Omega$ y un radio medido de la polea de $r = 0.025\,\text{m}$), se obtiene la función de transferencia estática idealizada:
+Sustituyendo con los parámetros del fabricante de la Tabla~\ref{tab:datos_motor} ($K_t = 0.068\,\text{Nm/A}$, $R = 5.5\,\Omega$ y un radio medido de la polea de $r = 0.025\,\text{m}$), se obtiene la siguiente relación:
 \begin{equation}
-	F_{\text{teórica}} = \frac{0.068}{0.025 \cdot 5.5} \cdot u \approx 0.4945 \cdot u
+	F_{\text{teórica}} = \frac{0.068}{0.025 \cdot 5.5} \cdot u \approx 0.5 \cdot u
 \end{equation}
 
-Esta aproximación lineal asume una eficiencia mecánica ideal del $100\%$ y un comportamiento libre de pérdidas por fricción. En un escenario dinámico completo, la ecuación física extendida adopta la forma:
-\begin{equation}
-	F = \frac{K_t}{r \cdot R} \left( u - K_e \cdot \omega \right) - F_{\text{fricción}}(\omega)
-\end{equation}
-Donde $K_e$ representa la constante de fuerza electromotriz (FEM) y $\omega$ la velocidad angular del eje.
+\subsubsection{Diseño del experimento}
 
-\subsubsection{Diseño del ensayo experimental de balance de carga}
+Con el propósito de caracterizar la ganancia real del actuador, se diseñó un banco de pruebas mecánico. El montaje consiste en acoplar rígidamente al eje del motor una palanca de longitud conocida ($L = 0.114\,\text{m}$), en cuyo extremo opuesto se suspenden de forma secuencial una serie de masas calibradas ($m \in \{10, 20, 50, 100\}\,\text{g}$).
 
-Con el propósito de caracterizar la ganancia real del actuador y validar los datos nominales, se diseñó un banco de ensayos mecánico basado en el principio del momento de fuerzas. El montaje consiste en acoplar rígidamente al eje del motor una palanca de longitud conocida ($L = 0.114\,\text{m}$), en cuyo extremo opuesto se suspenden de forma secuencial una serie de masas calibradas ($m \in \{10, 20, 50, 100\}\,\text{g}$).
+\begin{figure}[htbp]
+	\centering
+	\begin{subfigure}{0.48\textwidth}
+		\centering
+		\includegraphics[width=\textwidth, height=5cm, keepaspectratio=false, trim={0 1cm 0 1cm}, clip]{Pictures/pesos_calibrados} 
+		\caption{Pesos calibrados para el experimento}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{0.48\textwidth}
+		\centering
+		\includegraphics[width=\textwidth, height=5cm, keepaspectratio=false, trim={0 0 0 0}, clip]{Pictures/montaje_pesos} 
+		\caption{Montaje del experimento sobre el eje del motor}
+	\end{subfigure}
+	\caption{Banco de pruebas del ensayo experimental}
+	\label{fig:relacion_F_u}
+\end{figure}
 
-El experimento se abordó mediante dos estrategias de control en bucle cerrado programadas en la DSP, orientadas a contrarrestar el par gravitatorio inducido por la carga flotante y mantener la posición angular fija en el origen ($\theta = 0\,\text{rad}$):
+\newpage
+El experimento se abordó implementando un algoritmo de control de posición del motor en el \textbf{TMS32F280049C}, orientado a contrarrestar el par gravitatorio inducido por la carga y mantener la posición angular fija ($\theta_{ref} = 0\,\text{rad}$). Se realizaron dos ensayos distintos:
 
 \begin{enumerate}
-	\item \textbf{Ensayo mediante Acción Proporcional-Integral (PI):} El propósito de la componente integral consiste en garantizar un error de posición en régimen permanente estrictamente nulo ($e_{ss} = 0$). De este modo, la acción de control medida en bornes del motor iguala con exactitud el voltaje necesario para equilibrar el par estático de la masa suspendida.
-	\item \textbf{Ensayo mediante Acción Proporcional (P):} Prescindiendo de la acción integral, este enfoque se utilizó para observar la desviación angular elástica del sistema ante incrementos discretos de carga, aislando posibles efectos dinámicos acumulativos del integrador.
+	\item \textbf{Control de posición PI:} El propósito de la componente integral consiste en garantizar un error de posición nulo ($e_{p} = 0$). Dado que el controlador contrarresta el par gravitatorio y estabiliza la posición de la palanca en $\theta = 0\,\text{rad}$, el par estático generado por la masa suspendida se calcula como:
+	\begin{equation}
+		\tau = \tau_g = m \cdot g \cdot l
+		\label{eq:tau_PI}
+	\end{equation}
+	De este modo, la acción de control en voltios ($u$) solicitada por el algoritmo iguala exactamente el voltaje necesario para equilibrar dicho par en el equilibrio.
+	
+	\item \textbf{Control de posición P:} Este enfoque se utilizó para observar la desviación angular del sistema ante incrementos de carga, aislando posibles efectos de acumulación de la acción integral. Debido a que la palanca experimenta una inclinación estacionaria ($\theta \neq 0$), el par efectivo sobre el eje del actuador se ve atenuado y queda gobernado por la expresión:
+	\begin{equation}
+		\tau_{\text{ext}} = m \cdot g \cdot l \cdot \cos(\theta)
+		\label{eq:tau_P}
+	\end{equation}
+
 \end{enumerate}
 
-Los algoritmos de control aplicados sobre el hardware se detallan en el repositorio del proyecto, empleando los scripts de análisis desarrollados en MATLAB \cite{Porcar2026TFG} para el procesamiento de los vectores de telemetría guardados en los archivos \texttt{experimento\_PI.pdf} y \texttt{experimento\_P.pdf}.
+\subsubsection{Deducción de la ganancia real}
 
-\subsubsection{Resultados y deducción de la ganancia real}
-
-Tras correlacionar mediante regresión lineal los valores de voltaje medidos frente al par gravitatorio real ejercido por las masas ($\tau_{\text{ext}} = m \cdot g \cdot L$), se dedujeron las siguientes ecuaciones empíricas de acoplamiento:
+Tras correlacionar mediante regresión lineal los valores de voltaje medidos frente al par gravitatorio ejercido por las masas calibradas, se obtuvieron las siguientes relaciones entre par ($\tau$) y voltaje ($u$):
 \begin{equation}
 	\begin{cases}
 		\tau_{\text{PI}} = 0.015 \cdot u \\
@@ -1845,13 +1868,105 @@ Tras correlacionar mediante regresión lineal los valores de voltaje medidos fre
 	\end{cases}
 \end{equation}
 
-Tomando como referencia el modelo obtenido mediante el control Proporcional ($\tau = 0.016 \cdot u$) por presentar menor dispersión frente a la fricción remanente, se proyecta dicha ganancia sobre el radio de la polea real del carro ($r = 0.025\,\text{m}$) para consolidar la transformación a fuerza lineal:
+\begin{figure}[ht]
+	\centering
+	\begin{subfigure}{0.48\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{Pictures/experimento_PI} 
+		\caption{Control tipo PI}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{0.48\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{Pictures/experimento_P} 
+		\caption{Control tipo P}
+	\end{subfigure}
+	\caption{Ajuste de los modelos lineales sobre los datos experimentales}
+	\label{fig:ajuste_lineal}
+\end{figure}
+
+\FloatBarrier
+
+Como se puede observar en la Figura~\ref{fig:ajuste_lineal}, el ajuste de los modelos lineales obtenidos mediante regresión a los datos experimentales es bastante satisfactorio en ambos ensayos. Por tanto, la relación par-voltaje deducida es plenamente válida y útil para ser integrada en la conversión de unidades del modelado (Newton) a unidades del microcontrolador (Voltios).
+
+Tomando como referencia el modelo obtenido del control P ($\tau = 0.016 \cdot u$), se aplica dicha ganancia sobre el radio de la polea real del carro ($r = 0.025\,\text{m}$) para obtener la transformación a fuerza lineal:
 \begin{equation}
 	F = \frac{\tau}{r} = \frac{0.016}{0.025} \cdot u = 0.64 \cdot u
 \end{equation}
 
-Este resultado concluye que, bajo condiciones de operación en la plataforma física, \textbf{por cada voltio aplicado al actuador se genera una fuerza horizontal efectiva de $0.64\,\text{N}$ sobre el carro}. La sutil divergencia respecto al valor teórico ($0.4945\,\text{N/V}$) queda plenamente justificada por el par de despegue necesario para vencer la inercia del inducido y las pérdidas menores en la transmisión por correa.
+Este resultado concluye que, bajo condiciones de operación en la plataforma física, \textbf{por cada voltio aplicado al actuador se genera una fuerza horizontal efectiva de $0.64\,\text{N}$ sobre el carro}. Luego la ecuación utilizada para modelar el sistema y ajustar controladores se actualiza a:
+\begin{equation}
+	\begin{bmatrix} 
+		M + m & m l \cos\theta \\ 
+		m l \cos\theta & I + m l^2 
+	\end{bmatrix} 
+	\begin{bmatrix} 
+		\ddot{x} \\ 
+		\ddot{\theta} 
+	\end{bmatrix} 
+	+ 
+	\begin{bmatrix} 
+		c_x & -m l \dot{\theta} \sin\theta \\ 
+		0 & c_\theta 
+	\end{bmatrix} 
+	\begin{bmatrix} 
+		\dot{x} \\ 
+		\dot{\theta} 
+	\end{bmatrix} 
+	+ 
+	\begin{bmatrix} 
+		0 \\ 
+		m g l \sin\theta 
+	\end{bmatrix} 
+	= 
+	\begin{bmatrix} 
+		\textbf{0.64} \\ 
+		0 
+	\end{bmatrix} u
+	\label{eq:matrices_dinamica_desarrollada_converison}
+\end{equation}
+
+
+\subsubsection{Comparación con el modelo teórico}
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.75\textwidth]{Pictures/relacion_par_voltios}
+	\caption{Comparación entre el modelo teórico y el modelo obtenido experimentalmente.}
+	\label{fig:comparacion_par_voltios}
+\end{figure}
+\FloatBarrier
+
+Finalmente, al comparar las funciones de transferencia estáticas obtenidas experimentalmente frente a la respuesta teórica con los datos del fabricante, se extraen dos conclusiones para la validación de la plataforma (Figura~\ref{fig:comparacion_par_voltios}):
+\begin{itemize}[]
+	\item \textbf{Efecto de la zona muerta:} Mientras que la curva teórica asume un comportamiento lineal ideal que cruza el origen matemático $(0,0)$, las aproximaciones experimentales (tanto con control P como PI) registran un desplazamiento negativo sobre el eje de par de aproximadamente $-0.05\,\text{Nm}$ bajo una acción de control nula ($u = 0\,\text{V}$). Este hecho evidencia que el actuador real requiere un umbral crítico de tensión de arranque (entre los $3.5\,\text{V}$ y $4\,\text{V}$) destinado exclusivamente a  vencer la fricción estática.
+	
+	\item \textbf{Ganancia del modelo y fidelidad experimental:} Se observa que la ganancia estática de conversión final a fuerza horizontal deducida en el modelo empírico ($0.64\,\text{N/V}$) resulta ligeramente superior a la calculada teóricamente ($0.4945\,\text{N/V} \approx 0.5\,\text{N/V}$). Esta discrepancia es un fenómeno habitual en la identificación de sistemas. Al ser una medición directa sobre el hardware real del proyecto, se adopta la ganancia obtenida de forma empírica. 
+
+\end{itemize}
+ 
 \subsection{Masa y rozamiento del carro}
+\label{sub:masa_rozamiento_carro}
+
+Debido a que el carro mecánico de la plataforma presenta un recorrido lineal acotado por los extremos físicos del raíl, la ejecución de ensayos de identificación en bucle abierto conlleva el riesgo de colisionar con los finales de carrera. Por este motivo, se optó por un enfoque de \textbf{identificación en bucle cerrado}.
+
+\begin{figure}[ht]
+	\centering
+	\resizebox{\textwidth}{!}{%
+		\input{Pictures/figuras/ident_BC.tex}
+	}
+	\caption{Control P para identificación en BC}
+	\label{fig:ident_BC}
+\end{figure} 
+
+\subsubsection{Diseño del experimento}
+
+\subsubsection{Comportamiento del sistema en BC}
+
+\subsubsection{Identificación de la planta}
+
+\subsubsection{Comparación con los datos del fabricante}
+
 \subsection{Rozamiento del péndulo}
 \section{Implementación del algoritmo de control}
 6)Implementación de algoritmos de control en el microcontrolador (lo tenemos todo dividido en funciones, explicar un poco que recibe y devuelve cada una y como se ajusta todo)
