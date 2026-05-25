@@ -1145,7 +1145,7 @@ El punto de partida consistió en trasladar el modelo representado en la Ecuaci�
 		\midrule
 		Masa del carro              & $M$         & 1.12   & $\mathrm{kg}$ \\
 		Masa del péndulo            & $m$         & 0.12   & $\mathrm{kg}$ \\
-		Longitud al centro de masas & $l$         & 0.305  & $\mathrm{m}$ \\
+		Distancia al centro de masas & $l$         & 0.305  & $\mathrm{m}$ \\
 		Inercia del péndulo         & $J_p$       & 0.0136 & $\mathrm{kg \cdot m^2}$ \\
 		Fricción del carro           & $c_x$       & 0.05   & $\mathrm{N \cdot s / m}$ \\
 		Fricción del péndulo        & $c_\theta$  & 0.0005 & $\mathrm{N \cdot m \cdot s / rad}$ \\
@@ -2006,7 +2006,7 @@ La dinámica en bucle cerrado obtenida mediante la herramienta \texttt{systemIde
 	M(s) = \frac{51.02}{s^2 + 5.714\,s + 51.02}
 \end{equation}
 
-Si se emplea la expresión para aislar la dinámica en bucle abierto $G(s)$ \ref{eq:despeja_g}. Se llega a obtener la siguiente función de transferencia:
+Si se emplea la expresión para aislar la dinámica en bucle abierto $G(s)$ (\ref{eq:despeja_g}). Se llega a obtener la siguiente función de transferencia:
 \begin{equation}
 	G(s) = \frac{0.6378}{s(s + 5.714)} = \frac{0.11}{s(1 + 0.18s)} = \frac{K}{s(1 + \tau s)} 
 \end{equation}
@@ -2015,22 +2015,17 @@ En primera instancia, la expresión abstracta de $G(s)$ en el dominio de \textit
 
 \subsubsection{Aislamiento analítico de los parámetros físicos}
 
-La ecuación diferencial Newtoniana que gobierna el desplazamiento lineal del carro en el plano horizontal responde a la expresión:
+La ecuación diferencial que gobierna el desplazamiento lineal del carro en el plano horizontal responde a la expresión de fuerzas (el desarrollo algebraico completo se detalla en el Apéndice~\ref{ap:desarrollo_bloques_carro}):
 \begin{equation}
 	F(t) = M \cdot \ddot{x}(t) + c_x \cdot \dot{x}(t)
 \end{equation}
 
-Al aplicar la transformada de Laplace considerando condiciones iniciales nulas, la transferencia teórica entre la posición del carro y la fuerza ejercida por la correa adopta la forma:
+Si se considera la relación estática del actuador $F(s) = K_m \cdot U(s)$ (donde $K_m = 0.64\,\text{N/V}$), la función de transferencia de voltaje a posición es la siguiente: 
 \begin{equation}
-	G(s) = \frac{X(s)}{F(s)} = \frac{1}{s(M \cdot s + c_x)} = \frac{1/c_x}{s\left(1 + \frac{M}{c_x}s \right)}
+	G(s) = \frac{X(s)}{U(s)} = \frac{K_m/c_x}{s\left(1 + \frac{M}{c_x}s \right)} = \frac{K}{s(1 + \tau s)}
 \end{equation}
 
-Por los ensayos del apartado anterior, la relación entre la tensión del motor y la fuerza neta es $F(s) = K_m \cdot U(s)$ (donde $K_m = 0.64\,\text{N/V}$), la función de transferencia de voltaje a posición:
-\begin{equation}
-	G(s) = \frac{X(s)}{U(s)} = K_m\frac{X(s)}{F(s)} = \frac{K_m/c_x}{s\left(1 + \frac{M}{c_x}s \right)}
-\end{equation}
-
-Conocida la ganancia del sistema ($K = 0.1116\,\text{m/(V}\cdot\text{s)}$)  y  su constante de tiempo ($\tau = 0.1750\,\text{s}$), se plantea el siguiente sistema de ecuaciones:
+Conocida la ganancia del sistema ($K = 0.1116\,\text{m/(V}\cdot\text{s)}$) y su constante de tiempo ($\tau = 0.1750\,\text{s}$), se plantea el siguiente sistema de ecuaciones:
 \begin{equation}
 	\begin{cases}
 		\dfrac{K_m}{c_x} = K \vspace{2mm}\\
@@ -2043,18 +2038,124 @@ Conocida la ganancia del sistema ($K = 0.1116\,\text{m/(V}\cdot\text{s)}$)  y  s
 	\end{cases}
 \end{equation}
 
-Resolviendo en primera instancia para el coeficiente de rozamiento viscoso equivalente ($c_x$) que experimenta la guía lineal frente al avance, se obtiene:
+Resolviendo en primera instancia para el coeficiente de rozamiento viscoso ($c_x$) frente al avance, se obtiene:
 \begin{equation}
-	c_x = \frac{0.64}{0.1116} \approx 5.7348\,\text{Ns/m}
+	\boxed{c_x = \frac{0.64}{0.1116} \approx 5.7348\,\text{Ns/m}}
 \end{equation}
 
-Una vez determinada la magnitud del amortiguamiento, se sustituye dicho valor en la segunda relación para aislar y calcular de forma unívoca la masa total efectiva del carro móvil ($M$):
+Una vez determinado $c_x$, se sustituye dicho valor en la segunda relación para aislar y calcular la masa del carro ($M$):
 \begin{equation}
-	M = \tau \cdot c_x = 0.1750 \cdot 5.7348 \approx 1.0036\,\text{Kg}
+	\boxed{M = \tau \cdot c_x = 0.1750 \cdot 5.7348 \approx 1.0036\,\text{Kg}}
 \end{equation}
-
 
 \subsection{Rozamiento del péndulo}
+\label{sub:rozamiento_pendulo}
+
+El rozamiento presente en el eje del péndulo es la fuerza que evita que oscile indefinidamente. Para caracterizar este fenómeno de forma empírica, se diseñó un ensayo de \textbf{oscilación libre}, manteniendo el motor del carro completamente desactivado ($u = 0\,\text{V}$) y bloqueado en una posición fija del raíl.
+
+El firmware desarrollado para el microcontrolador TMS320F280049C (cuyo código fuente se encuentra en el repositorio del proyecto \cite{Porcar2026TFG}) se encarga de leer el encoder del péndulo (\texttt{eQEP2}) a una tasa de muestreo síncrona de $100\,\text{Hz}$ ($T = 10\,\text{ms}$) y transmitir los valores angulares en radianes ($\theta$) bajo formato \textit{CSV} vía UART-SCI para su posterior análisis en MATLAB.
+
+\subsubsection{Diseño del experimento y decremento logarítmico}
+
+La metodología práctica ejecutada en el laboratorio constó de las siguientes fases operativas siguiendo las indicaciones del fabricante \cite{feedback_pendulum_33005_manual}:
+\begin{itemize}
+	\item \textbf{Condiciones iniciales:} Se desplazó manualmente el péndulo hasta alcanzar una inclinación inicial aproximada de $20^\circ$ ($\approx 0.35\,\text{rad}$) respecto de su posición estable ($\theta = 0\,\text{rad}$).
+	
+	\item \textbf{Registro temporal:} Se liberó el cuerpo de forma instantánea, permitiendo que oscilara libremente durante un intervalo extendido \textbf{entre uno y dos minutos}.
+	
+	\item \textbf{Procesamiento de los datos:} Tras capturar la telemetría en formato \textit{CSV}. Se generó la Figura~\ref{fig:oscilaciones_pendulo} para analizar el decremento de la amplitud de las oscilaciones en función del tiempo transcurrido. 
+\end{itemize}
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.75\textwidth]{Pictures/ident_oscilaciones} 
+	\caption{Ensayo de oscilación libre del péndulo y curva de decaimiento temporal.}
+	\label{fig:oscilaciones_pendulo}
+\end{figure}
+\FloatBarrier
+
+\newpage
+\subsubsection{Estimación del coeficiente de rozamiento}
+Los datos recopilados en este intervalo capturan la atenuación progresiva de la oscilación. Basándose en la naturaleza de este decaimiento exponencial, el coeficiente de rozamiento $c_{\theta}$ se estima con la expresión matemática \cite{feedback_pendulum_33005_manual}:
+\begin{equation}
+	c_{\theta} = \frac{J_p}{n\cdot T}\log(\frac{A_1}{A_n})
+	\label{eq:decaimiento_exponencial}
+\end{equation}
+
+Donde cada uno de los parámetros que intervienen en el cálculo se definen a continuación:
+\begin{itemize}
+	\item $c_{\theta}$: Coeficiente de rozamiento viscoso equivalente del péndulo ($\text{Nms/rad}$).
+	
+	\item $J_p$: Momento de inercia total del péndulo ($\text{Kg}\cdot\text{m}^2$).
+	
+	\item $T$: Período de oscilación ($\text{s}$), correspondiente al intervalo de tiempo transcurrido entre dos picos de amplitud consecutivos en la señal temporal.
+	
+	\item $n$: Número entero de oscilaciones completas consideradas para el cálculo
+	.
+	\item $A_1$: Amplitud angular inicial del primer pico seleccionado ($\text{rad}$ o grados) al comienzo de la ventana de evaluación.
+	
+	\item $A_n$: Amplitud angular del pico situado $n$ períodos después del pico inicial ($\text{rad}$ o grados), la cual se ve atenuada debido a la pérdida de energía mecánica por fricción.
+\end{itemize}
+
+A partir del ensayo, se extrajeron las magnitudes numéricas correspondientes a una ventana de observación de dos minutos ($120\,\text{s}$), contabilizando un total de $n = 108$ oscilaciones completas ($n \approx 120/T$). Los valores experimentales junto con los datos del fabricante, quedan consolidados en la Tabla~\ref{tab:valores_pendulo}.
+
+\begin{table}[htbp]
+	\centering
+	\caption{Parámetros para la identificación de $c_{\theta}$}
+	\label{tab:valores_pendulo}
+	\begin{tabular}{lcc}
+		\hline
+		\textbf{Parámetro del sistema} & \textbf{Símbolo} & \textbf{Valor} \\ \hline
+		Período de oscilación promedio & $T$ & $1.12\,\text{s}$ \\
+		Número de ciclos evaluados & $n$ & $108$ \\
+		Momento de inercia (fabricante) & $J_p$ & $0.0139\,\text{Kg}\cdot\text{m}^2$ \\
+		Amplitud angular inicial & $A_1$ & $0.340\,\text{rad}$ \\
+		Amplitud angular final & $A_n$ & $0.065\,\text{rad}$ \\ \hline
+	\end{tabular}
+\end{table}
+
+Finalmente, sustituyendo este conjunto de valores en la expresión~(\ref{eq:decaimiento_exponencial}), se consigue la estimación definitiva del coeficiente de rozamiento viscoso:
+\begin{equation}
+	\boxed{c_{\theta} \approx 1.91 \cdot 10^{-4}\,\text{Nms/rad}}
+\end{equation}
+
+\newpage
+
+\subsection{Validación y contraste con los parámetros del fabricante}
+
+Para evaluar la desviación entre las aproximaciones teóricas y la realidad física del laboratorio, la Tabla~\ref{tab:resumen_y_comparativa} consolida una comparativa directa entre los datos proporcionados por el fabricante y los valores obtenidos empíricamente.
+
+\begin{table}[htbp]
+	\centering
+	\caption{Valores del fabricante frente a resultados experimentales.}
+	\label{tab:resumen_y_comparativa}
+	\begin{tabular}{l c c c l}
+		\toprule
+		\textbf{Parámetro} & \textbf{Símbolo} & \textbf{Valor Fabricante} & \textbf{Valor Identificado} & \textbf{Unidades} \\
+		\midrule
+		Masa del carro               & $M$         & 1.12   & 1.0036          & $\mathrm{kg}$ \\
+		Masa del péndulo             & $m$         & 0.12   & $0.1200^{\ast}$ & $\mathrm{kg}$ \\
+		Distancia al centro de masas  & $l$         & 0.305  & $0.3050^{\ast}$ & $\mathrm{m}$ \\
+		Inercia del péndulo          & $J_p$       & 0.0136 & $0.0139^{\dagger}$ & $\mathrm{kg \cdot m^2}$ \\
+		Fricción del carro           & $c_x$       & 0.05   & 5.7348          & $\mathrm{N \cdot s / m}$ \\
+		Fricción del péndulo         & $c_\theta$  & 0.0005 & $0.00019$       & $\mathrm{N \cdot m \cdot s / rad}$ \\
+		Ganancia Voltaje-Fuerza      & $K_m$       & 0.5000 & 0.6400          & $\mathrm{N/V}$ \\
+		\bottomrule
+		\multicolumn{5}{l}{\small $^{\ast}$ Valores adoptados como invariantes en el modelo.} \\
+		\multicolumn{5}{l}{\small $^{\dagger}$ Valor recalculado analíticamente a partir de las directrices del manual técnico.}
+	\end{tabular}
+\end{table}
+
+El análisis comparativo de la Tabla~\ref{tab:resumen_y_comparativa} revela discrepancias de gran interés práctico, justificando plenamente la necesidad de realizar una identificación experimental antes de abordar el diseño del controlador:
+\begin{itemize}
+	\item \textbf{Ajuste inercial del carro ($M$):} La masa efectiva obtenida experimentalmente ($1.0036\,\mathrm{kg}$) resulta muy próxima y del mismo orden de magnitud que la especificada por el fabricante ($1.12\,\mathrm{kg}$). Esta ligera reducción es habitual al haber estimado la dinámica en bucle cerrado, validando la consistencia del modelo.
+	
+	\item \textbf{Fenómenos disipativos ($c_x$ y $c_\theta$):} El coeficiente de fricción del carro ($c_x$) es notablemente superior al estimado en catálogo ($5.7348$ frente a $0.05\,\mathrm{N\cdot s/m}$). Esta diferencia radica en que el fabricante detalla únicamente el rozamiento lineal del carro deslizándose de forma aislada sobre el riel; por el contrario, el ensayo caracteriza el sistema completo, integrando la fricción interna del actuador y la resistencia de la correa dentada acoplada. Respecto a la fricción del péndulo ($c_\theta$), el valor obtenido ($1.91 \cdot 10^{-4}\,\mathrm{N\cdot m\cdot s/rad}$) se mantiene dentro del mismo orden de magnitud que el valor nominal ($5 \cdot 10^{-4}\,\mathrm{N\cdot m\cdot s/rad}$).
+	
+\end{itemize}
+
+La integración de estos parámetros validados en el entorno de simulación permite aproximar el modelo teórico a la realidad física de la plataforma. Este ajuste resulta indispensable para disponer de un banco de pruebas virtual preciso y representativa del comportamiento real del sistema en el laboratorio.
+
 \section{Implementación del algoritmo de control}
 6)Implementación de algoritmos de control en el microcontrolador (lo tenemos todo dividido en funciones, explicar un poco que recibe y devuelve cada una y como se ajusta todo)
 
@@ -2754,5 +2855,57 @@ No obstante, operar el puente en H a frecuencias tan reducidas resulta complicad
 	
 	\item \textbf{Contaminación acústica:} Las frecuencias del espectro audible humano se situan entre $20\,\text{Hz}$ y $20\,\text{kHz}$, con la banda de máxima sensibilidad entre $2\,\text{kHz}$ y $4\,\text{kHz}$.
 \end{enumerate}
+
+\newpage
+\section{Desarrollo matemático de la función de transferencia del carro}
+\label{ap:desarrollo_bloques_carro}
+
+En este apéndice se desglosa el procedimiento algebraico para la obtención de la función de transferencia entre voltaje y posición del carro. El sistema físico se modela simplificadamente como un bloque de masa neta acoplado a un elemento disipativo  (amortiguador) sobre el plano horizontal, tal y como se ilustra en la Figura~\ref{fig:esquema_masa_amortiguador}.
+\begin{figure}[htbp]
+	\centering
+	\resizebox{0.7\textwidth}{!}{
+		\input{Pictures/figuras/masa_amortiguador.tex}%
+	}
+	\caption{Modelo masa amortiguador}
+	\label{fig:esquema_masa_amortiguador}
+\end{figure}
+\FloatBarrier
+
+La ecuación diferencial que para este modelo simplificado es la siguiente:
+\begin{equation}
+	M \cdot \ddot{x}(t) + c_x \cdot \dot{x}(t) = F(t)
+\end{equation}
+
+Aplicando la transformada de Laplace bajo la hipótesis de condiciones iniciales nulas ($\dot{x}(0) = 0, x(0) = 0$), las derivadas temporales se traducen en el operador $s$:
+\begin{equation}
+	M \cdot s^2 X(s) + c_x \cdot s X(s) = F(s)
+\end{equation}
+
+Factorizando el término común del desplazamiento de la variable de estado horizontal $X(s)$, se obtiene:
+\begin{equation}
+	s(M \cdot s + c_x) X(s) = F(s)
+\end{equation}
+
+De este modo, la relación de la planta entre la posición de salida y la fuerza de entrada se expresa como:
+\begin{equation}
+	G_{\text{física}}(s) = \frac{X(s)}{F(s)} = \frac{1}{s(M \cdot s + c_x)}
+\end{equation}
+
+Para acoplar el modelo al entorno del microcontrolador, se introduce la ganancia estática de conversión del actuador, que vincula la tensión aplicada $U(s)$ con la fuerza horizontal en Newtons mediante el coeficiente $K_m$:
+\begin{equation}
+	F(s) = K_m \cdot U(s)
+\end{equation}
+
+Sustituyendo esta relación de potencia en la transferencia global del sistema, se deduce:
+\begin{equation}
+	G(s) = \frac{X(s)}{U(s)} = \frac{X(s)}{\frac{1}{K_m}F(s)} = K_m \cdot G_{\text{física}}(s) = \frac{K_m}{s(M \cdot s + c_x)}
+\end{equation}
+
+Finalmente, se manipula la expresión para obtener la función de transferencia en formato de \textbf{ganancia y constante de tiempo}:
+\begin{equation}
+	G(s) = \frac{\dfrac{K_m}{c_x}}{s\left(\dfrac{M}{c_x}s + 1\right)} = \frac{K}{s(1 + \tau s)}
+\end{equation}
+
+Donde las agrupaciones de los componentes físicos quedan ligadas a la ganancia estática $K$ y a la constante de tiempo del sistema $\tau$.
 
 \end{document}
