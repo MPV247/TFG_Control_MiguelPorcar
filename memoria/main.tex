@@ -1124,9 +1124,22 @@ El sistema utiliza una transmisión por correa dentada (Figura \ref{fig:motor_re
 
 \chapter{Desarrollo}
 
-Explicación de las actividades realizadas durante el desarrollo del proyecto. Se puede exponer en orden cronológico o por grupos de tareas. Hay que indicar los hitos alcanzados.
+Este capítulo constituye el núcleo de este trabajo, abarcando desde la validación en entornos virtuales hasta el despliegue definitivo de las leyes de control sobre la plataforma física. Adoptando el paradigma del \textit{Diseño Basado en Modelos} (MBD), el desarrollo se organiza en un flujo de trabajo que unifica la simulación numérica, la programación a bajo nivel del hardware y la identificación experimental de la dinámica real del sistema.
 
-En esta sección solamente hay que aportar la información técnica estrictamente necesaria para comprender el trabajo realizado. Esta información debe, además, estar presentada de forma que sea inteligible por cualquiera no familiarizado con los aspectos técnicos del trabajo realizado. La información técnica puede ubicarse en los apéndices para ser consultada si se desea.
+Para guiar el desarrollo de forma estructurada, el contenido de este capítulo se organiza en cinco bloques fundamentales:
+
+\begin{itemize}
+	\item \textbf{Trabajo de simulación:} Modelado matemático inicial en \textit{MATLAB/Simulink} y diseño de las estrategias de control (posición, algoritmo de levantamiento o \textit{swing-up} y lógica de conmutación). Asimismo, se detalla la integración de \textit{ROS} dentro de la simulación.
+	
+	\item \textbf{Programación del microcontrolador:} Configuración de bajo nivel y arquitectura del firmware sobre el microcontrolador \textit{TMS320F280049C}. Se detalla la puesta en marcha de los módulos periféricos esenciales:\textit{ eQEP} para la lectura encoders, \textit{ePWM} para la actuación del motor, y el periférico \textit{SCI} para el envío de la telemetría por el puerto serie.
+	
+	\item \textbf{Caracterización y compensación de la zona muerta:} Estudio experimental enfocado en conocer los efectos no lineales de la fricción estática del motor.
+	
+	\item \textbf{Identificación paramétrica experimental:} Metodología aplicada para aislar y calcular las constantes físicas reales de la planta de laboratorio y poder ajustar las simulaciones.
+	
+	\item \textbf{Implementación del algoritmo de control:} Integración y despliegue final de las leyes de control en el microcontrolador
+\end{itemize}
+
 
 \newpage
 \section{Trabajo de simulación}
@@ -2156,17 +2169,104 @@ El análisis comparativo de la Tabla~\ref{tab:resumen_y_comparativa} revela disc
 
 La integración de estos parámetros validados en el entorno de simulación permite aproximar el modelo teórico a la realidad física de la plataforma. Este ajuste resulta indispensable para disponer de un banco de pruebas virtual preciso y representativa del comportamiento real del sistema en el laboratorio.
 
+\newpage
 \section{Implementación del algoritmo de control}
-6)Implementación de algoritmos de control en el microcontrolador (lo tenemos todo dividido en funciones, explicar un poco que recibe y devuelve cada una y como se ajusta todo)
+\label{sec:implementacion_algoritmo}
+
+Para concluir con el capítulo, se presenta la implementación final de la rutina de control. Toda la estrategia algorítmica se ejecuta dentro de la rutina de interrupción periódica (ISR) asociada al \texttt{CpuTimer0} a una tasa de muestreo estricta de $100\,\text{Hz}$ ($T_s = 10\,\text{ms}$). 
+
+\begin{lstlisting}[style=estiloC, caption={Rutina de control principal (ISR).}, label={code:rutina_de_control}]
+	__interrupt void control(void)
+	{
+		CpuTimer0.InterruptCount++; 
+		
+		// --- BUCLE DE CONTROL ---
+		mide_encoder();
+		calcula_u();
+		aplica_u(u); 
+		
+		send_data = true; // Flag para envio por SCI
+		PieCtrlRegs.PIEACK.all = PIEACK_GROUP1;
+	}
+\end{lstlisting}
+
+A continuación, se detalla el diseño modular y la responsabilidad analítica de cada una de las tres subrutinas invocadas en el bucle principal:
+\begin{itemize}
+	\item \textbf{\texttt{mide\_encoder}:} Es la encargada de transformar las lecturas crudas del hardware en variables físicas con unidades del Sistema Internacional ($\text{m}$ y $\text{rad}$). Para ello, lee directamente los registros de conteo de posición (\texttt{QPOSCNT}) de los módulos \texttt{eQEP}.
+	
+	\item \textbf{\texttt{calcula\_u}:} Constituye el núcleo algorítmico del proyecto. Implementa la lógica de control híbrida que evalúa el error angular para conmutar de forma autónoma entre dos modos de operación: el algoritmo no lineal basado en energía (\textit{swing-up}) para balancear el péndulo desde su posición de reposo, y la ley por realimentación del estado para estabilizar el sistema en la vertical superior.
+	
+	\item \textbf{\texttt{aplica\_u}:} Recibe la acción de control calculada en voltios ($u$), compensa la zona muerta y convierte el valor resultante a unidades digitales para el módulo \texttt{ePWM}. A su vez, también asigna el sentido de giro con los \texttt{GPIO} encargados.
+\end{itemize}
+
+\begin{figure}[!htbp] % <-- Añade '!' y las opciones 'b' y 'p'
+	\centering
+	\resizebox{\textwidth}{!}{%
+		\input{Pictures/figuras/implementacion_control.tex}
+	}
+	\caption{Funciones en el bucle de control}
+	\label{fig:implement_control}
+\end{figure}
+
+El código fuente completo se encuentra disponible para su consulta en el repositorio público del proyecto \cite{Porcar2026TFG}. A continuación, únicamente se focaliza en \texttt{calcula\_u()}, al ser la subrutina que alberga la ley de control.
+
+\newpage
+ En primer lugar, el paso del modelo de simulación teórica a la ejecución en tiempo real sobre el microcontrolador obligó a introducir dos modificaciones:
+ 
+\paragraph{Inclusión de acción integral}
+
+Aunque el diseño original contemplaba una realimentación de estados pura (Sección~\ref{cap:control_kx}), los ensayos experimentales revelaron un error en estado estacionario en la posición del carro. Para anularlo, se expandió el vector de estados original añadiendo un estado virtual ($x_i$) que acumula la integral del error de posición ($x_{ref} - x$). 
+
+\begin{figure}[!htbp]
+	\centering
+	\resizebox{\textwidth}{!}{%
+		\input{Pictures/figuras/control_integral.tex}
+	}
+	\caption{Control por realimentación del estado con integrador}
+	\label{fig:control_integral}
+\end{figure}
+
+Como se observa en la Figura~\ref{fig:control_integral}, el error de posición se desvía hacia un integrador puro ($1/s$) para generar el nuevo estado $x_i$, cuya corrección se pondera mediante la ganancia $K_i$. De este modo, la acción integral elimina de forma autónoma el desfase del carro en el riel, mientras que la matriz original $K$ se encarga del resto de estados. 
 
 
+Finalmente, la función resultante para el control de posición implementada en el microcontrolador es la siguiente: 
+ 
+\begin{lstlisting}[style=estiloC, caption={Control por realimentación del estado}, label={code:rutina_de_control}]
+void calcula_accion_control(void)
+{
+	float e1 = ref_x - x; float e2 =  ref_theta - theta; 
+	float e3 = 0.0f - x_dot; float e4 = 0.0f - theta_dot;
+	Ie = Ie + T_sec * (ref_x - x);
+	
+	// Normalizar error angulo
+	e2 = atan2f(sinf(e2), cosf(e2));
+	
+	// Ley de control por realimentacion del estado: u = K * e
+	u = K1 * e1 + K2 * e2 + K3 * e3 + K4 * e4 + KI * Ie;
+	
+	//Ciclo limite (evitar desgaste excesivo del actuador)
+	if (fabs(e1) < 0.001 && fabs(e2) < 0.003){
+		u = 0;
+		Ie = Ie - T_sec * (ref_x - x); }
+	//Saturacion y anti-windup: 
+	if (u < -UMAX){
+		u = -UMAX; 
+		Ie = Ie - T_sec * (ref_x - x);}
+	else if (u > UMAX) {
+		u = UMAX; 
+		Ie = Ie - T_sec * (ref_x - x); }
+}
+\end{lstlisting}
 
 
 \chapter{Resultados}
 
-\section{Resultados en simulación}
-\section{Resultados en sistema físico}
-
+\section{Control por realimentación del estado}
+s
+\section{Control de energía (Swing-up)}
+s
+\section{Conmutación entre controles}
+s
 \chapter{Conclusiones y posible trabajo futuro}
 
 Trabajo a futuro --> Implementación en HAL, uso de algoritmos no basados en modelo (Reinformemnt Learning)
