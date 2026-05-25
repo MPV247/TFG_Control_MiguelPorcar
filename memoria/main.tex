@@ -2208,14 +2208,13 @@ A continuación, se detalla el diseño modular y la responsabilidad analítica d
 	\label{fig:implement_control}
 \end{figure}
 
-El código fuente completo se encuentra disponible para su consulta en el repositorio público del proyecto \cite{Porcar2026TFG}. A continuación, únicamente se focaliza en \texttt{calcula\_u()}, al ser la subrutina que alberga la ley de control.
+El código fuente completo se encuentra disponible para su consulta en el repositorio público del proyecto \cite{Porcar2026TFG}. A continuación, únicamente se focaliza en la función \texttt{calcula\_u()}, dado que es la que dictamina la ley de control.
 
 \newpage
- En primer lugar, el paso del modelo de simulación teórica a la ejecución en tiempo real sobre el microcontrolador obligó a introducir dos modificaciones:
- 
-\paragraph{Inclusión de acción integral}
 
-Aunque el diseño original contemplaba una realimentación de estados pura (Sección~\ref{cap:control_kx}), los ensayos experimentales revelaron un error en estado estacionario en la posición del carro. Para anularlo, se expandió el vector de estados original añadiendo un estado virtual ($x_i$) que acumula la integral del error de posición ($x_{ref} - x$). 
+\subsection{Control de posición en \texttt{calcula\_u()}}
+ 
+ Aunque el diseño original contemplaba un control de posición por realimentación del estado puro (Sección~\ref{cap:control_kx}), los ensayos experimentales revelaron un error en estado estacionario en la posición del carro sobre el riel. Para corregirlo, se expandió el vector de estados original añadiendo un estado virtual ($x_i$) que acumula la integral del error de posición ($x_{ref} - x$). 
 
 \begin{figure}[!htbp]
 	\centering
@@ -2228,36 +2227,61 @@ Aunque el diseño original contemplaba una realimentación de estados pura (Secc
 
 Como se observa en la Figura~\ref{fig:control_integral}, el error de posición se desvía hacia un integrador puro ($1/s$) para generar el nuevo estado $x_i$, cuya corrección se pondera mediante la ganancia $K_i$. De este modo, la acción integral elimina de forma autónoma el desfase del carro en el riel, mientras que la matriz original $K$ se encarga del resto de estados. 
 
+Finalmente, en el Código~\ref{code:codigo_control_posicion} se detalla cómo se traduce esta estructura de control a código C para el microcontrolador. 
 
-Finalmente, la función resultante para el control de posición implementada en el microcontrolador es la siguiente: 
- 
-\begin{lstlisting}[style=estiloC, caption={Control por realimentación del estado}, label={code:rutina_de_control}]
-void calcula_accion_control(void)
-{
-	float e1 = ref_x - x; float e2 =  ref_theta - theta; 
-	float e3 = 0.0f - x_dot; float e4 = 0.0f - theta_dot;
-	Ie = Ie + T_sec * (ref_x - x);
+\begin{lstlisting}[style=estiloC, caption={Código para el control de posición con término integral}, label={code:codigo_control_posicion}]
+	// 1. Calculo de errores de posicion y velocidad del carro
+	float e1 = ref_x - x;              // Error de posicion
+	float e3 = 0.0f - x_dot;           // Error de velocidad 
 	
-	// Normalizar error angulo
-	e2 = atan2f(sinf(e2), cosf(e2));
+	// 2. Errores asociados a la dinamica del pendulo
+	float e2 = ref_theta - theta;      
+	float e4 = 0.0f - theta_dot;       
 	
-	// Ley de control por realimentacion del estado: u = K * e
+	// 3. Integracion numerica del error de posicion en x
+	Ie = Ie + T_sec * e1;
+	
+	// 4. Ley de control realimentacion del estado con integrador
 	u = K1 * e1 + K2 * e2 + K3 * e3 + K4 * e4 + KI * Ie;
-	
-	//Ciclo limite (evitar desgaste excesivo del actuador)
-	if (fabs(e1) < 0.001 && fabs(e2) < 0.003){
-		u = 0;
-		Ie = Ie - T_sec * (ref_x - x); }
-	//Saturacion y anti-windup: 
-	if (u < -UMAX){
-		u = -UMAX; 
-		Ie = Ie - T_sec * (ref_x - x);}
-	else if (u > UMAX) {
-		u = UMAX; 
-		Ie = Ie - T_sec * (ref_x - x); }
-}
+\end{lstlisting}
+\newpage
+\subsection{Control de energía (Swing-up) en \texttt{calcula\_u()}}
+\label{sub:control_energia_codigo}
+
+Para balancear el péndulo desde su posición estable ($\theta = 0\,\text{rad}$) hasta la vertical superior inestable ($\theta = \pi\,\text{rad}$), se implementa una estrategia no lineal basada en el control de energía (Sección~\ref{cap:swing_up}). A diferencia del control de posición, este algoritmo evalúa continuamente el estado energético del sistema para bombear energía mediante aceleraciones estratégicas del carro ($\ddot{x}_{des}$).
+
+Como condición crítica previa a los cálculos, se \textbf{normaliza la lectura angular} estrictamente dentro del rango continuo $[-\pi, \pi]\,\text{rad}$. En esta convención, el origen ($0\,\text{rad}$) representa el reposo absoluto apuntando hacia abajo, mientras que los extremos $\pi$ y $-\pi\,\text{rad}$ convergen en la vertical superior. 
+
+Para evitar penalizaciones en el tiempo de ejecución de la ISR, la operación se apoya en la función \texttt{atan2f}, ya que está soportada en la \textit{Trigonometric Math Unit} del microcontrolador \cite{ti_f28004x_trm}.
+
+\begin{lstlisting}[style=estiloC, caption={Normalización del ángulo acelerado por la TMU}, label={code:norm_angulo}]
+// Normalizacion del angulo entre -pi y pi mediante hardware TMU
+float theta_norm = atan2f(sinf(theta), cosf(theta));
 \end{lstlisting}
 
+Finalmente, en el Código~\ref{code:codigo_swing_up} se detalla la \textbf{transcripción de la ley de control} descrita teóricamente la Sección~\ref{cap:swing_up}.
+
+\begin{lstlisting}[style=estiloC, caption={Código para el control de energía con PFL}, label={code:codigo_swing_up}]
+	// 1. Calculo de la energia mecanica total 
+	E_m = 0.5f * J_P * theta_dot * theta_dot - m * g * L_cm * cosf(theta);
+	
+	// 2. Referencia (Acel carro)
+	x_ddot_des = Ke * theta_dot * cosf(theta) * (E_m - m* g * L_cm)   - (Kp * x + Kd * x_dot);
+	
+	// 3. PFL
+	float inter = (1.0f / J_PEND) * (-m * g * L_cm * sinf(theta) 
+	+ m * L_cm * cosf(theta) * x_ddot_des - C_Th * theta_dot);
+	
+	u = (M + m) * x_ddot_des 
+	- m * L_cm * cosf(theta) * inter 
+	+ m * L_cm * theta_dot * theta_dot * sinf(theta) 
+	+ C_X * x_dot; 
+	
+	// 4. Conversion de Fuerza (N) a tension del motor (Voltios)
+	u = u / 0.64f;   
+\end{lstlisting}
+
+Con la integración de las leyes de control dentro de la rutina de interrupción periódica del microcontrolador, se completa la transición desde el modelo matemático abstracto y la simulación hasta una implementación física en tiempo real. La arquitectura modular diseñada garantiza que las tareas críticas de adquisición de datos, cálculo de la acción de control y modulación por ancho de pulsos (\textit{PWM}) se ejecuten de manera determinista cada $10\,\text{ms}$. Una vez consolidado el firmware y resueltas las particularidades del hardware, el sistema queda completamente preparado para la fase de validación experimental en la plataforma física, cuyos resultados se exponen en el siguiente capítulo.
 
 \chapter{Resultados}
 
