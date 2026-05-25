@@ -1577,7 +1577,7 @@ Como se observa en el esquema, el funcionamiento del módulo con el resto del mi
 \begin{itemize}
 	\item \textbf{Conexión con la CPU y Buses:} El núcleo del procesador (\textit{CPU}) se comunica de forma directa con los registros internos del módulo \textit{SCI} a través del bus periférico (\textit{Peripheral Bus}). 
 	
-	\item \textbf{Sincronización de Reloj (\textit{Bit Clock}):} El módulo de comunicaciones depende de la señal de reloj \textit{LSPCLK} (\textit{Low Speed Peripheral Clock}). El acceso a esta señal está condicionado por una compuerta lógica controlada por el registro de control \texttt{PCLKCR7}, se debe configurar para habilitar poder activar el periférico.
+	\item \textbf{Sincronización de Reloj (\textit{Bit Clock}):} El módulo de comunicaciones depende de la señal de reloj \textit{LSPCLK} (\textit{Low Speed Peripheral Clock}). El acceso a esta señal está condicionado por una compuerta lógica controlada por el registro de control \texttt{PCLKCR7}, se debe configurar para habilitar el periférico.
 	
 	\item \textbf{Enrutamiento Externo (\textit{GPIO MUX}):} Las señales del periférico (\texttt{SCITXD} para transmitir y \texttt{SCIRXD} para recibir) pasan primero por el multiplexor de pines (\textit{GPIO MUX}), que se encarga de dirigir físicamente estas líneas hacia los pines externos de la placa.
 	
@@ -1704,7 +1704,7 @@ Una vez finalizada la programación del microcontrolador, uno de los problemas d
 
 En la Figura~\ref{fig:concepto_zona_muerta} se ilustra de manera conceptual esta no-linealidad, donde se aprecia la banda muerta central en la relación entre el voltaje aplicado ($u$) y la velocidad angular resultante ($\omega$).
 
-El Bloque de Código~\ref{code:corrige_zm} implementa la corrección de la zona muerta mediante por software. La señal "salta" la banda de no-linealidad del actuador, garantizando que el puente en H conmute desde el primer instante un voltaje efectivo capaz de mover el motor. 
+El Bloque de Código~\ref{code:corrige_zm} implementa la corrección de la zona muerta por software. La señal "salta" la banda de no-linealidad del actuador, garantizando que el puente en H conmute desde el primer instante un voltaje efectivo capaz de mover el motor. 
 
 \begin{lstlisting}[style=estiloC, caption={Compensación de la zona muerta por código}, label={code:corrige_zm}]
 	
@@ -1985,7 +1985,7 @@ Una vez caracterizada la dinámica matemática de $M(s)$ , se extrae la función
 	\label{eq:despeja_g}
 \end{equation}
 
-A partir de $G(s)$ se puede deducir el rozamiento viscoso del sistema completa y la masa del carro. Seguidamente se muestra la metodología seguida para la identificación en bucle cerrado, la dinámica obtenida experimentalmente y los parámetros finalmente caracterizados. 
+A partir de $G(s)$ se puede deducir el rozamiento viscoso y la masa del carro. Seguidamente se muestra la metodología seguida para la identificación en bucle cerrado, la dinámica obtenida experimentalmente y los parámetros finalmente caracterizados. 
 
 \newpage
 \subsubsection{Diseño del experimento y adquisición de datos}
