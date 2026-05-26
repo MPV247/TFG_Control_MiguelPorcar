@@ -2291,6 +2291,12 @@ s
 s
 \section{Conmutación entre controles}
 s
+
+\section{Comparativa entre los resultados alcanzados y los objetivos iniciales}
+Aquí hacer una tabla comparativa entre los objetivos propuestos y los resultados reales y los objetivos propuestos.
+
+\section{Evaluación de la planificación temporal y justificación de desviaciones}
+
 \chapter{Conclusiones y posible trabajo futuro}
 
 Trabajo a futuro --> Implementación en HAL, uso de algoritmos no basados en modelo (Reinformemnt Learning)
@@ -2338,15 +2344,116 @@ Trabajo a futuro --> Implementación en HAL, uso de algoritmos no basados en mod
 % ==================================================================
 % APÉNDICE A: Desarrollo matemático
 % ==================================================================
-\section{Desarrollo del Lagrangiano}
+\section{Desarrollo matemático y modelado dinámico complementario}
+\subsection{Desarrollo del Lagrangiano}
 \label{anexo:desarrollo_dinamico}
 
 En este anexo se detalla el desarrollo matemático paso a paso del formalismo de Euler-Lagrange, partiendo de las energías del sistema hasta obtener la formulación matricial.
 \clearpage
+
+\subsection{Análisis de la dinámica eléctrica del actuador}
+\label{ap:dinamica_electrica}
+Si se quiere determinar la frecuencia óptima de operación, se debe analizar en primer lugar la constante de tiempo eléctrica ($\tau_e$) del actuador a partir de su circuito equivalente R-L, si atendemos a los parámetros del fabricante (Tabla \ref{tab:datos_motor}):
+
+\begin{equation}
+	\tau_e = \frac{L}{R} = \frac{7.2\,\text{mH}}{5.5\,\Omega} \approx 1.3\,\text{ms}
+\end{equation}
+
+Considerando que se requiere un intervalo mínimo de $5\tau_e$ para que la variable eléctrica alcance el régimen permanente ante un escalón de tensión. El periodo mínimo teórico de la señal \textit{PWM} ($T_{\text{PWM}}$) para despreciar la inductancia de la bobina del motor es:
+
+\begin{equation}
+	\begin{cases}
+		T_{\text{PWM}} &\ge 5\tau_e = 6.5\,\text{ms} \\
+		f_{\text{PWM, límite}} &= \frac{1}{T_{\text{PWM}}} = \frac{1}{6.5 \cdot 10^{-3}\,\text{s}} \approx 153.84\,\text{Hz}
+	\end{cases}
+\end{equation}
+
+Desde el punto de vista del comportamiento estático del motor, trabajar a frecuencias bajas próximas a este límite ofrece la ventaja de reducir la zona muerta del actuador, ya que proporciona el tiempo necesario para que la corriente se establezca y venza la fricción estática. 
+\begin{figure}[ht]
+	\centering
+	\begin{subfigure}{0.48\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{Pictures/circuito_equivalente} % Foto de la electrónica vieja
+		\caption{Circuito RL equivalente a un motor DC}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{0.48\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{Pictures/dinamica_RL} % Foto de la suciedad en el raíl
+		\caption{Respuesta temporal de la corriente}
+	\end{subfigure}
+	\caption{Circuito equivalente de un circuito motor DC y su dinámica ante entrada escalón}
+	\label{fig:equiv_motor}
+\end{figure}
+
+No obstante, operar el puente en H a frecuencias tan reducidas resulta complicado para el bucle de control debido a ciertas restricciones:
+
+\begin{enumerate}
+	\item \textbf{Acoplamiento con la frecuencia de muestreo ($f_{\text{control}}$):} Para asegurar la estabilidad y el determinismo del bucle cerrado, la frecuencia del control debe ser significativamente menor que la frecuencia de conmutación del actuador. Estableciendo un periodo de muestreo para la rutina de control de $T_s = 10\,\text{ms}$ ($f_{\text{control}} = 100\,\text{Hz}$), una frecuencia de \textit{PWM} cercana a $100\,\text{Hz}$ se encuentra demasiado en el límite para interferir en el bucle de control.
+	
+	\item \textbf{Sobrecalentamiento por rizado de corriente:} Las frecuencias bajas inducen un rizado de corriente severo incrementando las pérdidas óhmicas en el devanado ($\Delta P = I_{\text{rms}}^2 \cdot R$), derivando en una alta disipación térmica. Aunque para la plataforma experimental este factor no es destructivo (experimentos del orden de un par de minutos), degrada la eficiencia del sistema.
+	
+	\item \textbf{Contaminación acústica:} Las frecuencias del espectro audible humano se situan entre $20\,\text{Hz}$ y $20\,\text{kHz}$, con la banda de máxima sensibilidad entre $2\,\text{kHz}$ y $4\,\text{kHz}$.
+\end{enumerate}
+
+\newpage
+\subsection{Función de transferencia del carro}
+\label{ap:desarrollo_bloques_carro}
+
+En este apéndice se desglosa el procedimiento algebraico para la obtención de la función de transferencia entre voltaje y posición del carro. El sistema físico se modela simplificadamente como un bloque de masa neta acoplado a un elemento disipativo  (amortiguador) sobre el plano horizontal, tal y como se ilustra en la Figura~\ref{fig:esquema_masa_amortiguador}.
+\begin{figure}[htbp]
+	\centering
+	\resizebox{0.7\textwidth}{!}{
+		\input{Pictures/figuras/masa_amortiguador.tex}%
+	}
+	\caption{Modelo masa amortiguador}
+	\label{fig:esquema_masa_amortiguador}
+\end{figure}
+\FloatBarrier
+
+La ecuación diferencial que para este modelo simplificado es la siguiente:
+\begin{equation}
+	M \cdot \ddot{x}(t) + c_x \cdot \dot{x}(t) = F(t)
+\end{equation}
+
+Aplicando la transformada de Laplace bajo la hipótesis de condiciones iniciales nulas ($\dot{x}(0) = 0, x(0) = 0$), las derivadas temporales se traducen en el operador $s$:
+\begin{equation}
+	M \cdot s^2 X(s) + c_x \cdot s X(s) = F(s)
+\end{equation}
+
+Factorizando el término común del desplazamiento de la variable de estado horizontal $X(s)$, se obtiene:
+\begin{equation}
+	s(M \cdot s + c_x) X(s) = F(s)
+\end{equation}
+
+De este modo, la relación de la planta entre la posición de salida y la fuerza de entrada se expresa como:
+\begin{equation}
+	G_{\text{física}}(s) = \frac{X(s)}{F(s)} = \frac{1}{s(M \cdot s + c_x)}
+\end{equation}
+
+Para acoplar el modelo al entorno del microcontrolador, se introduce la ganancia estática de conversión del actuador, que vincula la tensión aplicada $U(s)$ con la fuerza horizontal en Newtons mediante el coeficiente $K_m$:
+\begin{equation}
+	F(s) = K_m \cdot U(s)
+\end{equation}
+
+Sustituyendo esta relación de potencia en la transferencia global del sistema, se deduce:
+\begin{equation}
+	G(s) = \frac{X(s)}{U(s)} = \frac{X(s)}{\frac{1}{K_m}F(s)} = K_m \cdot G_{\text{física}}(s) = \frac{K_m}{s(M \cdot s + c_x)}
+\end{equation}
+
+Finalmente, se manipula la expresión para obtener la función de transferencia en formato de \textbf{ganancia y constante de tiempo}:
+\begin{equation}
+	G(s) = \frac{\dfrac{K_m}{c_x}}{s\left(\dfrac{M}{c_x}s + 1\right)} = \frac{K}{s(1 + \tau s)}
+\end{equation}
+
+Donde las agrupaciones de los componentes físicos quedan ligadas a la ganancia estática $K$ y a la constante de tiempo del sistema $\tau$.
+\newpage
+
 % ==================================================================
-% APÉNDICE B: Código de la Planta
+% APÉNDICE B: Simulación
 % ==================================================================
-\section{Dinámica en MATLAB Functions}
+\section{Soporte al trabajo de simulación}
+\subsection{Dinámica en MATLAB Functions}
 \label{ap:codigo_dinamica}
 
 Este apéndice agrupa los bloques de código implementados en Simulink mediante estructuras \textit{MATLAB Function} para modelar la dinámica del sistema mecánico de dos grados de libertad.
@@ -2423,7 +2530,7 @@ Esta función mapea la acción de control hacia el espacio de coordenadas genera
 	\item[\textbf{Operación:}] Proyecta la fuerza $u$ sobre el primer grado de libertad (movimiento lineal del carro), asumiendo que el péndulo no tiene ningún actuador.
 \end{itemize}
 
-\section{Código Control de Energía}
+\subsection{Script control de energía}
 \label{ap:control_energia}
 
 \begin{matlabbox}{MATLAB Function Swing-Up con PFL}
@@ -2479,7 +2586,7 @@ end
 	\end{enumerate}
 \end{itemize}
 
-\section{Configuración Conexión MATLAB ROS}
+\subsection{Configuración de la conexión MATLAB ROS}
 \label{ap:conexion_ROS}
 
 \begin{matlabbox}{MATLAB Function conversión a mensaje de ROS}
@@ -2549,7 +2656,7 @@ Por otro lado, como se ilustra en la Figura~\ref{fig:hw_impl}, dentro del menú 
 \end{figure}
 \newpage
 
-\section{Desarrollo Dinámico y Programación de Simulaciones}
+\subsection{Desarrollo de simulaciones recursivas}
 \label{apendice:desarrollo_euler}
 Para conectar la teoría matemática con la implementación en código, se parte de la definición $\dot{\mathbf{x}}(t) = f(\mathbf{x}(t), u(t))$. Al aproximar la derivada temporal mediante el método de Euler de primer orden para un periodo de muestreo constante $T$, se obtiene la siguiente relación discreta:
 
@@ -2614,7 +2721,8 @@ end
 \noindent El script completo de la simulación, junto con los parámetros reales del sistema y los controladores funcionales detallados, se encuentra disponible para su consulta y descarga en el repositorio del proyecto \cite{Porcar2026TFG}.
 \newpage
 
-\section{Tabla de Multiplexación Completa del TMS32F280049C} \label{ap:tabla_mux}
+\section{Configuración y registros del microcontrolador (TMS320F280049C)}
+\subsection{Tabla de Multiplexación Completa del TMS32F280049C} \label{ap:tabla_mux}
 
 % --- PÁGINA 1: ENTRARÁ EL TÍTULO Y LA PRIMERA TABLA MUX1 ---
 \begin{figure}[!ht] % [!ht] fuerza a buscar espacio inmediatamente aquí
@@ -2646,7 +2754,7 @@ end
 \FloatBarrier
 
 \clearpage
-\section{Registros del módulo eQEP}
+\subsection{Registros del módulo eQEP}
 \label{ap:registros_eQEP}
 
 En primer lugar, se proporciona el mapa de memoria global del módulo de hardware para la lectura de encoders (\textit{eQEP}), el cual delimita las direcciones base del periférico y sus registros de control asociados. 
@@ -2720,10 +2828,10 @@ A partir de la distribución expuesta en la Figura~\ref{fig:bits_qepctl}, las co
 \begin{itemize}
 	\item \textbf{\texttt{QEPCTL.bit.FREE\_SOFT = 2h}:} Impide que el contador de posición se detenga debido a un punto de ruptura en la depuración.
 	
-	\item \textbf{\texttt{QEPCTL.bit.QPEN = 1h}:} Habilita formalmente el contador de posición del eQEP (\textit{eQEP Position Counter Enable}).
+	\item \textbf{\texttt{QEPCTL.bit.QPEN = 1h}:} Habilita formalmente el contador de posición del eQEP.
 \end{itemize}
 
-\section{Registros del módulo ePWM}
+\subsection{Registros del módulo ePWM}
 \label{ap:registros_ePWM}
 Se proporciona el mapa de memoria global del módulo de hardware para la modulación por ancho de pulso (\textit{ePWM}), el cual delimita las direcciones base del periférico y sus registros de control asociados. 
 \begin{figure}[!ht] % [!ht] fuerza a buscar espacio inmediatamente aquí
@@ -2805,7 +2913,7 @@ A partir de la distribución expuesta en la Figura~\ref{fig:bits_aqctla}, los ev
 \end{itemize}
 \newpage
 
-\section{Tasa de baudios del SCI}
+\subsection{Tasa de baudios del SCI}
 \label{ap:registros_sci}
 En este anexo se detalla el cálculo y la configuración de los registros \texttt{SCIHBAUD} y \texttt{SCILBAUD} del periférico \textit{SCI} para configurar la tasa de baudios en la comunicación serie. Antes de desarrollar el cálculo dado el valor de ambos registros se dispone de la descripciones de cada registro proporcionadas por \textit{Texas Instruments}. 
 
@@ -2868,7 +2976,7 @@ Este porcentaje de error es mínimo y no representa un problema de sincronismo e
 
 \newpage
 
-\section{Configuración del Temporizador y Jerarquía de Interrupciones}
+\subsection{Configuración de la ISR en detalle}
 \label{ap:interrupciones_timer}
 
 En este anexo se desglosa el funcionamiento interno del bloque de temporizadores de la CPU del \textbf{TMS320F280049C} y se detalla el firmware de bajo nivel desarrollado para establecer el determinismo temporal del sistema.
@@ -2893,9 +3001,7 @@ Como se observa en el diagrama de la Figura~\ref{fig:cpu_timer_hardware}, la bas
 \end{itemize}
 
 \newpage
-\paragraph{Firmware de inicialización de bajo nivel}
-
-En el Bloque de Código~\ref{code:low_level_timer} se expone el código de bajo nivel encargado de manipular los registros internos del microcontrolador.
+\paragraph{Inicialización a bajo nivel}
 
 \begin{lstlisting}[style=estiloC, caption={Rutina de bajo nivel para la inicialización del Timer 0}, label={code:low_level_timer}]
 	void setup_TimeInterrupt(void (*isr_ptr)(void), uint32_t T)
@@ -2923,7 +3029,7 @@ En el Bloque de Código~\ref{code:low_level_timer} se expone el código de bajo 
 	}
 \end{lstlisting}
 
-\subsubsection{Análisis de las instrucciones críticas de registro}
+\paragraph{Análisis de las instrucciones críticas de registro}
 
 \begin{enumerate}
 	\item \textbf{Protección de Memoria (\texttt{EALLOW} / \texttt{EDIS}):} La tabla de vectores que contiene las direcciones de las interrupciones críticas está protegida por hardware contra escrituras accidentales. La instrucción en ensamblador \texttt{EALLOW} deshabilita temporalmente esta protección, permitiendo sobreescribir la posición de memoria \texttt{PieVectTable.TIMER0\_INT} con el puntero de nuestra función \texttt{control}, cerrando el acceso seguro inmediatamente después con \texttt{EDIS}.
@@ -2934,102 +3040,5 @@ En el Bloque de Código~\ref{code:low_level_timer} se expone el código de bajo 
 	
 	\item \textbf{Líneas de Ejecución (\texttt{EINT} / \texttt{ERTM}):} La macro \texttt{EINT} activa de forma global todas las interrupciones del microcontrolador. Por su parte, \texttt{ERTM} (\textit{Enable Real-Time Mode}) es una directiva fundamental para las herramientas de depuración en tiempo real; permite que, incluso si el microcontrolador está conectado al ordenador enviando datos de telemetría o monitorizando variables, la interrupción del temporizador mantenga su máxima prioridad física de ejecución.
 \end{enumerate}
-
-\section{Análisis de la dinámica eléctrica del actuador}
-\label{ap:dinamica_electrica}
-Si se quiere determinar la frecuencia óptima de operación, se debe analizar en primer lugar la constante de tiempo eléctrica ($\tau_e$) del actuador a partir de su circuito equivalente R-L, si atendemos a los parámetros del fabricante (Tabla \ref{tab:datos_motor}):
-
-\begin{equation}
-	\tau_e = \frac{L}{R} = \frac{7.2\,\text{mH}}{5.5\,\Omega} \approx 1.3\,\text{ms}
-\end{equation}
-
-Considerando que se requiere un intervalo mínimo de $5\tau_e$ para que la variable eléctrica alcance el régimen permanente ante un escalón de tensión. El periodo mínimo teórico de la señal \textit{PWM} ($T_{\text{PWM}}$) para despreciar la inductancia de la bobina del motor es:
-
-\begin{equation}
-	\begin{cases}
-		T_{\text{PWM}} &\ge 5\tau_e = 6.5\,\text{ms} \\
-		f_{\text{PWM, límite}} &= \frac{1}{T_{\text{PWM}}} = \frac{1}{6.5 \cdot 10^{-3}\,\text{s}} \approx 153.84\,\text{Hz}
-	\end{cases}
-\end{equation}
-
-Desde el punto de vista del comportamiento estático del motor, trabajar a frecuencias bajas próximas a este límite ofrece la ventaja de reducir la zona muerta del actuador, ya que proporciona el tiempo necesario para que la corriente se establezca y venza la fricción estática. 
-\begin{figure}[ht]
-	\centering
-	\begin{subfigure}{0.48\textwidth}
-		\centering
-		\includegraphics[width=\textwidth]{Pictures/circuito_equivalente} % Foto de la electrónica vieja
-		\caption{Circuito RL equivalente a un motor DC}
-	\end{subfigure}
-	\hfill
-	\begin{subfigure}{0.48\textwidth}
-		\centering
-		\includegraphics[width=\textwidth]{Pictures/dinamica_RL} % Foto de la suciedad en el raíl
-		\caption{Respuesta temporal de la corriente}
-	\end{subfigure}
-	\caption{Circuito equivalente de un circuito motor DC y su dinámica ante entrada escalón}
-	\label{fig:equiv_motor}
-\end{figure}
-
-No obstante, operar el puente en H a frecuencias tan reducidas resulta complicado para el bucle de control debido a ciertas restricciones:
-
-\begin{enumerate}
-	\item \textbf{Acoplamiento con la frecuencia de muestreo ($f_{\text{control}}$):} Para asegurar la estabilidad y el determinismo del bucle cerrado, la frecuencia del control debe ser significativamente menor que la frecuencia de conmutación del actuador. Estableciendo un periodo de muestreo para la rutina de control de $T_s = 10\,\text{ms}$ ($f_{\text{control}} = 100\,\text{Hz}$), una frecuencia de \textit{PWM} cercana a $100\,\text{Hz}$ se encuentra demasiado en el límite para interferir en el bucle de control.
-	
-	\item \textbf{Sobrecalentamiento por rizado de corriente:} Las frecuencias bajas inducen un rizado de corriente severo incrementando las pérdidas óhmicas en el devanado ($\Delta P = I_{\text{rms}}^2 \cdot R$), derivando en una alta disipación térmica. Aunque para la plataforma experimental este factor no es destructivo (experimentos del orden de un par de minutos), degrada la eficiencia del sistema.
-	
-	\item \textbf{Contaminación acústica:} Las frecuencias del espectro audible humano se situan entre $20\,\text{Hz}$ y $20\,\text{kHz}$, con la banda de máxima sensibilidad entre $2\,\text{kHz}$ y $4\,\text{kHz}$.
-\end{enumerate}
-
-\newpage
-\section{Desarrollo matemático de la función de transferencia del carro}
-\label{ap:desarrollo_bloques_carro}
-
-En este apéndice se desglosa el procedimiento algebraico para la obtención de la función de transferencia entre voltaje y posición del carro. El sistema físico se modela simplificadamente como un bloque de masa neta acoplado a un elemento disipativo  (amortiguador) sobre el plano horizontal, tal y como se ilustra en la Figura~\ref{fig:esquema_masa_amortiguador}.
-\begin{figure}[htbp]
-	\centering
-	\resizebox{0.7\textwidth}{!}{
-		\input{Pictures/figuras/masa_amortiguador.tex}%
-	}
-	\caption{Modelo masa amortiguador}
-	\label{fig:esquema_masa_amortiguador}
-\end{figure}
-\FloatBarrier
-
-La ecuación diferencial que para este modelo simplificado es la siguiente:
-\begin{equation}
-	M \cdot \ddot{x}(t) + c_x \cdot \dot{x}(t) = F(t)
-\end{equation}
-
-Aplicando la transformada de Laplace bajo la hipótesis de condiciones iniciales nulas ($\dot{x}(0) = 0, x(0) = 0$), las derivadas temporales se traducen en el operador $s$:
-\begin{equation}
-	M \cdot s^2 X(s) + c_x \cdot s X(s) = F(s)
-\end{equation}
-
-Factorizando el término común del desplazamiento de la variable de estado horizontal $X(s)$, se obtiene:
-\begin{equation}
-	s(M \cdot s + c_x) X(s) = F(s)
-\end{equation}
-
-De este modo, la relación de la planta entre la posición de salida y la fuerza de entrada se expresa como:
-\begin{equation}
-	G_{\text{física}}(s) = \frac{X(s)}{F(s)} = \frac{1}{s(M \cdot s + c_x)}
-\end{equation}
-
-Para acoplar el modelo al entorno del microcontrolador, se introduce la ganancia estática de conversión del actuador, que vincula la tensión aplicada $U(s)$ con la fuerza horizontal en Newtons mediante el coeficiente $K_m$:
-\begin{equation}
-	F(s) = K_m \cdot U(s)
-\end{equation}
-
-Sustituyendo esta relación de potencia en la transferencia global del sistema, se deduce:
-\begin{equation}
-	G(s) = \frac{X(s)}{U(s)} = \frac{X(s)}{\frac{1}{K_m}F(s)} = K_m \cdot G_{\text{física}}(s) = \frac{K_m}{s(M \cdot s + c_x)}
-\end{equation}
-
-Finalmente, se manipula la expresión para obtener la función de transferencia en formato de \textbf{ganancia y constante de tiempo}:
-\begin{equation}
-	G(s) = \frac{\dfrac{K_m}{c_x}}{s\left(\dfrac{M}{c_x}s + 1\right)} = \frac{K}{s(1 + \tau s)}
-\end{equation}
-
-Donde las agrupaciones de los componentes físicos quedan ligadas a la ganancia estática $K$ y a la constante de tiempo del sistema $\tau$.
 
 \end{document}
