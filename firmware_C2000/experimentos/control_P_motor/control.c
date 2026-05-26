@@ -1,8 +1,38 @@
 //#############################################################################
 //
-// FILE:   control.c
+// FILE:        control.c
 //
-// TITLE:  CONTROL.
+// TITLE:       TFG - Control de Posición P en Vacío (Sin Carro Acoplado)
+//
+// AUTHOR:      Miguel Porcar
+// DATE:        Mayo 2026
+// TARGET:      TI C2000 (TMS320F28004x)
+//
+// DESCRIPCIÓN:
+// Éste módulo implementa un lazo de control puramente Proporcional (P) para 
+// regular la posición angular (rad) del motor sin carga mecánica acoplada.
+//
+// OBJETIVOS Y ESTRATEGIAS DEL ENSAYO:
+// 1. Control Proporcional Puro: Se utiliza únicamente la ganancia KP = 6.0f. 
+//    Al prescindir de la acción integral, este script permite evaluar de forma 
+//    directa el error en régimen permanente (offset) inherente al sistema.
+// 2. Frecuencia de Ejecución: El bucle corre estrictamente a 100 Hz (T = 10ms)
+//    dentro de la rutina de interrupción del CpuTimer0.
+// 3. Banda de Tolerancia Estacionaria: Mantiene el filtro de umbral mínimo 
+//    (u_v < 0.05V) para evitar oscilaciones de baja amplitud en el motor cuando 
+//    el error es prácticamente nulo.
+// 4. Linealización por Zona Muerta: El driver aplica los mismos offsets directos 
+//    (ZM_FWD_V/ZM_BWD_V = 2.55V) para neutralizar la fricción estática inicial 
+//    del motor de corriente continua.
+//
+// TELEMETRÍA (Salida Serial CSV):
+// Envía los datos desglosados en coma flotante tras cada ciclo de control:
+// Formato: [ tension_P(V) , tension_con_ZM(V) , posicion_real(rad) , referencia(rad) ]
+//
+// CONFIGURACIÓN DE PERIFÉRICOS ASOCIADOS:
+// - eQEP1: Registro de conteo de pulsos del encoder del motor.
+// - ePWM1 / GPIO1 / GPIO6: Modulación de ancho de pulso y lógica de dirección.
+// - SCI-A: Transmisión de tramas de depuración y registro hacia el PC.
 //
 //#############################################################################
 
@@ -27,14 +57,13 @@
 #define ZM_FWD_V 2.55f          //Valor zona muerta adelante (V)
 #define ZM_BWD_V 2.55f          //Valor zonas muertas atras  (V)
 #define KP 6.0f                 //Ganancia proporcional 
-#define KI 1.5f                 //Termino integral
-#define KD 0.0f                 //Termino derivativo del control
+
 
 //
 // Globals
 //
 long pulsos, pulsos_ant;
-float pos, w, ref, u_v, u_vzm, e, e_ant, e_dot, I; 
+float pos, w, ref, u_v, u_vzm, e, e_ant, e_dot; 
 char txBuffer[100];
 bool send_data = false;  //Flag para envio por puerto serie
 int counter_ref, cambios; 
@@ -104,7 +133,6 @@ void condiciones_iniciales(void)
     e = 0.0f; 
     e_ant = 0.0f; 
     e_dot = 0.0f; 
-    I = 0.0f;                            //Integral del error
 
     //Contadores (cambiar ref)
     counter_ref = 0;                     //Contador para bajar la frecuencia
@@ -154,14 +182,9 @@ void calcula_accion_control(void)
 {
     e = ref - pos;
     e_dot = (e - e_ant)/0.01f; 
-    I = I + KI*e*0.01f;
-    u_v = KP * e + I; 
+    u_v = KP * e ; 
 
-    //Antiwindup:
-    if (u_v < -15.0 || u_v > 15.0)
-    {
-        I = I - KI*e*0.01; 
-    }
+
     if (fabsf(u_v) < 0.05f) { //Evitar vibraciones
         u_v = 0.0f; 
     } 

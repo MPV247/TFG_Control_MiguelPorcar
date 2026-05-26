@@ -2,8 +2,7 @@
 //
 // FILE:        control.c
 //
-// TITLE:       TFG - Control por Realimentación del Estado con Integrador
-//              para Péndulo Invertido sobre Carro Lineal.
+// TITLE:       TFG - Control por Realimentación del Estado
 //
 // AUTHOR:      Miguel Porcar
 // DATE:        Mayo 2026
@@ -11,25 +10,25 @@
 //
 // DESCRIPCIÓN:
 // Éste módulo ejecuta un algoritmo de control por realimentación del vector de
-// estados extendido mediante un integrador para estabilizar el péndulo invertido 
-// en su punto de equilibrio inestable (theta = pi) y regular la posición 
-// horizontal del carro (x). Funciona a una frecuencia de 100 Hz (T = 10 ms).
+// estados estándar (4 estados) para estabilizar el péndulo invertido en su 
+// punto de equilibrio inestable (theta = pi) y regular la posición horizontal 
+// del carro (x). Funciona a una frecuencia de 100 Hz (T = 10 ms).
 //
 // ARQUITECTURA DEL SISTEMA DE CONTROL:
-// 1. Vector de Estados Extendido: El estado de la planta se define como 
-//    x_vec = [x, theta, x_dot, theta_dot]^T. Se añade un estado
-//    auxiliar integrador Ie = integral(ref_x - x) dt para eliminar por completo
-//    el error en estado estacionario de la posición del carro ante fricciones.
+// 1. Vector de Estados Estándar: El estado de la planta se define mediante 
+//    4 variables continuas: x_vec = [x, theta, x_dot, theta_dot]^T. Al no 
+//    incluir extensión del estado (sin integrador), el sistema puede presentar 
+//    un ligero error en estado estacionario en la posición del carro debido a 
+//    fricciones no modeladas (Coulomb/Stribeck).
 // 2. Ley de Control Implementada: 
-//    u = K1*(ref_x - x) + K2*(ref_theta - theta) + K3*(0 - x_dot) + K4*(0 - theta_dot) + KI*Ie
+//    u = K1*(ref_x - x) + K2*(ref_theta - theta) + K3*(0 - x_dot) + K4*(0 - theta_dot)
 // 3. Envoltura Trigonométrica (Acondicionamiento de Ángulo): Se utiliza la función 
 //    `atan2f(sinf(e), cosf(e))` para normalizar el error angular en el intervalo 
 //    [-pi, pi]. Esto evita discontinuidades catastróficas en el cálculo de la 
 //    acción de control cuando el péndulo oscila cerca de la vertical superior.
-// 4. Anti-Windup Condicional: Cuando la acción de control intermedio u supera la 
-//    saturación física impuesta por seguridad (UMAX = 4.68V), el acumulador del 
-//    integrador Ie se congela de manera estricta para prevenir la saturación 
-//    del lazo y sobreoscilaciones incontrolables.
+// 4. Zona Muerta del Actuador: Se aplica una compensación estática de zona muerta 
+//    (+-5.0V) para vencer la fricción estática inicial del motor antes de aplicar 
+//    la componente lineal de la ley de control.
 //
 // SECUENCIA EXPERIMENTAL DE REFERENCIAS (Perfil de Ensayos):
 // - 0 a 10s: Período de calma / Calibración (Motor apagado, u=0). El péndulo debe llevarse manualmente a la vertical.
@@ -64,18 +63,17 @@
 #define UMAX 4.68f              //Saturación del control (V)
 #define ZM_FWD 5.0f             //Zona muerta delante (V)
 #define ZM_BWD 5.0f             //Zona muerta atrás (V)
-#define K1 -115.71f               // Ganancia para posición (x)
-#define K2 260.31f               // Ganancia para ángulo (theta)
-#define K3 -82.96f               // Ganancia para velocidad (x_dot)
-#define K4 51.87f               // Ganancia para velocidad angular (theta_dot) 
-#define KI -54.77f              // Ganancia para el error integral en la posicion (x)
+#define K1 -31.6228f               // Ganancia para posición (x)
+#define K2 246.8238f               // Ganancia para ángulo (theta)
+#define K3 -56.5082f               // Ganancia para velocidad (x_dot)
+#define K4 57.6621f               // Ganancia para velocidad angular (theta_dot) 
 #define CUENTAS_10S 1000        //Contador para esperar 10 s hasta aplicar el control
 
 //
 // Globals
 //
 long pulsos1, pulsos2;
-float x, x_ant, x_dot, theta, theta_ant, theta_dot, Ie;            //Variables de estado
+float x, x_ant, x_dot, theta, theta_ant, theta_dot;            //Variables de estado
 
 float u, u_zm, ref_theta, ref_x;                                   //Variables de control
 int16_t u_dig; 
@@ -156,7 +154,6 @@ void condiciones_iniciales(void)
     //Referencia y error de medida:                           
     ref_theta = 0.0f;                      // Referencia angulo del pendulo
     ref_x = 0.0f; 
-    Ie = 0.0f;                             //Error integral
 }
 
 //Envio datos
@@ -220,25 +217,22 @@ void calcula_accion_control(void)
     e2 = atan2f(sinf(e2), cosf(e2));    //Normalizar error
     float e3 = 0.0f - x_dot;
     float e4 = 0.0f - theta_dot;
-    Ie = Ie + T_sec * (ref_x - x);
+  
  
     // Ley de control por realimentacion del estado: u = K * e
-    u = K1 * e1 + K2 * e2 + K3 * e3 + K4 * e4 + KI * Ie;
+    u = K1 * e1 + K2 * e2 + K3 * e3 + K4 * e4;
     
     //Ciclo límite (evitar desgaste excesivo del actuador)
     if (fabs(e1) < 0.001 && fabs(e2) < 0.003){
-        u = 0;
-        Ie = Ie - T_sec * (ref_x - x); 
+        u = 0; 
     }
 
     //Saturación y anti-windup aquí: 
     if (u < -UMAX){
         u = -UMAX; 
-        Ie = Ie - T_sec * (ref_x - x);
     }
     else if (u > UMAX) {
         u = UMAX; 
-        Ie = Ie - T_sec * (ref_x - x);
     }
 }
 

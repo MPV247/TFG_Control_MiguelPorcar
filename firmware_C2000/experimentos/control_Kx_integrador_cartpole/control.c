@@ -54,7 +54,7 @@
 
 //
 // Defines
-//
+// -115.7189  260.3190  -82.9727   51.8767  -54.7723
 #define ENCODER1_CPR 6597       //Relacion pulsos-riel
 #define ENCODER2_CPR 2000       //Relacion pulsos-pendulo
 #define T 10000                 //Periodo de ISR (10000 mcs = 10 ms)

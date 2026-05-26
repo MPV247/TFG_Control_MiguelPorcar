@@ -1,8 +1,43 @@
 //#############################################################################
 //
-// FILE:   control.c
+// FILE:        control.c
 //
-// TITLE:  CONTROL.
+// TITLE:       TFG - Control de Posición PD del Carro con Dither y Zona Muerta
+//
+// AUTHOR:      Miguel Porcar
+// DATE:        Mayo 2026
+// TARGET:      TI C2000 (TMS320F28004x)
+//
+// DESCRIPCIÓN:
+// Éste módulo ejecuta un lazo de control Proporcional-Derivativo (PD) discreto 
+// a una frecuencia de 100 Hz (T = 10ms) para regular la posición lineal (x) 
+// del carro transportador sobre el riel guía.
+//
+// ESTRATEGIAS AVANZADAS DE CONTROL E INSTRUMENTACIÓN:
+// 1. Algoritmo PD sin "Derivative Kick": La acción derivativa se calcula usando 
+//    directamente la velocidad medida de la planta ($-K_D \cdot \dot{x}$) en lugar de 
+//    la derivada del error. Esto previene picos violentos de tensión en el motor 
+//    cuando la referencia cambia instantáneamente de forma escalonada.
+// 2. Inyección de Dither Activo: Cuando el motor está activo ($u \neq 0$), el script 
+//    superpone una señal cuadrada alterna de alta frecuencia (50 Hz) y amplitud 
+//    AMP_DITHER = 1.4V. Esta microvibración reduce drásticamente el rozamiento 
+//    estático (stiction) en los cojinetes del carro, linealizando el comportamiento.
+// 3. Compensación Lineal de Zona Muerta: Introduce un offset simétrico de 4.5V 
+//    (ZM_FWD/ZM_BWD) para saltar de inmediato la banda de no-respuesta del puente H.
+// 4. Supresión de Ciclos Límite: Si el error de posición cae por debajo de la 
+//    resolución física crítica (0.00009m), el control se apaga de forma estricta 
+//    para evitar oscilaciones innecesarias en estado estacionario.
+// 5. Perfil Secuencial de Referencias Automático: Implementa una máquina de 
+//    estados periódica que cambia la consigna de posición cada 10 segundos en la 
+//    secuencia: [ 0.0m -> 0.3m -> -0.3m -> 0.3m -> 0.0m ].
+//
+// TELEMETRÍA (Salida Serial CSV):
+// Formato: [ ref(m) , x_real(m) , x_dot(m/s) , u_ideal(V) , u_final_con_ZM_y_Dither(V) ]
+//
+// CONFIGURACIÓN DE PERIFÉRICOS ASOCIADOS:
+// - eQEP1: Decodificación de cuadratura del encoder del carro (ENCODER1_CPR = 6597).
+// - ePWM1 / GPIO1 / GPIO6: Señales de potencia y sentido de giro del motor.
+// - CpuTimer0: Temporizador maestro de la ISR (10 ms).
 //
 //#############################################################################
 

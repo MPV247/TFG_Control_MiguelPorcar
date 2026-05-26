@@ -1,8 +1,33 @@
 //#############################################################################
 //
-// FILE:   control.c
+// FILE:        control.c
 //
-// TITLE:  CONTROL.
+// TITLE:       TFG - Ensayo de Decaimiento del Péndulo (Estimación de Rozamiento)
+//
+// AUTHOR:      Miguel Porcar
+// DATE:        Mayo 2026
+// TARGET:      TI C2000 (TMS320F28004x)
+//
+// DESCRIPCIÓN:
+// Éste módulo está diseñado para capturar la oscilación libre y amortiguada 
+// del péndulo a partir de una posición inicial no nula. No aplica ninguna
+// acción de control sobre el motor (u = 0 implicitamente al no activarse).
+//
+// OBJETIVO DEL ENSAYO:
+// Registrar la atenuación de la amplitud angular (theta) en el tiempo tras 
+// perturbar el péndulo. Los datos obtenidos en el CSV se utilizarán 
+// posteriormente en MATLAB/Python para identificar el modelo de pérdidas por 
+// fricción (rozamiento viscoso y culómbico) en la articulación.
+//
+// TELEMETRÍA (Salida Serial CSV):
+// Envía muestras de forma periódica estricta cada 10ms a través del puerto SCI-A:
+// Formato: [ pulsos_crudos(long) , angulo_theta(rad) ]
+//
+// CONFIGURACIÓN DE PERIFÉRICOS ASOCIADOS:
+// - eQEP2: Periférico asignado para la lectura del encoder del péndulo.
+// - CpuTimer0: Configurado con un periodo de muestreo rápido (T = 10ms) para 
+//   capturar con suficiente resolución la dinámica transitoria de la oscilación.
+// - SCI-A: Volcado de la trama serial hacia el sistema de adquisición de datos.
 //
 //#############################################################################
 
@@ -116,7 +141,6 @@ void mide_encoder(void)
 __interrupt void control(void)
 {
     CpuTimer0.InterruptCount++; 
-    // --- BUCLE DE CONTROL ---
     mide_encoder(); 
     send_data = true; 
     PieCtrlRegs.PIEACK.all = PIEACK_GROUP1;

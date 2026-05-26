@@ -1,8 +1,38 @@
 //#############################################################################
 //
-// FILE:   control.c
+// FILE:        control.c
 //
-// TITLE:  CONTROL.
+// TITLE:       TFG - Control de Posición PI en Vacío (Sin Carro Acoplado)
+//
+// AUTHOR:      Miguel Porcar
+// DATE:        Mayo 2026
+// TARGET:      TI C2000 (TMS320F28004x)
+//
+// DESCRIPCIÓN:
+// Éste módulo implementa un algoritmo de control Proporcional-Integral (PI) 
+// de posición en bucle cerrado para regular la posición angular (rad) del 
+// motor funcionando de forma aislada (sin acoplamiento mecánico al carro).
+//
+// ESTRATEGIAS DE CONTROL INCORPORADAS:
+// 1. Regulador PI Discreto: Calculado a una frecuencia de 100 Hz (T = 10ms) 
+//    utilizando las ganancias KP = 6.0f y KI = 1.5f.
+// 2. Esquema Anti-windup: Prevención de la saturación del término integral. 
+//    Si la acción de control combinada supera los límites físicos de alimentación 
+//    (+-15.0V), se congela la acumulación de la integral en ese ciclo.
+// 3. Banda de Supresión de Vibraciones (Deadband): Si la acción calculada u_v 
+//    es inferior a 0.05V en valor absoluto, se fuerza a 0.0V de forma estricta 
+//    para mitigar el chattering (vibraciones de alta frecuencia) en régimen permanente.
+// 4. Compensación de Zona Muerta Activa: Inyección de offsets algebraicos 
+//    en el driver (ataca_motor) tanto en unidades analógicas (ZM_FWD_V/ZM_BWD_V = 2.55V) 
+//    como digitales (+-850 cuentas de PWM) para linealizar la respuesta del puente H.
+//
+// TELEMETRÍA (Salida Serial CSV):
+// Formato: [ tension_PI(V) , tension_con_ZM(V) , posicion_real(rad) , referencia(rad) ]
+//
+// CONFIGURACIÓN DE PERIFÉRICOS ASOCIADOS:
+// - eQEP1: Captura de la posición angular del motor (ENCODER_CPR = 2048.0f).
+// - ePWM1 / GPIO1 / GPIO6: Driver del puente H (Dirección y Duty Cycle).
+// - CpuTimer0: Generación de la base de tiempo periódica del control a 10ms.
 //
 //#############################################################################
 

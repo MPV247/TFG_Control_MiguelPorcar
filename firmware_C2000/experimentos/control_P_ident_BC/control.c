@@ -1,8 +1,36 @@
 //#############################################################################
 //
-// FILE:   control.c
+// FILE:        control.c
 //
-// TITLE:  CONTROL.
+// TITLE:       TFG - Identificación en Bucle Cerrado mediante Control P del Carro
+//
+// AUTHOR:      Miguel Porcar
+// DATE:        Mayo 2026
+// TARGET:      TI C2000 (TMS320F28004x)
+//
+// DESCRIPCIÓN:
+// Éste módulo implementa un esquema de control puramente Proporcional (P) 
+// ejecutado a 100 Hz (T = 10ms) diseñado específicamente como herramienta de 
+// excitación para la identificación dinámica del carro sobre el riel en lazo cerrado.
+//
+// CRITERIOS DE DISEÑO PARA IDENTIFICACIÓN:
+// 1. Control P de Alta Ganancia: Configurado con KP = 80.0f para garantizar una 
+//    directividad rígida sobre la planta. Al prescindir de acciones dinámicas (I, D) 
+//    en el propio controlador, el transitorio medido refleja de forma pura la 
+//    interacción entre la ganancia estática y los polos reales del sistema físico 
+//    (masa y rozamiento viscoso).
+// 2. Perfil de Excitación Acotado: La máquina de estados genera perturbaciones 
+//    escalón de baja amplitud (+-0.1m) cada 10 segundos [0.0m -> 0.1m -> 0.0m -> -0.1m -> 0.0m].
+// 3. Desensibilización de la Fricción (Dither + ZM): El uso conjunto de la compensación 
+//    de zona muerta (+-4.5V) y la inyección de Dither cuadrado (+-1.4V a 50 Hz) es 
+//    fundamental aquí: lineariza de forma activa el comportamiento del actuador, 
+//    permitiendo identificar el carro mediante modelos lineales estándar de 2º orden.
+// 4. Ventana de Supresión de Ruido: Umbral estricto para errores inferiores a 
+//    0.00009m para evitar que el ruido de cuantificación afecte al registro de datos.
+//
+// TELEMETRÍA DE ALTA RESOLUCIÓN (Salida Serial CSV):
+// Envía 5 canales en coma flotante con 4 decimales para procesado en MATLAB/Python:
+// Formato: [ ref(m) , x_real(m) , x_dot(m/s) , u_ideal(V) , u_actuador_ZM_Dither(V) ]
 //
 //#############################################################################
 
