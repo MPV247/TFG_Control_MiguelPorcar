@@ -14,3 +14,12 @@
 *.ilg
 *.ind
 
+# Archivos temporales de MATLAB
+*.asv
+*.slxc
+*.mex*
+
+# Carpetas de caché de simulación y generación de código
+slprj/
+_out/
+
