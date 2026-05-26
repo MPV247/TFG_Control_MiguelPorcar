@@ -2288,14 +2288,14 @@ Con la integración de las leyes de control dentro de la rutina de interrupción
 \section{Control de posición}
 \label{sec:resultados_control_posicion}
 
-En esta sección se evalúa el comportamiento de la ley de control por realimentación del estado en el sistema real. Las ganancias del controlador ($K = [K1, K2, K3, K4]$) se ajustaron y validaron en simulación antes de su implementación en el hardware real. El objetivo fundamental es doble: 
+En esta sección se evalúa el comportamiento de la ley de control por realimentación del estado en el sistema real. Las ganancias del controlador ($K = [K_1, K_2, K_3, K_4]$) se ajustaron y validaron en simulación antes de su implementación en el hardware real. El objetivo fundamental es doble: 
 \begin{itemize}
 	\item \textbf{Validación del modelo matemático identificado:} Las ganancias obtenidas en el modelo de simulación deben poder estabilizar el equipo del laboratorio sin necesidad de reajustes empíricos (prueba y error).
 	
 	\item \textbf{Análisis teórico en planta real:} Al ajustar las ganancias del controlador con el método de optimización \textit{LQR} (Sección~\ref{cap:control_kx}) es interesante analizar como afecta la ponderación de $Q$ y $R$ en el comportamiento del sistema real. 
 \end{itemize}
 
-Para evaluar de forma homogénea las prestaciones de las distintas configuraciones del controlador, se diseñó un escenario de prueba que consiste en una secuencia de cambios de referencia en forma de escalón para la posición del carro ($x_{ref}$). La secuencia experimental, se define como:
+Para evaluar de forma homogénea las prestaciones de las distintas configuraciones del controlador, se diseñó un escenario de prueba que consiste en una secuencia de cambios de referencia en forma de escalón para la posición del carro ($x_{ref}$). La secuencia experimental se define como:
 \begin{equation}
 	x_{ref}(t) = 
 	\begin{cases} 
@@ -2338,7 +2338,7 @@ En el Cuadro~\ref{tab:comparativa_lqr} se muestran los seis controladores probad
 La Figura~\ref{fig:resultados_kx} revela la influencia del valor de los parámetros $Q$ y $R$ en el rendimiento del bucle de control:
 
 \begin{enumerate}
-	\item \textbf{Gasto energético ($R$):} Físicamente, disminuir $R$ implica tolerar un mayor esfuerzo de actuación en voltios a cambio de minimizar el error más rápidamente. Experimentalmente, \textbf{C1} exhibe una respuesta lenta y perezosa ante los cambios de referencia en $x$. En cambio, \textbf{C3} intenta converger más rápidamente hacia $x_{ref}$ a costa de una acción control de más agresiva.
+	\item \textbf{Gasto energético ($R$):} Físicamente, disminuir $R$ implica tolerar un mayor esfuerzo de actuación en voltios a cambio de minimizar el error más rápidamente. Experimentalmente, \textbf{C1} exhibe una respuesta lenta y perezosa ante los cambios de referencia en $x$. En cambio, \textbf{C3} intenta converger más rápidamente hacia $x_{ref}$ a costa de una acción control más agresiva.
 	
 	\item \textbf{Modulación del peso del estado de posición (Diagonal de $Q$):} Las configuraciones \textbf{C4} y \textbf{C5} incrementan selectivamente el primer elemento de la diagonal de $Q$ ($Q_{11}$), el cual penaliza el error de posición el carro ($x_{ref} - x$), manteniendo $R=0.001$. Al elevar este peso, la ganancia $K_1$ escala de $-31.62$ (\textbf{C3}) a $-50.00$ (\textbf{C4}) y finalmente a $-100.00$ (\textbf{C5}). Los resultados demuestran que el carro intenta converger hacia las referencias de $\pm 0.15\,\text{m}$ con una velocidad superior. Sin embargo, este comportamiento introduce un compromiso de diseño (\textit{trade-off}): la aceleración brusca del carro para corregir su posición lineal eleva las oscilaciones angulares del péndulo ($\theta$), comprometiendo temporalmente la estabilidad vertical en cada escalón.
 	
@@ -2363,7 +2363,7 @@ Este comportamiento experimental fue el que motivó a añadir término integral 
 	\label{fig:resultados_integrador}
 \end{figure}
 \FloatBarrier
-Como se aprecia en la Figura~\ref{fig:resultados_integrador}, la inclusión de la acción integral corrige el error de posición. En el momento en que el carro se detiene en la posición ($x_{ref} - x$), por pequeño que sea el error, comienza a acumularse de forma continua en el tiempo dentro del estado virtual $I_e$. Esta integración numérica genera un aumento progresivo y rampa en la señal de control $u$ que, al cabo de unos instantes, logra romper el umbral de bloqueo mecánico y vencer la resistencia de la correa de transmisión. 
+Como se aprecia en la Figura~\ref{fig:resultados_integrador}, la inclusión de la acción integral corrige el error de posición. En el momento en que el carro se detiene con un error de posición residual ($x_{ref} - x$), comienza a acumularse de forma continua en el tiempo dentro del estado virtual $I_e$. Esta integración numérica genera un aumento progresivo y rampa en la señal de control $u$ que, al cabo de unos instantes, logra romper el umbral de bloqueo mecánico y vencer la resistencia de la correa de transmisión. 
 
 Con este hito, queda completamente validada la robustez del control de posición sobre la plataforma física real. Si se desea observar el comportamiento en vídeo del experimento, se encuentra disponible en el repositorio del proyecto \cite{Porcar2026TFG}.
 
