@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<?ccsproject version="1.0"?>
+<projectOptions>
+	<ccsVariant value="50:Theia-based"/>
+	<ccsVersion value="70.5.0"/>
+	<deviceFamily value="C2000"/>
+	<executableActions value=""/>
+	<createSlaveProjects value=""/>
+	<templateProperties value="id=sci_ex1_echoback.projectspec.comunicacion_serie"/>
+	<origin value="C:\ti\C2000Ware_26_00_00_00\device_support\f28004x\examples\sci\CCS\sci_ex1_echoback.projectspec"/>
+	<filesToOpen value=""/>
+</projectOptions>
