@@ -1790,7 +1790,7 @@ Para contrastar este principio y seleccionar la mejor configuración para el buc
 
 \begin{figure}[htbp]
 	\centering
-	\includegraphics[width=0.75\textwidth]{Pictures/comparativa_frecuencias_pwm}
+	\includegraphics[width=0.8\textwidth]{Pictures/comparativa_frecuencias_pwm}
 	\caption{Caracterización empírica de la zona muerta del motor en función de la frecuencia del PWM.}
 	\label{fig:curvas_zona_muerta}
 \end{figure}
@@ -2005,7 +2005,7 @@ Fijada la constante del controlador de posición en un valor estricto de $K_p = 
 
 \begin{figure}[htbp]
 	\centering
-	\includegraphics[width=0.75\textwidth]{Pictures/BC_carro_KP_80}
+	\includegraphics[width=0.9\textwidth]{Pictures/respuesta_BC_KP80}
 	\caption{Dinámica $M(s)$ obtenida experimentalmente}
 	\label{fig:BC_ident}
 \end{figure}
@@ -2081,7 +2081,7 @@ La metodología práctica ejecutada en el laboratorio constó de las siguientes 
 
 \begin{figure}[htbp]
 	\centering
-	\includegraphics[width=0.75\textwidth]{Pictures/ident_oscilaciones} 
+	\includegraphics[width=0.9\textwidth]{Pictures/ident_oscilaciones} 
 	\caption{Ensayo de oscilación libre del péndulo y curva de decaimiento temporal.}
 	\label{fig:oscilaciones_pendulo}
 \end{figure}
@@ -2329,13 +2329,17 @@ En el Cuadro~\ref{tab:comparativa_lqr} se muestran los seis controladores probad
 
 \begin{figure}[htbp]
 	\centering
-	\includegraphics[width=\textwidth]{Pictures/Comparativa_Controladores} 
+	\includegraphics[width=0.88\textwidth]{Pictures/Comparativa_Controladores} 
 	\caption{Desempeño de los controladores sobre la planta real}
 	\label{fig:resultados_kx}
 \end{figure}
 \FloatBarrier
 
-La Figura~\ref{fig:resultados_kx} revela la influencia del valor de los parámetros $Q$ y $R$ en el rendimiento del bucle de control:
+La Figura~\ref{fig:resultados_kx} revela la influencia del valor de los parámetros $Q$ y $R$ en el rendimiento del bucle de control, se observan diferencias en la dinámica en bucle cerrado dependiendo del vector de ganancias ($K = [K_1, K_2, K_3, K_4]$) obtenido. 
+
+\newpage
+
+A continuación se desglosa el desempeño de cada controlador en función de sus parámetros de diseño ($R, Q$):
 
 \begin{enumerate}
 	\item \textbf{Gasto energético ($R$):} Físicamente, disminuir $R$ implica tolerar un mayor esfuerzo de actuación en voltios a cambio de minimizar el error más rápidamente. Experimentalmente, \textbf{C1} exhibe una respuesta lenta y perezosa ante los cambios de referencia en $x$. En cambio, \textbf{C3} intenta converger más rápidamente hacia $x_{ref}$ a costa de una acción control más agresiva.
@@ -2356,14 +2360,15 @@ No obstante, en todas las gráficas,  el error de posición en el estado $x$ no 
  
 Este comportamiento experimental fue el que motivó a añadir término integral en el control por realimentación del estado (Sección~\ref{cap:con_integral}) para incrementar la robustez del controlador ante discrepancias entre el modelado teórico y la realidad física. 
 
+\newpage
+Como se aprecia en la Figura~\ref{fig:resultados_integrador}, la inclusión de la acción integral consigue llevar al carro a la posición de referencia. En el momento en que el carro se detiene con un error de posición residual ($x_{ref} - x$), comienza a acumularse de forma continua en el tiempo dentro del estado virtual $I_e$. Esta integración numérica genera un aumento progresivo y rampa en la señal de control $u$ que, al cabo de unos instantes, logra romper el umbral de bloqueo mecánico y vencer la resistencia de la correa de transmisión. 
 \begin{figure}[htbp]
 	\centering
-	\includegraphics[width=0.8\textwidth]{Pictures/control_con_integrador} 
+	\includegraphics[width=0.9\textwidth]{Pictures/control_con_integrador} 
 	\caption{Control de posición con integrador sobre la planta real}
 	\label{fig:resultados_integrador}
 \end{figure}
 \FloatBarrier
-Como se aprecia en la Figura~\ref{fig:resultados_integrador}, la inclusión de la acción integral corrige el error de posición. En el momento en que el carro se detiene con un error de posición residual ($x_{ref} - x$), comienza a acumularse de forma continua en el tiempo dentro del estado virtual $I_e$. Esta integración numérica genera un aumento progresivo y rampa en la señal de control $u$ que, al cabo de unos instantes, logra romper el umbral de bloqueo mecánico y vencer la resistencia de la correa de transmisión. 
 
 Con este hito, queda completamente validada la robustez del control de posición sobre la plataforma física real. Si se desea observar el comportamiento en vídeo del experimento, se encuentra disponible en el repositorio del proyecto \cite{Porcar2026TFG}.
 
