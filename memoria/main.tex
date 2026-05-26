@@ -2213,7 +2213,7 @@ El código fuente completo se encuentra disponible para su consulta en el reposi
 \newpage
 
 \subsection{Control de posición en \texttt{calcula\_u()}}
- 
+ \label{cap:con_integral}
  Aunque el diseño original contemplaba un control de posición por realimentación del estado puro (Sección~\ref{cap:control_kx}), los ensayos experimentales revelaron un error en estado estacionario en la posición del carro sobre el riel. Para corregirlo, se expandió el vector de estados original añadiendo un estado virtual ($x_i$) que acumula la integral del error de posición ($x_{ref} - x$). 
 
 \begin{figure}[!htbp]
@@ -2285,8 +2285,88 @@ Con la integración de las leyes de control dentro de la rutina de interrupción
 
 \chapter{Resultados}
 
-\section{Control por realimentación del estado}
-s
+\section{Control de posición}
+\label{sec:resultados_control_posicion}
+
+En esta sección se evalúa el comportamiento de la ley de control por realimentación del estado en el sistema real. Las ganancias del controlador ($K = [K1, K2, K3, K4]$) se ajustaron y validaron en simulación antes de su implementación en el hardware real. El objetivo fundamental es doble: 
+\begin{itemize}
+	\item \textbf{Validación del modelo matemático identificado:} Las ganancias obtenidas en el modelo de simulación deben poder estabilizar el equipo del laboratorio sin necesidad de reajustes empíricos (prueba y error).
+	
+	\item \textbf{Análisis teórico en planta real:} Al ajustar las ganancias del controlador con el método de optimización \textit{LQR} (Sección~\ref{cap:control_kx}) es interesante analizar como afecta la ponderación de $Q$ y $R$ en el comportamiento del sistema real. 
+\end{itemize}
+
+Para evaluar de forma homogénea las prestaciones de las distintas configuraciones del controlador, se diseñó un escenario de prueba que consiste en una secuencia de cambios de referencia en forma de escalón para la posición del carro ($x_{ref}$). La secuencia experimental, se define como:
+\begin{equation}
+	x_{ref}(t) = 
+	\begin{cases} 
+		0.00\,\text{m} & \text{si } 0\,\text{s} \le t < 5\,\text{s} \\
+		0.15\,\text{m} & \text{si } 5\,\text{s} \le t < 10\,\text{s} \\
+		-0.15\,\text{m} & \text{si } 10\,\text{s} \le t < 15\,\text{s} \\
+		0.00\,\text{m} & \text{si } t \ge 15\,\text{s}
+	\end{cases}
+\end{equation}
+
+El péndulo se inicializa en la vertical superior inestable ($\theta = \pi\,\text{rad}$) mediante asistencia inicial, momento en el cual se activa el control de posición.
+
+\newpage
+En el Cuadro~\ref{tab:comparativa_lqr} se muestran los seis controladores probados en la plataforma física, relacionando sus matrices de penalización ($Q, R$) con las ganancias asociadas y cargadas en el microcontrolador.
+
+\begin{table}[!htbp]
+	\centering
+	\caption{Configuraciones de controladores}
+	\label{tab:comparativa_lqr}
+	\begin{tabular}{ccccccc}
+		\hline
+		\textbf{Ref.} & \textbf{Matriz $Q$ (Diagonal)} & \textbf{Escalar $R$} & \textbf{$K_1$ ($x$)} & \textbf{$K_2$ ($\theta$)} & \textbf{$K_3$ ($\dot{x}$)} & \textbf{$K_4$ ($\dot{\theta}$)} \\ \hline
+		\textbf{C1}   & $\text{diag}([1, 1, 1, 1])$ & $0.100$ & $-3.1623$ & $70.4535$ & $-15.5513$ & $14.0179$ \\
+		\textbf{C2}   & $\text{diag}([1, 1, 1, 1])$ & $0.010$ & $-10.0000$ & $106.0000$ & $-24.4000$ & $22.0500$ \\
+		\textbf{C3}   & $\text{diag}([1, 1, 1, 1])$ & $0.001$ & $-31.6228$ & $246.8238$ & $-56.5082$ & $57.6621$ \\
+		\textbf{C4}   & $\text{diag}([2.5, 1, 1, 1])$ & $0.001$ & $-50.0000$ & $271.5136$ & $-66.5486$ & $61.8432$ \\
+		\textbf{C5}   & $\text{diag}([10, 1, 1, 1])$ & $0.001$ & $-100.0000$ & $333.2000$ & $-92.7000$ & $72.7000$ \\
+		\textbf{C6}   & $\text{diag}([5, 1, 0.7, 0.1])$ & $0.001$ & $-70.7107$ & $227.8228$ & $-67.6920$ & $45.5221$ \\ \hline
+	\end{tabular}
+\end{table}
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\textwidth]{Pictures/Comparativa_Controladores} 
+	\caption{Desempeño de los controladores sobre la planta real}
+	\label{fig:resultados_kx}
+\end{figure}
+\FloatBarrier
+
+La Figura~\ref{fig:resultados_kx} revela la influencia del valor de los parámetros $Q$ y $R$ en el rendimiento del bucle de control:
+
+\begin{enumerate}
+	\item \textbf{Gasto energético ($R$):} Físicamente, disminuir $R$ implica tolerar un mayor esfuerzo de actuación en voltios a cambio de minimizar el error más rápidamente. Experimentalmente, \textbf{C1} exhibe una respuesta lenta y perezosa ante los cambios de referencia en $x$. En cambio, \textbf{C3} intenta converger más rápidamente hacia $x_{ref}$ a costa de una acción control de más agresiva.
+	
+	\item \textbf{Modulación del peso del estado de posición (Diagonal de $Q$):} Las configuraciones \textbf{C4} y \textbf{C5} incrementan selectivamente el primer elemento de la diagonal de $Q$ ($Q_{11}$), el cual penaliza el error de posición el carro ($x_{ref} - x$), manteniendo $R=0.001$. Al elevar este peso, la ganancia $K_1$ escala de $-31.62$ (\textbf{C3}) a $-50.00$ (\textbf{C4}) y finalmente a $-100.00$ (\textbf{C5}). Los resultados demuestran que el carro intenta converger hacia las referencias de $\pm 0.15\,\text{m}$ con una velocidad superior. Sin embargo, este comportamiento introduce un compromiso de diseño (\textit{trade-off}): la aceleración brusca del carro para corregir su posición lineal eleva las oscilaciones angulares del péndulo ($\theta$), comprometiendo temporalmente la estabilidad vertical en cada escalón.
+	
+	\item \textbf{Suavizado de la respuesta transitoria (\textbf{C6}):} El controlador \textbf{C6} introduce una ponderación estratégica adaptada al entorno real, reduciendo el peso a los errores en la velocidad angular y lineal ($Q_{33}=0.7, Q_{44}=0.1$), ya que ambas señales presentan ruido de medida. 
+\end{enumerate}
+
+El resultado experimental más relevante es que \textbf{los seis controladores obtenidos en simulación mantuvieron el péndulo equilibrado en su posición vertical inestable}. Este hecho constituye la prueba del éxito de la transferencia del modelo al sistema físico: certifica que el modelado dinámico, junto con los coeficientes de fricción y masa identificados en el laboratorio, describen la física real del sistema.
+
+No obstante, en todas las gráficas,  el error de posición en el estado $x$ no es nulo ya que el carro se detiene a unos milímetros o centímetros de la referencia exacta ($x \ne x_{ref}$). Esta anomalía no responde a un fallo del diseño, sino a fenómenos físicos de la planta real que quedan fuera del alcance del modelo:
+\begin{itemize}
+	\item \textbf{Zona muerta:} Aunque se hizo una compensación por software (Sección~\ref{cap:zona_muerta}) eliminarla por completo es muy complicado ya que el rozamiento no es uniforme en todos los puntos del riel. 
+	
+	\item \textbf{Transmisión:} La elasticidad de la correa es un efecto que juega en contra y es complicado de modelar. 
+\end{itemize}
+ 
+Este comportamiento experimental fue el que motivó a añadir término integral en el control por realimentación del estado (Sección~\ref{cap:con_integral}) para incrementar la robustez del controlador ante discrepancias entre el modelado teórico y la realidad física. 
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.8\textwidth]{Pictures/control_con_integrador} 
+	\caption{Control de posición con integrador sobre la planta real}
+	\label{fig:resultados_integrador}
+\end{figure}
+\FloatBarrier
+Como se aprecia en la Figura~\ref{fig:resultados_integrador}, la inclusión de la acción integral corrige el error de posición. En el momento en que el carro se detiene en la posición ($x_{ref} - x$), por pequeño que sea el error, comienza a acumularse de forma continua en el tiempo dentro del estado virtual $I_e$. Esta integración numérica genera un aumento progresivo y rampa en la señal de control $u$ que, al cabo de unos instantes, logra romper el umbral de bloqueo mecánico y vencer la resistencia de la correa de transmisión. 
+
+Con este hito, queda completamente validada la robustez del control de posición sobre la plataforma física real. Si se desea observar el comportamiento en vídeo del experimento, se encuentra disponible en el repositorio del proyecto \cite{Porcar2026TFG}.
+
 \section{Control de energía (Swing-up)}
 s
 \section{Conmutación entre controles}
