@@ -1,111 +1,142 @@
-%% MODELADO DEL SISTEMA. 
-%Parámetros experimentales
-mc = 1.08;     %Kg , masa del carro.
-mp = 0.12;     %Kg , masa del péndulo.
-M = mp + mc;   %Kg, masa total del sistema.
-J = 0.0139;    %Kgm², momento de inercia del sistema.
-cp = 0.0002 ;  %Nm.rad/s, coeficiente de rozamiento del péndulo.
-cc = 4.08;     %Ns/m , coeficiente de rozamiento del carro.
-g = 9.81;      % m/s², aceleración debida a la gravedad
-lcm = 0.3;     %m, Distancia entre el centro de masas y el eje de rotación.  
+%==========================================================================
+% UNIVERSITAT JAUME I (UJI) - GRADO EN INTELIGENCIA ROBÓTICA
+% Alumno: Miguel Porcar Vicent
+% Proyecto: TFG_Control_MiguelPorcar (simulacion)
+%==========================================================================
+% SCRIPT:      simulacion_no_lineal_cartpole.m
+% CARPETA:     /simulacion/
+% DESCRIPCIÓN: Define los parámetros físicos del péndulo invertido, obtiene
+%              el modelo linealizado en espacio de estados (SS), sintoniza
+%              los controladores (LQR y Asignación de Polos) y valida la
+%              respuesta ante condiciones iniciales mediante un bucle de
+%              simulación discreto no lineal con saturación de actuador.
+%              
+% ENTRADAS:    - Parámetros dinámicos teóricos/identificados del sistema.
+% SALIDAS:     - sim_discreta_500ms.pdf (Validación temporal de los estados)
+%==========================================================================
 
-%% Obtención de la representación en SS a partir de la dinámica
+%% 1. PARÁMETROS EXPERIMENTALES DEL SISTEMA
+clear; clc; close all;
 
-%Matrices M, C, G, B (Definen la dinámica del sistema). 
+mc = 1.08;     % Masa del carro (Kg)
+mp = 0.12;     % Masa del péndulo (Kg)
+M  = mp + mc;  % Masa total del sistema (Kg)
+J  = 0.0139;   % Momento de inercia del sistema (Kgm²)
+cp = 0.0002;   % Coeficiente de rozamiento del péndulo (Nm·rad/s)
+cc = 4.08;     % Coeficiente de rozamiento del carro (Ns/m)
+g  = 9.81;     % Aceleración de la gravedad (m/s²)
+lcm = 0.3;     % Distancia del centro de masas al eje de rotación (m)
 
-M_bar = [M,          -mp*lcm;
-        -mp*lcm,      J]; 
+%% 2. OBTENCIÓN DE LA REPRESENTACIÓN EN ESPACIO DE ESTADOS (SS)
+% Matrices inercial (M_bar), amortiguamiento (C_bar) y gravitatoria (G_bar)
+M_bar = [M,       -mp*lcm;
+        -mp*lcm,   J]; 
+    
+C_bar = [cc,       0;
+         0,        cp]; 
+     
+G_bar = [0,        0; 
+         0,       -mp*g*lcm]; 
 
-C_bar = [cc,           0;
-          0,          cp       ]; 
+% Construcción de la matriz dinámica A (4x4) y matriz de entrada B (4x1)
+A = [zeros(2),      eye(2);
+     -M_bar\G_bar, -M_bar\C_bar];
 
-G_bar= [  0              0; 
-          0,         -mp*g*lcm]; 
+B = [0; 0; (M_bar \ [1; 0])];
 
-%A: 4x4, se tienen cuatros estados. 
-A= [zeros(2),        eye(2);
-    -M_bar\G_bar ,-M_bar\C_bar];
+% Conversión de entrada: Relación estática lineal (de Voltios a Newtons)
+B_volt = 0.64 * B; 
 
-%B: 4x1, una acción de control para cuatro estados.
-B = [0;0;[M_bar\[1;0]]];
-B_volt = 0.64*B; %Relación lineal entre Newtons y voltios
+C = eye(4); % Matriz de salida: Monitorización completa del vector de estados
+D = 0;      % Matriz de paso directo
 
-%C: 4X4, disponibles todas las mediciones.
-C = eye(4); 
+% Creación del modelo LTI en Bucle Abierto
+G_BA = ss(A, B_volt, C, D);
 
-%D: 1x1
-D = 0; 
+%% 3. SINTONÍA DE CONTROLADORES (LQR & POLE PLACEMENT)
+n = 4; % Número de estados
+m = 1; % Número de entradas
 
-
-
-%% Control con optimización LQR.
-G_BA = ss(A, B_volt, C, D)
-n = 4; % N estados
-m = 1; % N acciones de control 
-
-%--- LQR ---
-% 1. Definición de pesos
+% --- Opción A: Optimizador Lineal Cuadrático (LQR) ---
 Q = diag([1, 1, 1, 1]); 
 r = 0.1;                
-
 R = r * eye(m);       
-
-% 2. Resolver la optimización
 [K_lqr, S, E] = lqr(A, B_volt, Q, R);
 
-% --- Asignacion de polos en BC ---
+% --- Opción B: Asignación de Polos (PLC) ---
 p = [-2.5, -3, -3.5, -4]; 
 K_plc = place(A, B_volt, p);
 
-%% Control de posicion del sistema (Realimentación del estado)
-N=12;
-T=500e-3;
-x=zeros(4,N);
-x(2,1)=3.05;
-u=zeros(1,N);
-t=zeros(1,N);
-u_max = 2.91;           %Saturacion de la acción de control (N)
-ref = [0, 3.14, 0, 0];  %Punto control intestable
+%% 4. SIMULACIÓN TEMPORAL (MÉTODO RECURSIVO NO LINEAL)
+N = 6000;            % Número de muestras de la simulación
+T = 10e-3;        % Periodo de muestreo/integración (s)
 
-for k=1:N-1
-   % Accion de control de posición:
-   u(k) = -K_plc * (x(:,k) - ref'); %Aquí falta poner que la ref del ángulo es pi
+% Inicialización de matrices de estado y control
+x = zeros(4, N);
+x(2, 1) = 3.05;    % Condición inicial del ángulo (cercano a pi rad)
 
-   %Saturación de la acción de control:
+u = zeros(1, N);
+t = zeros(1, N);
+
+u_max = 2.91;      % Límite de saturación física del actuador (N)
+ref = [0, pi, 0, 0]; % Punto de operación inestable (Péndulo vertical hacia arriba)
+
+for k = 1:N-1
+   % Ley de control por realimentación del estado (usando K_plc):
+   u(k) = -K_plc * (x(:,k) - ref'); 
+   
+   % Saturación del actuador (Seguridad de la planta)
    if (u(k) > u_max)
        u(k) = u_max;
    elseif (u(k) < -u_max)
        u(k) = -u_max;
    end
   
+   % --- Dinámica No Lineal ("Realidad Física") ---
+   M_t = [M,                     mp*lcm*cos(x(2,k));
+          mp*lcm*cos(x(2,k)),    J];
+      
+   C_t = [cc,   -mp*lcm*x(4,k)*sin(x(2,k));
+          0,     cp];
+      
+   G_t = [0; mp*g*lcm*sin(x(2,k))];
    
-   % Simulación física (no lineal, "realidad")
-   M_t = [M,          +mp*lcm*cos(x(2,k));
-   +mp*lcm*cos(x(2,k)),      J];
-
-   C_t = [cc,   -mp*lcm*x(4,k)*sin(x(2,k))
-     0,          cp        ];
-
-   G_t = [0; +mp*g*lcm*sin(x(2,k))];
-
-   f1=x(3,k);
-   f2=x(4,k);
-   f34=M_t\([u(k);0]-C_t*x(3:4,k)-G_t);
-
-   %Cálculo del valor de los estados en la siguiente iteración.
-   x(:,k+1)=x(:,k)+T*[f1;f2;f34];
-   t(k+1)=t(k)+T;
+   % Vector de derivadas de los estados (Euler)
+   f1 = x(3, k);
+   f2 = x(4, k);
+   f34 = M_t \ ([u(k); 0] - C_t*x(3:4, k) - G_t);
+   
+   % Integración numérica hacia la siguiente muestra
+   x(:, k+1) = x(:, k) + T * [f1; f2; f34];
+   t(k+1) = t(k) + T;
 end
 
-dist = x(1, :);
-theta = x(2, :) -3.14; %Graficar todo en 0
-vel = x(3, :);
+% Desglose de estados y centrado del ángulo en cero para la gráfica
+dist      = x(1, :);
+theta     = x(2, :) - pi; 
+vel       = x(3, :);
 theta_dot = x(4, :);
 
-%Obtener la gráfica de la simulación
-figure, plot(t, dist'), hold on
-plot(t,theta')
-plot(t, u')
-legend('x', 'theta', 'u')
+%% 5. GENERACIÓN DE GRÁFICAS Y EXPORTACIÓN VECTORIAL
+figure('Units', 'centimeters', 'Position', [5, 5, 15, 11]);
+hold on; grid on;
 
-exportgraphics(gcf, 'sim_discreta_500ms.pdf', 'ContentType', 'vector');
+% Trazado de variables (Transpuestas a vectores columna para el plot)
+plot(t, dist',  'LineWidth', 1.5, 'Color', [0 0.4470 0.7410]);
+plot(t, theta', 'LineWidth', 1.5, 'Color', [0.8500 0.3250 0.0980]);
+plot(t, u',     '--', 'LineWidth', 1.2, 'Color', [0.4660 0.6740 0.1880]);
+
+% Configuración de etiquetas con formato LaTeX
+xlabel('Tiempo, $t$ (s)', 'Interpreter', 'latex');
+ylabel('Amplitud de las Variables', 'Interpreter', 'latex');
+title('\textbf{Validaci\''on de la Simulaci\''on Discreta ($T = 500$ ms)}', 'Interpreter', 'latex');
+
+% Ubicación de la leyenda configurada en la esquina superior derecha (northeast)
+legend({'Posici\''on carro $x$ (m)', '$\acute{A}$ngulo p\''endulo $\theta-\pi$ (rad)', 'Acci\''on de control $u$ (V)'}, ...
+       'Location', 'northeast', 'Interpreter', 'latex', 'FontSize', 9);
+   
+set(gca, 'TickLabelInterpreter', 'latex', 'FontSize', 11);
+hold off;
+
+%% Exportación directa a PDF vectorial para la memoria
+exportgraphics(gcf, 'sim_discreta_10ms.pdf', 'ContentType', 'vector');
