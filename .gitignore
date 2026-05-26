@@ -23,3 +23,12 @@
 slprj/
 _out/
 
+### --- Code Composer Studio e IDEs ---
+# Carpetas de compilación y binarios (evita subir el .out y los .obj)
+CPU1_RAM/
+CPU1_FLASH/
+
+# Configuración local de herramientas y asistentes virtuales
+.claude/
+.theia/
+
