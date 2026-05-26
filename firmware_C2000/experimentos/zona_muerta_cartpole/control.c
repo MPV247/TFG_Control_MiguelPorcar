@@ -1,8 +1,34 @@
 //#############################################################################
 //
-// FILE:   control.c
+// FILE:        control.c
 //
-// TITLE:  CONTROL.
+// TITLE:       TFG - Identificación de la Zona Muerta del Actuador
+//
+// AUTHOR:      Miguel Porcar
+// DATE:        Mayo 2026
+// TARGET:      TI C2000 (TMS320F28004x)
+//
+// DESCRIPCIÓN:
+// Éste módulo ejecuta un ensayo automatizado en rampa para identificar la 
+// zona muerta (Zona Muerta - ZM) del motor de corriente continua con el carro acoplado.
+//
+// FLUJO DEL EXPERIMENTO:
+// 1. Realiza una batería consecutiva de 5 tests mecánicos (n = 1 hasta 5).
+// 2. En cada test, la tensión aplicada (u_test) incrementa +0.05V cada 1 segundo 
+//    (equivalente a 100 ciclos de la ISR de 10ms).
+// 3. Control de carrera/seguridad: Si el carro se desplaza más de 5 cm 
+//    (> 660 pulsos), el motor se detiene inmediatamente para evitar colisiones.
+// 4. Al detenerse, se activa un estado de espera de 3 segundos (300 ciclos) 
+//    para mitigar inercias antes de recalibrar el cero real e iniciar el siguiente test.
+//
+// TELEMETRÍA (Salida Serial CSV):
+// Envía datos en tiempo real por el puerto SCI-A con la siguiente estructura:
+// Formato: [num_experimento , posicion(m) , velocidad(m/s) , tension(V)]
+//
+// CONFIGURACIÓN DE PERIFÉRICOS ASOCIADOS:
+// - eQEP1: Captura de posición del encoder del carro (ENCODER1_CPR = 6597).
+// - ePWM1 / GPIO1 / GPIO6: Driver del puente H (Dirección y Duty Cycle).
+// - SCI-A: Comunicación serie para volcado de telemetría hacia MATLAB/Python.
 //
 //#############################################################################
 

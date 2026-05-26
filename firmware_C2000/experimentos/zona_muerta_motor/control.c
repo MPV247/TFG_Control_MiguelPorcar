@@ -1,8 +1,37 @@
 //#############################################################################
 //
-// FILE:   control.c
+// FILE:        control.c
 //
-// TITLE:  CONTROL.
+// TITLE:       TFG - Caracterización del Motor en Vacío (Sin Carro Acoplado)
+//
+// AUTHOR:      Miguel Porcar
+// DATE:        Mayo 2026
+// TARGET:      TI C2000 (TMS320F28004x)
+//
+// DESCRIPCIÓN:
+// Éste módulo ejecuta un test cíclico y automatizado para caracterizar el 
+// comportamiento dinámico del motor de CC sin la carga del carro acoplada.
+// Permite validar de forma aislada la compensación de las zonas muertas 
+// del motor (ZM_FWD = 1130, ZM_BWD = 1200).
+//
+// MÁQUINA DE ESTADOS DEL EXPERIMENTO (estado_test):
+// - Estado 0 (Adelante): Incrementa la acción u de 1 en 1 por cada segundo 
+//   hasta llegar a +60 (aplicando el offset ZM_FWD en el driver).
+// - Estado 1 (Frenado 1): Pone u = 0 y espera a que la velocidad angular 
+//   caiga por debajo de |w| < 1.0 rad/s para asegurar parada estática.
+// - Estado 2 (Atrás): Decrementa u de 1 en 1 por cada segundo hasta -60 
+//   (aplicando el offset ZM_BWD en el driver).
+// - Estado 3 (Frenado 2): Pone u = 0, espera parada estática (|w| < 1.0 rad/s)
+//   y reinicia el ciclo completo de forma indefinida.
+//
+// TELEMETRÍA (Salida Serial CSV):
+// Envía datos tras cada interrupción por el puerto SCI-A con el formato:
+// Formato: [ accion_control_digital(u) , velocidad_angular(rad/s) ]
+//
+// CONFIGURACIÓN DE PERIFÉRICOS ASOCIADOS:
+// - eQEP1: Encoder rotativo del motor configurado a ENCODER_CPR = 2048.0f.
+// - CpuTimer0: Configurado con un periodo de muestreo lento (T = 1s) para 
+//   capturar de forma limpia la velocidad en régimen permanente en cada paso.
 //
 //#############################################################################
 
