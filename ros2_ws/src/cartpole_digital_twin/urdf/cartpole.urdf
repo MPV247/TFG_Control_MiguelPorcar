@@ -1,0 +1,253 @@
+<?xml version="1.0"?>
+<robot name="digital_pendulum_feedback">
+
+  <material name="feedback_green">
+    <color rgba="0.0 0.4 0.4 1"/>
+  </material>
+  <material name="aluminum_silver">
+    <color rgba="0.75 0.75 0.75 1"/>
+  </material>
+  <material name="black">
+    <color rgba="0.1 0.1 0.1 1"/>
+  </material>
+  <material name="dark_grey">
+    <color rgba="0.2 0.2 0.2 1"/>
+  </material>
+  <material name="belt_red">
+    <color rgba="1.0 0.0 0.0 1.0"/>
+  </material>
+  <material name="limit_red">
+    <color rgba="0.8 0.0 0.0 0.8"/>
+  </material>
+
+  <!-- TODO Encontrar las medidas del carro y el riel y adaptar el urdf.-->
+  <link name="base_link">
+    <!-- Riel -->
+    <visual>
+      <origin xyz="0 0 -0.032" rpy="1.57 0 0"/> <geometry><box size="1.71 0.01 0.11"/></geometry>
+      <material name="aluminum_silver"/>
+    </visual>
+    <visual>
+      <origin xyz="0 -0.055 -0.008" rpy="1.57 0 0"/> <geometry><box size="1.71 0.06 0.005"/></geometry>
+      <material name="aluminum_silver"/>
+    </visual>
+    <visual>
+      <origin xyz="0 0.055 -0.008" rpy="1.57 0 0"/> <geometry><box size="1.71 0.06 0.005"/></geometry>
+      <material name="aluminum_silver"/>
+    </visual>
+    <!-- Columna1 -->
+    <visual>
+      <origin xyz="-0.505 0 -0.237"/><geometry><box size="0.05 0.07 0.4"/></geometry>
+      <material name="feedback_green"/>
+    </visual>
+    <!-- Pie de Apoyo 1-->
+    <visual>
+      <origin xyz="-0.505 0 -0.437"/><geometry><box size="0.05 0.3 0.02"/></geometry>
+      <material name="feedback_green"/>
+    </visual>
+    <!-- Columna 2-->
+    <visual>
+      <origin xyz="0.505 0 -0.237"/><geometry><box size="0.05 0.07 0.4"/></geometry>
+      <material name="feedback_green"/>
+    </visual>
+    <!-- Pie de Apoyo 2 -->
+    <visual>
+      <origin xyz="0.505 0 -0.437"/><geometry><box size="0.05 0.3 0.02"/></geometry>
+      <material name="feedback_green"/>
+    </visual>
+    <!-- Correa -->
+    <visual>
+      <origin xyz="-0.025 0 0.028" rpy="0 0 0"/>
+      <geometry>
+        <box size="1.75 0.012 0.002"/> </geometry>
+      <material name="belt_red"/>
+    </visual>
+
+    <visual>
+      <origin xyz="-0.025 0 -0.022" rpy="0 0 0"/>
+      <geometry>
+        <box size="1.75 0.012 0.002"/>
+      </geometry>
+      <material name="belt_red"/>
+    </visual>
+
+  </link>
+
+  <!-- Topes (Finales de Carrera virtuales)-->
+  <!-- Izquierdo-->
+  <link name="left_limit">
+    <visual>
+      <origin xyz="0 0 0"/><geometry><box size="0.01 0.12 0.1"/></geometry>
+      <material name="limit_red"/>
+    </visual>
+  </link>
+  <joint name="left_limit_joint" type="fixed">
+    <parent link="base_link"/><child link="left_limit"/>
+    <origin xyz="-0.5 0 0.05" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Derecho -->
+  <link name="right_limit">
+    <visual>
+      <origin xyz="0 0 0"/><geometry><box size="0.01 0.12 0.1"/></geometry>
+      <material name="limit_red"/>
+    </visual>
+  </link>
+  <joint name="right_limit_joint" type="fixed">
+    <parent link="base_link"/><child link="right_limit"/>
+    <origin xyz="0.5 0 0.05" rpy="0 0 0"/>
+  </joint>
+
+
+ <!-- Carro -->
+
+  <link name="cart">
+    <!-- Chasis carro -->
+    <visual>
+      <origin xyz="0 0 0.05"/>
+      <geometry><box size="0.16 0.1 0.05"/></geometry>
+      <material name="feedback_green"/>
+    </visual>
+    <!-- Eje -->
+    <visual>
+      <origin xyz="0 0 0.05" rpy="1.57 0 0"/>
+      <geometry><cylinder length="0.15" radius="0.01"/></geometry>
+      <material name="aluminum_silver"/>
+    </visual>
+    <inertial>
+      <mass value="0.5"/>
+      <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
+    </inertial>
+  </link>
+
+  <joint name="cart_slider" type="prismatic">
+    <parent link="base_link"/>
+    <child link="cart"/>
+    <axis xyz="-1 0 0"/>
+    <limit effort="20.0" lower="-0.5" upper="0.5" velocity="20.0"/>
+  </joint>
+
+<!-- Ruedas Carro -->
+
+<!-- Se definen las dimensiones de las ruedas (1.5 cm de radio)-->
+<link name="wheel_fl">
+    <visual><origin rpy="1.57 0 0"/><geometry><cylinder length="0.01" radius="0.015"/></geometry><material name="black"/></visual>
+  </link>
+  <link name="wheel_fr">
+    <visual><origin rpy="1.57 0 0"/><geometry><cylinder length="0.01" radius="0.015"/></geometry><material name="black"/></visual>
+  </link>
+  <link name="wheel_bl">
+    <visual><origin rpy="1.57 0 0"/><geometry><cylinder length="0.01" radius="0.015"/></geometry><material name="black"/></visual>
+  </link>
+  <link name="wheel_br">
+    <visual><origin rpy="1.57 0 0"/><geometry><cylinder length="0.01" radius="0.015"/></geometry><material name="black"/></visual>
+  </link>
+
+  <!-- Animacion de las ruedas en funcion del frame del carro-->
+  <!-- Propiedad mimic con multiplicador = ditancia_carro/Radio_rueda -->
+  <joint name="wheel_fl_joint" type="continuous">
+    <parent link="cart"/><child link="wheel_fl"/>
+    <origin xyz="0.07 0.055 0.035" rpy="0 0 0"/><axis xyz="0 1 0"/>
+    <mimic joint="cart_slider" multiplier="-66.0" offset="0"/>
+  </joint>
+
+  <joint name="wheel_fr_joint" type="continuous">
+    <parent link="cart"/><child link="wheel_fr"/>
+    <origin xyz="0.07 -0.055 0.035" rpy="0 0 0"/><axis xyz="0 1 0"/>
+    <mimic joint="cart_slider" multiplier="-66.0" offset="0"/>
+  </joint>
+
+  <joint name="wheel_bl_joint" type="continuous">
+    <parent link="cart"/><child link="wheel_bl"/>
+    <origin xyz="-0.07 0.055 0.035" rpy="0 0 0"/><axis xyz="0 1 0"/>
+    <mimic joint="cart_slider" multiplier="-66.0" offset="0"/>
+  </joint>
+
+  <joint name="wheel_br_joint" type="continuous">
+    <parent link="cart"/><child link="wheel_br"/>
+    <origin xyz="-0.07 -0.055 0.035" rpy="0 0 0"/><axis xyz="0 1 0"/>
+    <mimic joint="cart_slider" multiplier="-66.0" offset="0"/>
+  </joint>
+
+  <!-- Motor -->
+  <!-- TODO: Medir el radio de las poleas-->
+  <link name="motor_rotor">
+    <visual>
+      <origin xyz="0 0 0" rpy="1.57 0 0"/>
+      <geometry><cylinder length="0.005" radius="0.025"/></geometry>
+      <material name="black"/>
+    </visual>
+  </link>
+
+  <joint name="motor_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="motor_rotor"/>
+    <origin xyz="-0.9 0 0.003" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <mimic joint="cart_slider" multiplier="-40" offset="0"/>
+  </joint>
+
+  <!-- Polea -->
+
+  <link name="idler_pulley">
+    <visual>
+      <origin xyz="0 0 0" rpy="1.57 0 0"/>
+      <geometry><cylinder length="0.005" radius="0.025"/></geometry>
+      <material name="dark_grey"/>
+    </visual>
+  </link>
+
+  <joint name="pulley_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="idler_pulley"/>
+    <origin xyz="0.85 0 0.003" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <mimic joint="cart_slider" multiplier="-40.0" offset="0"/>
+  </joint>
+
+  <!-- Pendulo-->
+
+  <link name="pole">
+    <!-- Barra péndulo-->
+    <visual>
+      <origin xyz="0 0 0.2" rpy="0 0 0"/>
+      <geometry><cylinder length="0.402" radius="0.006"/></geometry>
+      <material name="aluminum_silver"/>
+    </visual>
+    <!-- Masa en el extremo del pendulo -->
+    <visual>
+      <origin xyz="0 0 0.37" rpy="0 0 0"/>
+      <geometry><cylinder length="0.041" radius="0.02"/></geometry>
+      <material name="dark_grey"/>
+    </visual>
+    <!-- Eje del péndulo -->
+    <visual>
+      <origin xyz="0 0 0" rpy="1.57 0 0"/>
+      <geometry><cylinder length="0.06" radius="0.01"/></geometry>
+      <material name="black"/>
+    </visual>
+    <inertial>
+      <origin xyz="0 0 0.225"/>
+      <mass value="0.2"/>
+      <inertia ixx="0.004" ixy="0" ixz="0" iyy="0.004" iyz="0" izz="0.0001"/>
+    </inertial>
+  </link>
+
+  <joint name="pole_joint" type="continuous">
+    <parent link="cart"/>
+    <child link="pole"/>
+    <origin xyz="0 0.1 0.05" rpy="0 3.14 3.14"/>
+    <axis xyz="0 -1 0"/>
+  </joint>
+
+  <!-- Extremo del pendulo -->
+  <link name="pole_tip">
+    </link>
+
+  <joint name="pole_tip_joint" type="fixed">
+    <parent link="pole"/>
+    <child link="pole_tip"/>
+    <origin xyz="0 0 0.4" rpy="0 0 0"/>
+  </joint>
+
+</robot>

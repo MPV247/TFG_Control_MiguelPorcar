@@ -33,3 +33,7 @@ CPU1_FLASH/
 .claude/
 .theia/
 
+#Carpetas ROS de compilación
+build
+install
+log
