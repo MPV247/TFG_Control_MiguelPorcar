@@ -22,6 +22,7 @@
 # Carpetas de caché de simulación y generación de código
 slprj/
 _out/
++bus_conv_fcns/
 
 ### --- Code Composer Studio e IDEs ---
 # Carpetas de compilación y binarios (evita subir el .out y los .obj)
