@@ -172,7 +172,7 @@ void puerto_serie(void)
     float_parts p_theta_dot = desglosar_float(theta_dot);
     float_parts p_u         = desglosar_float(u); 
 
-    sprintf(txBuffer, "%%c%d.%04d,%c%d.%04d,%c%d.%04d,%c%d.%04d,%c%d.%04d\r\n",
+    sprintf(txBuffer, "%c%d.%04d,%c%d.%04d,%c%d.%04d,%c%d.%04d,%c%d.%04d\r\n",
             p_x.signo, p_x.entero, p_x.decimal,
             p_theta.signo, p_theta.entero, p_theta.decimal,
             p_x_dot.signo, p_x_dot.entero, p_x_dot.decimal,
