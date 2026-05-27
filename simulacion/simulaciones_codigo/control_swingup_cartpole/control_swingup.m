@@ -28,7 +28,7 @@ lcm = 0.3;     % Distancia del centro de masas al eje de rotación (m)
 Ke = 30.0;  
 
 %Control de posición (ts = 1.5s, xi = 0.7)
-Kp = 16.0; 
+Kp = 8.0; 
 Kd = 4.16; 
 
 %% 4. SIMULACIÓN TEMPORAL (MÉTODO RECURSIVO NO LINEAL)
