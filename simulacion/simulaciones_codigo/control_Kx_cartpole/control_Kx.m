@@ -3,8 +3,8 @@
 % Alumno: Miguel Porcar Vicent
 % Proyecto: TFG_Control_MiguelPorcar (simulacion)
 %==========================================================================
-% SCRIPT:      simulacion_no_lineal_cartpole.m
-% CARPETA:     /simulacion/
+% SCRIPT:      control_Kx.m
+% CARPETA:     /simulacion/simulaciones_codigo/control_Kx_cartpole
 % DESCRIPCIÓN: Define los parámetros físicos del péndulo invertido, obtiene
 %              el modelo linealizado en espacio de estados (SS), sintoniza
 %              los controladores (LQR y Asignación de Polos) y valida la
@@ -12,7 +12,7 @@
 %              simulación discreto no lineal con saturación de actuador.
 %              
 % ENTRADAS:    - Parámetros dinámicos teóricos/identificados del sistema.
-% SALIDAS:     - sim_discreta_500ms.pdf (Validación temporal de los estados)
+% SALIDAS:     - control_Kx_T_XXms.pdf (Validación temporal del controlador)
 %==========================================================================
 
 %% 1. PARÁMETROS EXPERIMENTALES DEL SISTEMA
@@ -50,9 +50,6 @@ B_volt = 0.64 * B;
 C = eye(4); % Matriz de salida: Monitorización completa del vector de estados
 D = 0;      % Matriz de paso directo
 
-% Creación del modelo LTI en Bucle Abierto
-G_BA = ss(A, B_volt, C, D);
-
 %% 3. SINTONÍA DE CONTROLADORES (LQR & POLE PLACEMENT)
 n = 4; % Número de estados
 m = 1; % Número de entradas
@@ -68,18 +65,18 @@ p = [-2.5, -3, -3.5, -4];
 K_plc = place(A, B_volt, p);
 
 %% 4. SIMULACIÓN TEMPORAL (MÉTODO RECURSIVO NO LINEAL)
-N = 6000;            % Número de muestras de la simulación
+N = 600;          % Número de iteraciones de la simulación
 T = 10e-3;        % Periodo de muestreo/integración (s)
 
 % Inicialización de matrices de estado y control
 x = zeros(4, N);
-x(2, 1) = 3.05;    % Condición inicial del ángulo (cercano a pi rad)
+x(2, 1) = 3.05;            % Condición inicial del ángulo (cercano a pi rad)
 
 u = zeros(1, N);
 t = zeros(1, N);
 
-u_max = 2.91;      % Límite de saturación física del actuador (N)
-ref = [0, pi, 0, 0]; % Punto de operación inestable (Péndulo vertical hacia arriba)
+u_max = 4.68;               % Saturación del actuador (V)
+ref = [0, pi, 0, 0];        % Punto de operación inestable (Péndulo vertical hacia arriba)
 
 for k = 1:N-1
    % Ley de control por realimentación del estado (usando K_plc):
@@ -139,4 +136,4 @@ set(gca, 'TickLabelInterpreter', 'latex', 'FontSize', 11);
 hold off;
 
 %% Exportación directa a PDF vectorial para la memoria
-exportgraphics(gcf, 'sim_discreta_10ms.pdf', 'ContentType', 'vector');
+exportgraphics(gcf, 'control_Kx_T_10ms.pdf', 'ContentType', 'vector');
