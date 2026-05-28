@@ -63,6 +63,7 @@
 \usepackage{tcolorbox}
 \usepackage{hyperref}
 \usepackage{amssymb}
+\usepackage{tabularx}
 
 \tcbuselibrary{listings, skins}
 
@@ -1140,6 +1141,7 @@ Para guiar el desarrollo de forma estructurada, el contenido de este capítulo s
 	\item \textbf{Implementación del algoritmo de control:} Integración y despliegue final de las leyes de control en el microcontrolador
 \end{itemize}
 
+Por último, cabe destacar que, si bien a lo largo de este documento se incorporan bloques de código específicos para describir detalles de implementación, el grueso del desarrollo se encuentra completamente disponible en el \href{https://github.com/MPV247/TFG_Control_MiguelPorcar}{\textbf{repositorio oficial del proyecto}} \cite{Porcar2026TFG}.
 
 \newpage
 \section{Trabajo de simulación}
@@ -1315,12 +1317,12 @@ Al inyectar estos datos en el mismo tópico (\texttt{/joint\_states}), la herram
 \paragraph{Problemas derivados}
 Durante la integración de esta arquitectura, surgieron dos problemas técnicos que requirieron desviaciones de la configuración por defecto para estabilizar la plataforma de simulación:
 \begin{itemize}
-	\item \textbf{Incompatibilidad en el Middleware (DDS):} Inicialmente se presentaron cortes intermitentes en la comunicación y pérdida de paquetes entre plataformas. El problema se resolvió modificando el estándar de comunicación de red hacia \textit{Cyclone DDS}, lo que garantizó un intercambio de datos robusto y compatible entre MATLAB y ROS. Suele ser un problema muy común el la distribución \textit{Humble} que se empleó para el proyecto.
+	\item \textbf{Incompatibilidad en el Middleware (DDS):} Inicialmente se presentaron cortes intermitentes en la comunicación y pérdida de paquetes entre plataformas. El problema se resolvió modificando el estándar de comunicación de red hacia \textit{Cyclone DDS}. Suele ser un problema muy común el la distribución \textit{Humble} que se empleó para el proyecto.
 	
 	\item \textbf{Sincronización del Solver de Simulink:} El motor de cálculo numérico de Simulink tendía a desfasarse de la frecuencia de actualización que exige ROS para la publicación de sus tópicos. Para solucionarlo, se configuró el \textit{solver} en un paso de tiempo fijo discreto.
 \end{itemize}
 
-Si se desea conocer en detalle la configuracíon de \textit{Simulink} así como la conversión de un vector numérico en un mensaje estándar de ROS, consulte el Anexo \ref{ap:conexion_ROS}. 
+La configuracíon de \textit{Simulink} así como la conversión de un vector numérico en un mensaje estándar de ROS, se encuentra en el Anexo \ref{ap:conexion_ROS}. Por otro lado, la estructura completa del paquete de ROS 2 y sus \textit{launch files} se encuentran detallados en el \texttt{README.md} del \href{https://github.com/MPV247/TFG_Control_MiguelPorcar}{\textbf{repositorio oficial del proyecto}} \cite{Porcar2026TFG}. 
 
 \subsection{Simulaciones Recursivas}
 
@@ -1344,8 +1346,8 @@ Esta ecuación gobierna el comportamiento del simulador en cada paso de tiempo y
 	\item $f(\mathbf{x}_k, u_k)$: Es la función que describe la \textbf{dinámica física del sistema}. Combina el estado actual $\mathbf{x}_k$ con la acción de control en ese momento ($u_k$) para devolver las velocidades y aceleraciones instantáneas del mecanismo.
 \end{itemize}
 
-Mientras que las velocidades se obtienen de forma directa, el cálculo de las aceleraciones dentro de la función $f(\mathbf{x}_k, u_k)$ requiere resolver algebraicamente las ecuaciones que definen la dinámica del sistema abordadas en la Sección \ref{cap:modelado_teoria}. El desarrollo matemático completo para resolver este sistema dinámico y su traducción algorítmica al código de simulación se detallan en el Apéndice \ref{apendice:desarrollo_euler}.
-
+Mientras que las velocidades se obtienen de forma directa, el cálculo de las aceleraciones dentro de la función $f(\mathbf{x}_k, u_k)$ requiere resolver algebraicamente las ecuaciones que definen la dinámica del sistema abordadas en la Sección \ref{cap:modelado_teoria}. El desarrollo matemático completo para resolver este sistema dinámico y su traducción algorítmica al código de simulación se detallan en el Apéndice \ref{apendice:desarrollo_euler}. Asimismo, el entorno de simulación completo junto con diversos ejemplos de funcionamiento —tales como el control de posición, la maniobra de levantamiento o \textit{swing-up} y la lógica de conmutación entre controladores— se encuentra disponible para su ejecución en el \href{https://github.com/MPV247/TFG_Control_MiguelPorcar}{\textbf{repositorio oficial del proyecto}} \cite{Porcar2026TFG}.
+\newpage
 \subsubsection{Problemas Encontrados y Compromiso del Periodo de Muestreo}
 
 El principal reto técnico durante el desarrollo de este entorno simulado fue la aparición de \textbf{inestabilidades numéricas artificiales}. El éxito de la simulación depende críticamente de la elección del periodo de muestreo ($T_s$). 
@@ -1356,7 +1358,7 @@ Debido a que el método de Euler asume de forma simplificada que las aceleracion
 	\centering
 	\begin{subfigure}{0.48\textwidth}
 		\centering
-		\includegraphics[width=\textwidth]{Pictures/sim_discreta_10ms} % Foto de la electrónica vieja
+		\includegraphics[width=\textwidth]{Pictures/control_Kx_integrador_T_10ms} % Foto de la electrónica vieja
 		\caption{Simulación con $T_s = 10 ms$}
 	\end{subfigure}
 	\hfill
@@ -1377,6 +1379,7 @@ En esta sección se detalla el desarrollo e implementación del firmware encarga
 
 Posteriormente, se desglosa con mayor detalle la configuración a bajo nivel de los periféricos críticos de actuación (ePWM) y captura de datos (eQEP), para finalizar con el diseño del canal de telemetría (SCI) y la sincronización de la interrupción periódica del sistema (rutina de control).
 
+Por último, el firmware completo se encuentra estructurado como un proyecto listo para ser importado, compilado y cargado en el microcontrolador. Asimismo, la versión definitiva del sistema, junto con los diversos códigos y programas de prueba desarrollados durante las fases experimentales intermedias (como los ensayos de la zona muerta o el ajuste individual de controladores), están disponibles de forma organizada en el directorio \texttt{firmware\_C2000} del \href{https://github.com/MPV247/TFG_Control_MiguelPorcar}{\textbf{repositorio oficial del proyecto}} \cite{Porcar2026TFG}.
 \paragraph{Ecosistema de desarrollo}
 El desarrollo del firmware, como se comentó en el Capítulo~\ref{cap:analisis}, se apoya en el entorno de desarrollo integrado (IDE) oficial de Texas Instruments, \textbf{Code Composer Studio (CCS)} \cite{ti_ccs}. Este entorno optimiza la compilación para la arquitectura C28x y proporciona herramientas avanzadas de depuración (\textit{debug}). Gracias a ellas, es posible ejecutar el código línea por línea, así como inspeccionar y monitorizar el valor de los registros del sistema en tiempo real durante la ejecución del programa.
 
@@ -1384,7 +1387,7 @@ Además para programar el microcontrolador \textbf{TMS320F280049C} en el IDE, se
 
 \begin{figure}[ht]
 	\centering
-	\includegraphics{Pictures/capas_HAL}
+	\includegraphics[width=0.55\textwidth]{Pictures/capas_HAL}
 	\caption{Niveles de abstracción para programar el microcontrolador \cite{ti_c2000ware_drivers}}
 	\label{fig:HAL_C2000}
 \end{figure}
@@ -1399,13 +1402,14 @@ Por este motivo, se ha seleccionado el enfoque intermedio de \textbf{Campos de b
 	\centering
 	\caption{Comparativa de metodologías}
 	\label{tab:metodologia_programacion}
-	\begin{tabular}{llll}
+	\small % <-- Esto reduce sutilmente el tamaño para que entre en una línea
+	\begin{tabularx}{\textwidth}{lllX}
 		\hline
 		\textbf{Metodología} & \textbf{Dificultad} & \textbf{Control del Hardware} & \textbf{Ejemplo de Sintaxis} \\ \hline
 		Acceso Directo & Alta & Absoluto (Manual) & \texttt{*CMPR1 = 0x1234;}\\
 		\textbf{Bit-fields} & \textbf{Media} & \textbf{Alto (Directo)} & \texttt{EPwm1Regs.CMPA.bit.CMPA = valor;} \\
 		DriverLib & Baja & Bajo (Abstracto) & \texttt{EPWM\_setCounterCompareValue()} \\ \hline
-	\end{tabular}
+	\end{tabularx}
 \end{table}
 \FloatBarrier
 
@@ -1437,12 +1441,12 @@ Antes de proceder con el desarrollo software, se define la interfaz física del 
 \end{figure}
 
 A partir de la distribución espacial provista por el fabricante y considerando los requerimientos operativos (actuación del motor, lectura de encoders y comunicación externa), se seleccionan los pines atendiendo a funcionalidad y localización en la tarjeta de desarrollo. En la Tabla~\ref{tab:pinout_sistema} se consolida el mapeo definitivo de pines
-\begin{table}[ht] % <-- Cambiado a [ht]
+\begin{table}[ht]
 	\centering
 	\caption{Mapeo definitivo de entradas y salidas}
 	\label{tab:pinout_sistema}
-	\small % <-- Reduce ligeramente el tamaño de fuente de la tabla para ganar altura vital
-	\renewcommand{\arraystretch}{1.1} % <-- Reducido el espaciado de filas de 1.3 a 1.1
+	\small
+	\renewcommand{\arraystretch}{1.1}
 	\begin{tabularx}{\textwidth}{l l l l X}
 		\hline
 		\textbf{Señal Física} & \textbf{Conexión LaunchPad} & \textbf{GPIO} & \textbf{Mux Value} & \textbf{Descripción Técnica / Propósito} \\ \hline
@@ -1453,22 +1457,27 @@ A partir de la distribución espacial provista por el fabricante y considerando 
 		\texttt{EQEP1B} & Pin 39 (J4) & \texttt{GPIO11} & \texttt{5} (\textit{eQEP}) & Entrada del Canal B para el encoder del carro. \\
 		\texttt{EQEP2A} & Pin 72 (J8) & \texttt{GPIO14} & \texttt{10} (\textit{eQEP}) & Entrada del Canal A para el encoder del péndulo. \\
 		\texttt{EQEP2B} & Pin 73 (J8) & \texttt{GPIO15} & \texttt{10} (\textit{eQEP}) & Entrada del Canal B para el encoder del péndulo. \\
-		\texttt{SCIRXDA} & Enrutamiento interno\footnotemark & \texttt{GPIO28} & \texttt{1} (\textit{SCI}) & Entrada de recepción de comandos desde el PC. \\
-		\texttt{SCITXDA} & Enrutamiento interno\footnotemark[\value{footnote}] & \texttt{GPIO29} & \texttt{1} (\textit{SCI}) & Salida de transmisión de telemetría hacia el PC. \\ \hline
+		\texttt{SCIRXDA} & Enrutamiento interno\textsuperscript{1} & \texttt{GPIO28} & \texttt{1} (\textit{SCI}) & Entrada de recepción de comandos desde el PC. \\
+		\texttt{SCITXDA} & Enrutamiento interno\textsuperscript{1} & \texttt{GPIO29} & \texttt{1} (\textit{SCI}) & Salida de transmisión de telemetría hacia el PC. \\ \hline
 	\end{tabularx}
+	
+	\vspace{2mm}
+	\begin{minipage}{\textwidth}
+		\footnotesize
+		\textsuperscript{1} Las señales del módulo SCI (UART) se encuentran interconectadas por hardware en el circuito de la placa LAUNCHXL-F280049C hacia el depurador XDS110. Esto permite la comunicación bidireccional con el PC a través del puerto JTAG con un único cable USB.
+	\end{minipage}
 \end{table}
-\footnotetext{Las señales del módulo SCI (UART) se encuentran interconectadas por hardware en el circuito de la placa LAUNCHXL-F280049C hacia el depurador XDS110. Esto permite la comunicación bidireccional con el PC a través del puerto JTAG con un único cable USB.}
-\FloatBarrier % <-- Solo una barrera al final del conjunto completo
+\FloatBarrier
 
 
-\paragraph{Configuración general de periféricos hardware dedicados (ePWM y eQEP)}
+\paragraph{Configuración general de periféricos}
 
-La utilidad de este apartado radica en exponer el procedimiento que se ha diseñado en el firmware para la correcta habilitación, inicialización y puesta en marcha de los periféricos esenciales del sistema. Así, se desarrollaron las rutinas de configuración tanto para el módulo de modulación por ancho de pulsos (\textit{ePWM1}) —encargado de la actuación sobre el motor— como para los bloques de decodificación en cuadratura (\textit{eQEP1} y \textit{eQEP2}) dedicados a la lectura de los encoders. Con el fin de estructurar el código de manera eficiente, el proceso de inicialización de cada módulo consta de tres fases fundamentales:
+La utilidad de este apartado radica en exponer el procedimiento que se ha diseñado en el firmware para la correcta habilitación, inicialización y puesta en marcha de los periféricos esenciales del sistema. Con el fin de estructurar el código de manera eficiente, el proceso de inicialización de cada módulo consta de tres fases fundamentales:
 
 \begin{itemize}
 	\item \textbf{Habilitación del reloj del periférico:} Se activa la señal de reloj específica a través de los registros de control del sistema (\texttt{CpuSysRegs.PCLKCR2} para el módulo \textit{ePWM1} y \texttt{CpuSysRegs.PCLKCR4} para los módulos \textit{eQEP}). Debido a que estos registros están protegidos, se requiere el uso de las instrucciones de ensamblador \texttt{EALLOW} y \texttt{EDIS} para su modificación segura.
 	
-	\item \textbf{Configuración de registros internos:} Ajuste de los registros del modulo de acuerdo con las especificaciones del fabricante para obtener el comportamiento deseado. Para facilitar la lectura del texto principal, la descripción exhaustiva del mapa de memoria de cada bloque se ha desplazado al Anexo~\ref{ap:registros_eQEP} (eQEP) y al Anexo\ref{ap:registros_ePWM} (ePWM).
+	\item \textbf{Configuración de registros internos:} Ajuste de los registros del modulo de acuerdo con las especificaciones del fabricante para obtener el comportamiento deseado. 
 	
 	\item \textbf{Activación final del módulo:} Modificación del bit de habilitación global por hardware (como el bit \texttt{QPEN} en el caso de la lógica \textit{eQEP}) para indicar a la CPU que el periférico se encuentra plenamente operativo.
 \end{itemize}
