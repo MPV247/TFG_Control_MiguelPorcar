@@ -20,11 +20,13 @@ setup(
     zip_safe=True,
     maintainer='miguel',
     maintainer_email='al426647@uji.es',
-    description='TODO: Package description',
+    description='Gemelo digital y telemetria para pendulo invertido (TFG)',
     license='TODO: License declaration',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            # Nombre ejecutable = carpeta_raiz.archivo_script:funcion_a_buscar
+            'serial_node = cartpole_digital_twin.serial_node:main',
         ],
     },
 )

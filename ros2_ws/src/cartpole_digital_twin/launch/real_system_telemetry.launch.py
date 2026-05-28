@@ -43,8 +43,8 @@ def generate_launch_description():
         # Nodo Driver Serie para conectar con el Péndulo Físico
         Node(
             package='cartpole_digital_twin',
-            executable='serial_driver',
-            name='serial_driver',
+            executable='serial_node',
+            name='serial_joint_publisher',
             output='screen',
             parameters=[
                 {'port': '/dev/ttyACM0'},
