@@ -1287,6 +1287,32 @@ Para articular esta conexión se empleó la herramienta \textit{ROS Toolbox}, es
 \end{figure}
 \FloatBarrier
 
+\newpage
+\paragraph{Modularidad del sistema y desviaciones en la planificación}
+
+Hubo una desviación respecto de la planificación inicial dada la modularidad y el alto nivel de abstracción en el ecosistema de ROS 2. Como extensión al entorno de simulación, se implementó una infraestructura paralela orientada a la monitorización de la planta física real en el mismo entorno tridimensional. 
+
+Para lograrlo, se desarrolló un nodo que actúa como intermediario entre el hardware (microcontrolador) y el ecosistema de ROS 2. El nodo, desde el punto de vista de la comunicación, realiza las mismas funciones que el implementado en Simulink:
+\begin{itemize}[]
+	\item \textbf{Obtención de los datos:} Lectura de la telemetría en formato (\texttt{CSV}) que el microcontrolador transmite a través del puerto serie (\textit{SCI/UART}) a 115200 bps.
+	
+	\item \textbf{Encapsulado en mensajes:} El nodo procesa la cadena de caracteres, extrae las posiciones cinemáticas reales ($x$ y $\theta$) y las encapsula exactamente en la misma estructura de mensaje estándar \texttt{sensor\_msgs/JointState}.
+	
+\end{itemize}
+
+Al inyectar estos datos en el mismo tópico (\texttt{/joint\_states}), la herramienta \textit{RViz} responde de manera idéntica sin requerir ninguna modificación interna. Esta característica dota al proyecto de una gran versatilidad, permitiendo conmutar de forma transparente entre la simulación y la monitorización del comportamiento físico real.
+\begin{figure}[ht]
+	\centering
+	\resizebox{\textwidth}{!}{%
+		\input{Pictures/figuras/modularidad_ros.tex}%
+	}
+	\caption{Representación de la idea de modularidad y abstracción en el ecosistema de ROS 2}
+	\label{fig:modularidad_ros}
+\end{figure}
+
+\FloatBarrier
+
+\paragraph{Problemas derivados}
 Durante la integración de esta arquitectura, surgieron dos problemas técnicos que requirieron desviaciones de la configuración por defecto para estabilizar la plataforma de simulación:
 \begin{itemize}
 	\item \textbf{Incompatibilidad en el Middleware (DDS):} Inicialmente se presentaron cortes intermitentes en la comunicación y pérdida de paquetes entre plataformas. El problema se resolvió modificando el estándar de comunicación de red hacia \textit{Cyclone DDS}, lo que garantizó un intercambio de datos robusto y compatible entre MATLAB y ROS. Suele ser un problema muy común el la distribución \textit{Humble} que se empleó para el proyecto.
