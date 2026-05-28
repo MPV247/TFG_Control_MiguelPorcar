@@ -5,8 +5,8 @@
 \begin{document}
 	
 	\begin{tikzpicture}[
-		% Espaciado base global armónico
-		node distance=2.0cm and 2.3cm,
+		% Ajustamos el espaciado interno por defecto a 1.8cm para los bloques hermanos
+		node distance=2.0cm and 1.8cm,
 		% Estilos base homogéneos
 		bloque/.style={draw=black!50, fill=white, thick, rectangle, rounded corners, minimum height=1.8cm, minimum width=3.2cm, align=center, font=\sffamily},
 		archivo/.style={draw=orange!70!black, fill=orange!10, thick, cylinder, shape border rotate=90, minimum height=1.2cm, minimum width=1.2cm, aspect=0.3, align=center, font=\scriptsize\sffamily},
@@ -27,10 +27,10 @@
 			\scriptsize Motor de Física
 		};
 		
-		% C2_TOP: Tópico ROS 2
-		\node[bloque, right=of matlab] (ros) {
+		% C2_TOP: Tópico ROS 2 (Aumentamos a 3.8cm para separar el bloque verde del azul)
+		\node[bloque, right=3.8cm of matlab] (ros) {
 			\includegraphics[height=0.6cm, keepaspectratio]{Pictures/Ros_logo.png} \\[0.05cm]
-			\scriptsize Tópico:\\
+			\scriptsize Topic:\\
 			\texttt{/joint\_states}
 		};
 		
@@ -40,7 +40,7 @@
 		};
 		
 		% C4_TOP: Visualizador RViz
-		\node[visualizador, right=1.8cm of rsp] (rviz) {
+		\node[visualizador, right=of rsp] (rviz) {
 			\includegraphics[width=3.2cm]{Pictures/modelo_3D} \\
 			\footnotesize \textbf{RViz}
 		};
@@ -49,21 +49,21 @@
 		% --- FILA INFERIOR: REJILLA DE ALINEACIÓN ABSOLUTA ---------------
 		% =================================================================
 		
-		% C1_BOT: Microcontrolador (Establece la altura de referencia para la fila inferior)
+		% C1_BOT: Microcontrolador (Logo ampliado a 0.8cm para que no se vea enano)
 		\node[bloque, below=of matlab, draw=red!70!black, fill=red!5] (uc) {
+			\includegraphics[height=0.8cm, keepaspectratio]{Pictures/ti_logo.png} \\[0.1cm]
 			\textbf{Microcontrolador}\\
-			\small TMS320F280049C\\[0.1cm]
 			\scriptsize Planta Feedback 33-005
 		};
 		
-		% C2_BOT: Nodo Serie (Cruce perfecto: X de 'ros' y Y de 'uc')
+		% C2_BOT: Nodo Serie (Se alinea automáticamente con 'ros' manteniendo la separación con 'uc')
 		\node[bloque, draw=green!60!black] (serial_node) at (ros |- uc) {
 			\textbf{Nodo Serie ROS 2}\\
 			\scriptsize Pasarela UART $\rightarrow$ ROS\\
 			\tiny (Python / C++)
 		};
 		
-		% C3_BOT: Archivo URDF (Cruce perfecto: X de 'rsp' y Y de 'uc')
+		% C3_BOT: Archivo URDF
 		\node[archivo] (urdf) at (rsp |- uc) {Archivo\\URDF};
 		
 		% =================================================================
@@ -87,12 +87,12 @@
 		% --- CONEXIONES Y FLUJOS DE DATOS --------------------------------
 		% =================================================================
 		
-		% Flujos Horizontales (Ahora perfectamente paralelos al 100%)
-		\draw[flecha] (matlab.east) -- node[etiqueta, above=0.08cm] {ROS Toolbox\\ \texttt{[rad, m]}} (ros.west);
+		% Flujos Horizontales 
+		\draw[flecha] (matlab.east) -- node[etiqueta, above=0.08cm] {ROS Toolbox} (ros.west);
 		\draw[flecha] (uc.east) -- node[etiqueta, above=0.08cm] {SCI / UART} (serial_node.west);
 		
-		% Flujos Verticales (Perfectamente perpendiculares)
-		\draw[flecha] (serial_node.north) -- node[etiqueta, xshift=0.15cm, pos=0.5, anchor=west] {Encapsulado\\ \texttt{sensor\_msgs/JointState}} (ros.south);
+		% Flujos Verticales
+		\draw[flecha] (serial_node.north) -- node[etiqueta, xshift=0.15cm, pos=0.5, anchor=west] {} (ros.south);
 		\draw[flecha, dashed, draw=orange!70!black] (urdf.north) -- (rsp.south);
 		
 		% Flujo hacia RViz
