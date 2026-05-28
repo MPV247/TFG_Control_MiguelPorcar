@@ -228,7 +228,7 @@ void calcula_accion_control(void)
     //Ciclo límite (evitar desgaste excesivo del actuador)
     if (fabs(e1) < 0.001 && fabs(e2) < 0.003){
         u = 0;
-        Ie = Ie - T_sec * (ref_x - x); 
+        
     }
 
     //Saturación y anti-windup aquí: 
