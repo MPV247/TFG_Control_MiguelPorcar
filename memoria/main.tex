@@ -64,6 +64,7 @@
 \usepackage{hyperref}
 \usepackage{amssymb}
 \usepackage{tabularx}
+\usepackage{pgfgantt}
 
 \tcbuselibrary{listings, skins}
 
@@ -416,8 +417,72 @@ Cada tarea y subtarea tiene un objetivo asociado para facilitar el desarrollo de
 \newpage
 
 \subsection{Estimación de tiempos}
-% Aquí irían los objetivos (Estabilización, Swing-up, etc.) 
-% Y la tabla de horas que ya definimos (300h totales, 50h para memoria).
+\label{sec:estimacion_tiempos}
+
+Para garantizar la viabilidad del proyecto dentro de un marco temporal de \textbf{300 horas totales} y con la actividad presencial estructurada en jornadas de \textbf{6 horas diarias} (en horario de 08:00 a 14:00 de lunes a viernes). Se ha estructurado la planificación temporal en un cómputo de 30 horas semanales, fijando la duración total del cronograma en un periodo de \textbf{10 semanas}.
+
+En el Cuadro~\ref{tab:desglose_horas} se detalla la asignación horaria prevista para cada una de las tareas principales y sus objetivos asociados. Dado el desafío técnico que representa la programación a bajo nivel sobre el microcontrolador, se ha otorgado una prioridad destacada al desarrollo del firmware (T5), reservando un total de 70 horas para su correcta ejecución y depuración. Por otro lado, se reservan 30 horas para la redacción final de la memoria técnica y la preparación de la defensa (T7). No obstante, la labor de documentación se plantea como una actividad transversal y continua a lo largo del proyecto.
+
+\begin{table}[htbp]
+	\centering
+	\caption{Desglose de horas estimadas por tarea principal.}
+	\label{tab:desglose_horas}
+	\small
+	\begin{tabular}{llcc}
+		\toprule
+		\textbf{Tarea} & \textbf{Descripción} & \textbf{Objetivo} & \textbf{Horas Estimadas} \\ \midrule
+		\textbf{T1} & Modelado matemático y físico & O1 & 30 h \\
+		\textbf{T2} & Entorno de simulación e integración con ROS & O2 & 40 h \\
+		\textbf{T3} & Diseño de estrategias de control en simulación & O3 & 30 h \\
+		\textbf{T4} & Preparación del hardware y electrónica & O4 & 30 h \\
+		\textbf{T5} & Desarrollo del firmware de bajo nivel & O5 & 70 h \\
+		\textbf{T6} & Validación experimental en el sistema real & O6 & 50 h \\
+		\textbf{T7} & Documentación técnica y cierre & O7 & 50 h \\ \midrule
+		\multicolumn{3}{r}{\textbf{Total estimado:}} & \textbf{300 h} \\ \bottomrule
+	\end{tabular}
+\end{table}
+
+Se ha elaborado el diagrama de Gantt de la Figura~\ref{fig:diagrama_gantt}. Como se aprecia en el cronograma, se ha diseñado un solapamiento estratégico entre las tareas de modelado y simulación virtual (T1, T2 y T3) y la fase de preparación del hardware (T4). Permitiendo optimizar las horas de laboratorio, garantizando una interacción directa y continuada con la planta física desde etapas tempranas. A su vez, se observa claramente que el grueso central del proyecto lo ocupa el desarrollo del firmware (T5), dedicando 4 semanas. 
+
+\begin{figure}[htbp]
+	\centering
+	\begin{ganttchart}[
+		canvas/.style={draw=black!50, fill=white},
+		vgrid={*1{black!10}},
+		hgrid=true,
+		x unit=0.85cm, 
+		y unit title=0.6cm,
+		y unit chart=0.7cm,
+		title height=1,
+		title label font=\footnotesize\bfseries,
+		bar/.style={fill=blue!60!cyan, draw=blue!40!black},
+		bar height=0.5,
+		bar label font=\footnotesize\bfseries,
+		progress label text={},
+		group label font=\footnotesize\bfseries,
+		milestone label font=\footnotesize\itshape
+		]{1}{10}
+		% Título del eje temporal
+		\gantttitle{Semanas de desarrollo (30 h/semana)}{10} \\
+		\gantttitlelist{1,...,10}{1} \\
+		
+		% Barras de las tareas principales (ajustadas a la nueva distribución de horas)
+		\ganttbar{T1. Modelado Físico}{1}{2} \\
+		\ganttbar{T2. Simulación y ROS}{2}{4} \\
+		\ganttbar{T3. Control en Simulación}{3}{4} \\
+		\ganttbar{T4. Prep. Hardware}{4}{5} \\
+		\ganttbar{T5. Firmware bajo nivel}{5}{8} \\
+		\ganttbar{T6. Validación Real}{7}{9} \\
+		\ganttbar{T7. Memoria y Cierre}{1}{10} \\
+		
+		% Hitos importantes reposicionados lógicamente
+		\ganttmilestone{Hito: Simulación funcional}{4} \\
+		\ganttmilestone{Hito: Bucle de control en planta real}{8}
+	\end{ganttchart}
+	\caption{Diagrama de Gantt de la planificación prevista para el proyecto}
+	\label{fig:diagrama_gantt}
+\end{figure}
+\FloatBarrier
 
 \section{Estimación de costes}
 % Aquí incluyes el coste del ingeniero (25€/h x 300h), 
@@ -2398,17 +2463,20 @@ En el Cuadro~\ref{tab:comparativa_lqr} se muestran los seis controladores probad
 	\end{tabular}
 \end{table}
 
-\begin{figure}[htbp]
+Para la evaluación cuantitativa de cada controlador, se implementó un flujo continuo de adquisición de datos en tiempo real a través del puerto serie del microcontrolador. La telemetría recopilada de cada experimento, en formato \textit{CSV}, fue posteriormente procesada en el entorno MATLAB para sintetizar las curvas de rendimiento sobre la planta física. Con el fin de garantizar la transparencia metodológica y permitir la réplica exacta de los resultados, tanto los registros de datos en bruto (\textit{raw data}) como los scripts de postprocesado se encuentran completamente disponibles en el \href{https://github.com/MPV247/TFG_Control_MiguelPorcar}{\textbf{repositorio oficial del proyecto}} \cite{Porcar2026TFG}. 
+ 
+\newpage
+La Figura~\ref{fig:resultados_kx} revela la influencia del valor de los parámetros $Q$ y $R$ en el rendimiento del bucle de control, se observan diferencias en la dinámica en bucle cerrado dependiendo del vector de ganancias ($K = [K_1, K_2, K_3, K_4]$) obtenido.
+
+\begin{figure}[!htbp]
 	\centering
-	\includegraphics[width=0.88\textwidth]{Pictures/Comparativa_Controladores} 
+	\includegraphics[width=0.75\textwidth]{Pictures/Comparativa_Controladores} 
 	\caption{Desempeño de los controladores sobre la planta real}
 	\label{fig:resultados_kx}
 \end{figure}
 \FloatBarrier
 
-La Figura~\ref{fig:resultados_kx} revela la influencia del valor de los parámetros $Q$ y $R$ en el rendimiento del bucle de control, se observan diferencias en la dinámica en bucle cerrado dependiendo del vector de ganancias ($K = [K_1, K_2, K_3, K_4]$) obtenido. 
-
-\newpage
+ 
 
 A continuación se desglosa el desempeño de cada controlador en función de sus parámetros de diseño ($R, Q$):
 
@@ -2431,17 +2499,15 @@ No obstante, en todas las gráficas,  el error de posición en el estado $x$ no 
  
 Este comportamiento experimental fue el que motivó a añadir término integral en el control por realimentación del estado (Sección~\ref{cap:con_integral}) para incrementar la robustez del controlador ante discrepancias entre el modelado teórico y la realidad física. 
 
-\newpage
 Como se aprecia en la Figura~\ref{fig:resultados_integrador}, la inclusión de la acción integral consigue llevar al carro a la posición de referencia. En el momento en que el carro se detiene con un error de posición residual ($x_{ref} - x$), comienza a acumularse de forma continua en el tiempo dentro del estado virtual $I_e$. Esta integración numérica genera un aumento progresivo y rampa en la señal de control $u$ que, al cabo de unos instantes, logra romper el umbral de bloqueo mecánico y vencer la resistencia de la correa de transmisión. 
 \begin{figure}[htbp]
 	\centering
-	\includegraphics[width=0.9\textwidth]{Pictures/control_con_integrador} 
+	\includegraphics[width=\textwidth]{Pictures/control_con_integrador} 
 	\caption{Control de posición con integrador sobre la planta real}
 	\label{fig:resultados_integrador}
 \end{figure}
 \FloatBarrier
 
-Con este hito, queda completamente validada la robustez del control de posición sobre la plataforma física real. Si se desea observar el comportamiento en vídeo del experimento, se encuentra disponible en el repositorio del proyecto \cite{Porcar2026TFG}.
 
 \section{Control de energía (Swing-up)}
 s
