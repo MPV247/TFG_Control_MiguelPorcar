@@ -1482,7 +1482,7 @@ La utilidad de este apartado radica en exponer el procedimiento que se ha diseñ
 	\item \textbf{Activación final del módulo:} Modificación del bit de habilitación global por hardware (como el bit \texttt{QPEN} en el caso de la lógica \textit{eQEP}) para indicar a la CPU que el periférico se encuentra plenamente operativo.
 \end{itemize}
 
-Dada la relevancia de estos submódulos, en los siguientes apartados se analiza con detalle su implementación y funcionamiento interno. 
+Con el propósito de garantizar la modularidad y legibilidad del software, la totalidad de este proceso de configuración general se ha encapsulado en el archivo de código fuente \texttt{perifericos.c}. La implementación íntegra del firmware desarrollado y la estructura de directorios del proyecto se encuentran accesibles de forma pública en el \href{https://github.com/MPV247/TFG_Control_MiguelPorcar}{\textbf{repositorio oficial del proyecto}} \cite{Porcar2026TFG}. Dada la relevancia de estos submódulos, en los siguientes apartados se analiza con detalle su implementación y funcionamiento interno.
 
 \subsection{Módulo eQEP (Lectura del Encoder)}
 
@@ -2025,7 +2025,7 @@ A partir de $G(s)$ se puede deducir el rozamiento viscoso y la masa del carro. S
 \newpage
 \subsubsection{Diseño del experimento y adquisición de datos}
 
-Para materializar la metodología de identificación expuesta y excitar la dinámica del carro de forma segura, se implementó en el microcontrolador una rutina periódica en base a una máquina de estados temporizada \cite{Porcar2026TFG}. El ensayo práctico se estructuró bajo las siguientes directrices:
+Para materializar la metodología de identificación expuesta y excitar la dinámica del carro de forma segura, se implementó en el microcontrolador una rutina periódica en base a una máquina de estados temporizada. El ensayo práctico se estructuró bajo las siguientes directrices:
 \begin{itemize}
 	\item \textbf{Entradas escalón:} La referencia de posición del raíl ($r(t)$) conmuta en magnitudes discretas de $\pm 10\,\text{cm}$ ($\pm 0.1\,\text{m}$) cada $10\,\text{s}$. Esta ventana temporal de diez segundos se seleccionó estratégicamente para garantizar que el sistema consiga llegar a la posición objetivo.
 	
@@ -2202,7 +2202,7 @@ El análisis comparativo de la Tabla~\ref{tab:resumen_y_comparativa} revela disc
 	
 \end{itemize}
 
-La integración de estos parámetros validados en el entorno de simulación permite aproximar el modelo teórico a la realidad física de la plataforma. Este ajuste resulta indispensable para disponer de un banco de pruebas virtual preciso y representativa del comportamiento real del sistema en el laboratorio.
+La integración de estos parámetros validados en el entorno de simulación permite aproximar el modelo teórico a la realidad física de la plataforma. Este ajuste resulta indispensable para disponer de un banco de pruebas virtual preciso y representativo del comportamiento real del sistema en el laboratorio. Asimismo, con el propósito de garantizar la transparencia y la reproducibilidad de los resultados obtenidos, todos los scripts de procesado y ficheros de datos brutos empleados durante este proceso de análisis e identificación han sido debidamente estructurados y cargados en el \href{https://github.com/MPV247/TFG_Control_MiguelPorcar}{\textbf{repositorio oficial del proyecto}} \cite{Porcar2026TFG}.
 
 \newpage
 \section{Implementación del algoritmo de control}
@@ -2243,7 +2243,7 @@ A continuación, se detalla el diseño modular y la responsabilidad analítica d
 	\label{fig:implement_control}
 \end{figure}
 
-El código fuente completo se encuentra disponible para su consulta en el repositorio público del proyecto \cite{Porcar2026TFG}. A continuación, únicamente se focaliza en la función \texttt{calcula\_u()}, dado que es la que dictamina la ley de control.
+El código fuente completo se encuentra disponible para su consulta en el \href{https://github.com/MPV247/TFG_Control_MiguelPorcar}{\textbf{repositorio oficial del proyecto}} \cite{Porcar2026TFG}, concretamente en el archivo \texttt{control.c}. Este script se diseñó como una capa de abstracción de todo el hardware, aislando la complejidad de bajo nivel para permitir la experimentación y modificación de algoritmos de forma ágil y sencilla. A continuación, el análisis se focaliza únicamente en la función \texttt{calcula\_u()}, dado que es la encargada de dictaminar la ley de control.
 
 \newpage
 
@@ -2307,7 +2307,56 @@ En el Código~\ref{code:codigo_swing_up} se detalla la \textbf{transcripción de
 Con la integración de las leyes de control dentro de la rutina de interrupción periódica del microcontrolador, se completa la transición desde el modelo matemático abstracto y la simulación hasta una implementación física en tiempo real. La arquitectura modular diseñada garantiza que las tareas críticas de adquisición de datos, cálculo de la acción de control y modulación por ancho de pulsos (\textit{PWM}) se ejecuten de manera determinista cada $10\,\text{ms}$. Una vez consolidado el firmware y resueltas las particularidades del hardware, el sistema queda completamente preparado para la fase de validación experimental en la plataforma física, cuyos resultados se exponen en el siguiente capítulo.
 
 \chapter{Resultados}
+\section{Puesta a punto e integración del hardware}
+\label{sec:resultados_hardware}
 
+Como paso previo fundamental a la ejecución de las leyes de control, y en consonancia con el objetivo específico \textbf{O4} de este proyecto, se llevó a cabo la recuperación mecánica y la sustitución íntegra del sistema electrónico obsoleto de la plataforma \textit{Digital Pendulum 33-005}. 
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.65\textwidth]{Pictures/nueva_electronica}
+	\caption{Nueva electrónica de control y etapa de potencia.}
+	\label{fig:electronica_actualizada}
+\end{figure}
+\FloatBarrier
+
+Esta transición desde un módulo comercial cerrado y obsoleto hacia una arquitectura abierta basada en el microcontrolador \textbf{TMS320F280049C} representa un salto cualitativo para los laboratorios y la actividad docente de la universidad. Al romper la dependencia con el hardware propietario y las licencias de software descatalogadas del fabricante original, la planta se transforma en una plataforma de \textbf{código abierto}. 
+
+Este nuevo enfoque fomenta el desarrollo de futuros trabajos universitarios por diversas razones:
+\begin{itemize}[]
+	\item \textbf{Sostenibilidad:} Uso de componentes electrónicos comerciales, económicos y fácilmente sustituibles en caso de avería.
+	
+	\item \textbf{Desarrollo y versatilidad científica:} La naturaleza abierta del sistema elimina las restricciones de diseño, fomentando la experimentación y la evolución de nuevas líneas de investigación. Al no depender de herramientas propietarias de terceros, el proyecto se convierte en una base donde futuros estudiantes pueden hacer crecer el ecosistema de desarrollo.
+\end{itemize}  
+
+A la par de la renovación electrónica, la restauración de los componentes mecánicos constituyó el factor determinante para probar físicamente los controladores sintonizados en simulación. En primer lugar, el disco óptico deformado del encoder del péndulo se cambio por un nuevo. Esta reparación eliminó la perdida de pulsos, garantizando una lectura de posición angular correcta.
+
+En segundo lugar, se realizó un reacondicionamiento de la unidad mecánica. Este proceso incluyó la limpieza del riel, la limpieza de residuos de grasa reseca acumulada durante años, el posterior engrasado de los rodamientos del carro y de los ejes de la correa de transmisión y por último, el cambio de la correa dentada por una nueva. 
+
+\begin{figure}[htbp]
+	\centering
+	% Primera subfigura (arriba)
+	\begin{subfigure}{0.7\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{Pictures/nuevo_disco}
+		\caption{Renovación del disco óptico.}
+		\label{fig:hw_nuevo_encoder}
+	\end{subfigure}
+	
+	\vspace{0.4cm} % Espacio vertical de separación entre ambas imágenes
+	
+	% Segunda subfigura (abajo)
+	\begin{subfigure}{0.7\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{Pictures/reparacion_general}
+		\caption{Unidad mecánica reparada y lista para los ensayos.}
+		\label{fig:hw_planta_lista}
+	\end{subfigure}
+	
+	\caption{Detalles de la puesta a punto mecánica y del sistema de captación.}
+	\label{fig:puesta_a_punto_mecanica}
+\end{figure}
+\FloatBarrier
 \section{Control de posición}
 \label{sec:resultados_control_posicion}
 
@@ -2331,7 +2380,6 @@ Para evaluar de forma homogénea las prestaciones de las distintas configuracion
 
 El péndulo se inicializa en la vertical superior inestable ($\theta = \pi\,\text{rad}$) mediante asistencia inicial, momento en el cual se activa el control de posición.
 
-\newpage
 En el Cuadro~\ref{tab:comparativa_lqr} se muestran los seis controladores probados en la plataforma física, relacionando sus matrices de penalización ($Q, R$) con las ganancias asociadas y cargadas en el microcontrolador.
 
 \begin{table}[!htbp]
