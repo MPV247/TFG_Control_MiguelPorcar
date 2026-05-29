@@ -1334,7 +1334,7 @@ Una vez resuelto el cálculo dinámico y el control en Simulink, el siguiente hi
 
 Para articular esta conexión se empleó la herramienta \textit{ROS Toolbox}, estructurando el flujo de información bajo el paradigma de publicador/suscriptor:
 \begin{itemize}
-	\item \textbf{Lógica de Publicación (Nodo Publicador):} Como se ilustra en la Figura~\ref{fig:nodo_publicador}, el nodo desarrollado en Simulink toma de forma continua el vector con las posiciones $x$ y $\theta$ (\texttt{[q]}) y el tiempo de simulación para estructurar el envío de datos mediante un bloque de conversión (\texttt{MATLAB to ROS}). Esta información se encapsula en la estructura de un mensaje dedicado a articulaciones (\texttt{sensor\_msgs/JointState}) y el bloque \texttt{Publish} la difunde activamente en la red bajo el tópico \texttt{/joint\_states}.
+	\item \textbf{Lógica de Publicación (Nodo Publicador):} Como se ilustra en la Figura~\ref{fig:nodo_publicador}, el nodo desarrollado en Simulink toma de forma continua el vector con las posiciones $x$ y $\theta$ (\texttt{[q]}) y el tiempo de simulación para estructurar el envío de datos mediante un bloque de conversión (\texttt{MATLAB to ROS}). Esta información se encapsula en la estructura de un mensaje dedicado a articulaciones (\texttt{sensor\_msgs/JointState} \cite{ros2_joint_state}) y el bloque \texttt{Publish} la difunde activamente en la red bajo el tópico \texttt{/joint\_states}.
 \end{itemize}
 \begin{figure}[ht]
 	\centering
@@ -1383,7 +1383,7 @@ Al inyectar estos datos en el mismo tópico (\texttt{/joint\_states}), la herram
 \paragraph{Problemas derivados}
 Durante la integración de esta arquitectura, surgieron dos problemas técnicos que requirieron desviaciones de la configuración por defecto para estabilizar la plataforma de simulación:
 \begin{itemize}
-	\item \textbf{Incompatibilidad en el Middleware (DDS):} Inicialmente se presentaron cortes intermitentes en la comunicación y pérdida de paquetes entre plataformas. El problema se resolvió modificando el estándar de comunicación de red hacia \textit{Cyclone DDS}. Suele ser un problema muy común el la distribución \textit{Humble} que se empleó para el proyecto.
+	\item \textbf{Incompatibilidad en el Middleware (DDS):} Inicialmente se presentaron cortes intermitentes en la comunicación y pérdida de paquetes entre plataformas. El problema se resolvió modificando el estándar de comunicación de red hacia \textit{Cyclone DDS} \cite{ros2_cyclone_dds}. Suele ser un problema muy común el la distribución \textit{Humble} que se empleó para el proyecto.
 	
 	\item \textbf{Sincronización del Solver de Simulink:} El motor de cálculo numérico de Simulink tendía a desfasarse de la frecuencia de actualización que exige ROS para la publicación de sus tópicos. Para solucionarlo, se configuró el \textit{solver} en un paso de tiempo fijo discreto.
 \end{itemize}
@@ -1500,9 +1500,9 @@ Antes de proceder con el desarrollo software, se define la interfaz física del 
 
 \begin{figure}[ht] % <-- Cambiado a [ht] para mayor prioridad de colocación
 	\centering
-	\includegraphics[width=0.82\textwidth]{Pictures/pinmap} % <-- Reducido ligeramente de 0.95 a 0.82
+	\includegraphics[width=\textwidth]{Pictures/pinmap} % <-- Reducido ligeramente de 0.95 a 0.82
 	\vspace{-2mm} % <-- Reduce espacio muerto debajo de la imagen
-	\caption{Mapa de pines y asignación de periféricos de la tarjeta LAUNCHXL-F280049C.}
+	\caption{Mapa de pines y asignación de periféricos de la tarjeta LAUNCHXL-F280049C \cite{ti_f28004x_launchpad}}
 	\label{fig:launchpad_pinout}
 \end{figure}
 
