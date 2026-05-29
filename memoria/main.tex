@@ -1646,7 +1646,7 @@ En la Tabla~\ref{tab:config_epwm} se sintetiza la configuración definitiva carg
 		\texttt{TBCTR} & \texttt{0} & Inicialización y limpieza preventiva del contador de tiempo base. \\
 		\texttt{TBCTL.bit.CTRMODE} & \texttt{2} & Configuración de conteo triangular simétrico. \\
 		\texttt{TBCTL.bit.HSPCLKDIV} & \texttt{5} & Pre-escalador de reloj, alta velocidad $TBCLK = SYSCLK / (HSPCLKDIV \cdot CLKDIV)$. \\
-		\texttt{TBCTL.bit.CLKDIV} & \texttt{1} & Pre-escalador de reloj secundario. \\
+		\texttt{TBCTL.bit.CLKDIV} & \texttt{0} & Pre-escalador de reloj secundario. \\
 		\texttt{CMPA.bit.CMPA} & \texttt{0} & Ciclo de trabajo (\textit{duty cycle}) inicial en un estado seguro del 0\,\%. \\
 		\texttt{AQCTLA.bit.CAU} & \texttt{1} & Fuerza la señal a 0~V al cruzar el umbral \texttt{CMPA} en la fase de subida. \\
 		\texttt{AQCTLA.bit.CAD} & \texttt{2} & Fuerza la señal a 3.3~V al cruzar el umbral \texttt{CMPA} en la fase de bajada. \\ \hline
@@ -3230,7 +3230,7 @@ Valores modificados en la función de inicalización para obtener un comportamie
 		
 	\item \textbf{\texttt{TBCTL.bit.HSPCLKDIV = 5h}:} El valor numérico \texttt{5h} actúa como un índice de configuración por hardware que le indica al microcontrolador que debe aplicar un divisor de frecuencia real entre 10 sobre el reloj principal del sistema.
 	
-	\item \textbf{\texttt{TBCTL.bit.CLKDIV = 1h}:} El valor numérico \texttt{1h} indica un divisor de 2 para la frecuencia base. (CORREGIR ESTO)
+	\item \textbf{\texttt{TBCTL.bit.CLKDIV = 0h}:} El valor numérico \texttt{0h} indica un divisor de 1 para la frecuencia base. 
 \end{itemize}
 
 \newpage
