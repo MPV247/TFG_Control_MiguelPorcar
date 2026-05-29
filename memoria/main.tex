@@ -159,75 +159,70 @@
 \raggedbottom
 \begin{document}
 %----------------------------------------------------------------------------------------
-%	TITLE PAGE
+%	PORTADA TOTALMENTE ADAPTADA A STRUCTURE.TEX Y RÚBRICA UJI
 %----------------------------------------------------------------------------------------	
 \begingroup
 \thispagestyle{empty}
-% Usamos TikZ para posicionamiento absoluto en la página
+
 \begin{tikzpicture}[remember picture,overlay]
 	
 	% --- 1. LOGO DE LA UJI ---
-	% Mantenemos la posición del logo original
-	\node[anchor=north, yshift=-2.5cm] at (current page.north) {
-		\includegraphics[height=5cm]{Pictures/logo_uji.png} % Ajusta la altura si es necesario
+	\node[anchor=north, yshift=-2.2cm] at (current page.north) {
+		\includegraphics[height=4.5cm]{Pictures/logo_uji.png}
 	};
 	
-	% --- 2. HEADER TEXT (NUEVO ESTILO) ---
-	% Text nodes for the structured header
-	\node[anchor=center, yshift=6cm] at (current page.center) {
-		{\huge\sffamily\scshape TRABAJO DE FINAL DE GRADO}
+	% --- 2. NOMBRE DE LA TITULACIÓN ---
+	\node[anchor=center, yshift=6.5cm] at (current page.center) {
+		{\sffamily\large\bfseries\color{black!80} UNIVERSITAT JAUME I}
 	};
-	\node[anchor=center, yshift=4cm] at (current page.center) {
-		{\large\sffamily GRADO EN INTELIGENCIA ROBÓTICA}
+	\node[anchor=center, yshift=5.8cm] at (current page.center) {
+		{\sffamily\large\bfseries\color{black!50} GRADO EN INTELIGENCIA ROBÓTICA}
 	};
 	
-	% --- 3. MAIN TITLE WITH LINES --
-	% Upper Line
-	\draw[thick] ([xshift=-0.425\paperwidth, yshift=2cm]current page.center) -- ([xshift=0.425\paperwidth, yshift=2cm]current page.center);
+	% --- 3. NOMBRE DEL PROYECTO (TÍTULO EQUILIBRADO) ---
+	% Línea geométrica superior con el color 'ocre' de tu plantilla
+	\draw[line width=2.5pt, ocre] ([xshift=-7.5cm, yshift=2.2cm]current page.center) -- ([xshift=7.5cm, yshift=2.2cm]current page.center);
 	
-	% Actual Title Text
-	\node[anchor=center, yshift=0cm] at (current page.center) {
-		\parbox{0.85\paperwidth}{
+	% Texto del Título (Tipografía Avant Garde heredada mediante \sffamily)
+	\node[anchor=center, yshift=0.2cm] at (current page.center) {
+		\parbox{14.5cm}{
 			\centering
-			\fontsize{24pt}{28pt}\selectfont 
-			\bfseries\sffamily
-			Estudio e implementación del control de péndulo invertido sobre carro en un sistema de tiempo real
-		}
-	};
-	% Lower Line
-	\draw[thick] ([xshift=-0.425\paperwidth, yshift=-2cm]current page.center) -- ([xshift=0.425\paperwidth, yshift=-2cm]current page.center);
-	
-	% --- 4. STUDENT AND TUTOR INFO SPLIT (NUEVO ESTILO) ---
-	% Left info (right-aligned text within the parbox)
-	\node[anchor=north, xshift=-7cm, yshift=-5cm] at (current page.center) {
-		\parbox{0.45\paperwidth}{
-			\raggedleft % Alineado a la derecha dentro de la caja
-			{\normalsize\sffamily Estudiante:}\\[5pt]
-			{\Large\sffamily\bfseries Miguel Porcar Vicent}\\
+			\fontsize{22pt}{28pt}\selectfont 
+			\bfseries\sffamily\color{black!85}
+			Control No Lineal y Estabilización en Tiempo Real de un Sistema Subactuado utilizando Arquitectura C2000
 		}
 	};
 	
-	% Right info (right-aligned text within the parbox)
-	\node[anchor=north, xshift=3cm, yshift=-5cm] at (current page.center) {
-		\parbox{0.45\paperwidth}{
-			\raggedleft % Alineado a la derecha dentro de la caja
-			{\normalsize\sffamily Tutor:}\\[5pt]
-			{\Large\sffamily\bfseries Ignacio Peñarrocha Alós}
-		}
+	% Línea geométrica inferior en color 'ocre'
+	\draw[line width=2.5pt, ocre] ([xshift=-7.5cm, yshift=-1.8cm]current page.center) -- ([xshift=7.5cm, yshift=-1.8cm]current page.center);
+	
+	% Mención del tipo de documento
+	\node[anchor=center, yshift=-2.6cm] at (current page.center) {
+		{\sffamily\bfseries\large\color{black!50} TRABAJO DE FINAL DE GRADO}
 	};
 	
-	% --- 5. COURSE AND DATE (NUEVO ESTILO, DISCRETO AL FINAL) ---
-	\node[anchor=south, yshift=4cm] at (current page.south) {
-		\parbox{0.8\paperwidth}{
+	% --- 4. ALUMNO Y TUTOR (Simetría perfecta y etiquetas en color 'ocre') ---
+	\node[anchor=north, yshift=-4.5cm] at (current page.center) {
+		\sffamily\large
+		\renewcommand{\arraystretch{1.4}} % Espaciado elegante entre filas
+		\begin{tabular}{r p{2.5cm} l}
+			\textbf{\color{ocre}\small AUTOR:} & & \textbf{\color{ocre}\small TUTOR:} \\
+			Miguel Porcar Vicent & & Ignacio Peñarrocha Alós
+		\end{tabular}
+	};
+	
+	% --- 5. FECHA DE DEFENSA Y CURSO (Pie de página institucional) ---
+	\node[anchor=south, yshift=3.5cm] at (current page.south) {
+		\parbox{12cm}{
 			\centering
-			{\large\sffamily Fecha de presentación: Junio de 2026}\\[5pt]
-			{\large\sffamily Curso académico: 2025/2026}
+			{\color{ocre!50}\rule{3cm}{1pt}} \\ \vspace{0.4cm}
+			{\sffamily\color{black!80}\large \textbf{Fecha de defensa:} Junio de 2026}\\[5pt]
+			{\sffamily\color{black!50}\normalsize Curso académico: 2025/2026}
 		}
 	};
 \end{tikzpicture}
 \vfill
 \endgroup
-
 
 %----------------------------------------------------------------------------------------
 %	COPYRIGHT PAGE
@@ -237,7 +232,7 @@
 ~\vfill
 \thispagestyle{empty}
 
-\noindent \textit{Agradecimientos:
+\noindent \textbf{Agradecimientos:
 \\
 \\}Me gustaría expresar mi sincero agradecimiento a mi tutor, Ignacio Peñarrocha Alós, por darme la oportunidad de profundizar en el área de la carrera que más interés me despierta: el control de bajo nivel de sistemas robóticos. Asimismo, le agradezco su apoyo constante y su guía a lo largo de todo el desarrollo para superar las dificultades técnicas que fueron surgiendo.
 
@@ -249,7 +244,7 @@ Finalmente, quiero dar las gracias a mis padres por su apoyo incondicional y pac
 
 \vspace{1.2cm} 
 
-\noindent \textbf{Palabras clave:} Péndulo invertido sobre carro, Control en tiempo real, Realimentación del estado, \textit{Swing-up}, Robótica subactuada, Microcontroladores C2000.
+\noindent \textbf{Palabras clave:} Péndulo invertido, Control en tiempo real, Realimentación del estado, \textit{Swing-up}, Robótica subactuada, Microcontroladores C2000.
 \vspace{1.2cm}
 
 \noindent \textit{CASTELLÓN, a 29 de Mayo de 2026} 
