@@ -2706,7 +2706,7 @@ Al sustituir las Ecuaciones \ref{lagrange1} y \ref{lagrange2} en la estructura d
 
 \subsection{Análisis de la dinámica eléctrica del actuador}
 \label{ap:dinamica_electrica}
-Si se quiere determinar la frecuencia óptima de operación, se debe analizar en primer lugar la constante de tiempo eléctrica ($\tau_e$) del actuador a partir de su circuito equivalente R-L, si atendemos a los parámetros del fabricante (Tabla \ref{tab:datos_motor}):
+Si se quiere determinar la frecuencia óptima de operación, se debe analizar en primer lugar la constante de tiempo eléctrica ($\tau_e$) del actuador a partir de su circuito equivalente R-L \cite{pm_ab022}, si atendemos a los parámetros del fabricante (Tabla \ref{tab:datos_motor}):
 
 \begin{equation}
 	\tau_e = \frac{L}{R} = \frac{7.2\,\text{mH}}{5.5\,\Omega} \approx 1.3\,\text{ms}
@@ -2735,7 +2735,7 @@ Desde el punto de vista del comportamiento estático del motor, trabajar a frecu
 		\includegraphics[width=\textwidth]{Pictures/dinamica_RL} % Foto de la suciedad en el raíl
 		\caption{Respuesta temporal de la corriente}
 	\end{subfigure}
-	\caption{Circuito equivalente de un circuito motor DC y su dinámica ante entrada escalón}
+	\caption{Circuito equivalente de un circuito motor DC y su dinámica ante entrada escalón \cite{pm_ab022}}
 	\label{fig:equiv_motor}
 \end{figure}
 
@@ -2746,7 +2746,7 @@ No obstante, operar el puente en H a frecuencias tan reducidas resulta complicad
 	
 	\item \textbf{Sobrecalentamiento por rizado de corriente:} Las frecuencias bajas inducen un rizado de corriente severo incrementando las pérdidas óhmicas en el devanado ($\Delta P = I_{\text{rms}}^2 \cdot R$), derivando en una alta disipación térmica. Aunque para la plataforma experimental este factor no es destructivo (experimentos del orden de un par de minutos), degrada la eficiencia del sistema.
 	
-	\item \textbf{Contaminación acústica:} Las frecuencias del espectro audible humano se situan entre $20\,\text{Hz}$ y $20\,\text{kHz}$, con la banda de máxima sensibilidad entre $2\,\text{kHz}$ y $4\,\text{kHz}$.
+	\item \textbf{Contaminación acústica:} Las frecuencias del espectro audible humano se situan entre $20\,\text{Hz}$ y $20\,\text{kHz}$, con la banda de máxima sensibilidad entre $2\,\text{kHz}$ y $4\,\text{kHz}$ \cite{wiki_espectro_audible}.
 \end{enumerate}
 
 \newpage
