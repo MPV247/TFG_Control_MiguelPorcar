@@ -168,7 +168,7 @@
 	
 	% --- 1. LOGO DE LA UJI ---
 	\node[anchor=north, yshift=-2.2cm] at (current page.north) {
-		\includegraphics[height=4.5cm]{Pictures/logo_uji.png}
+		\includegraphics[height=4.5cm]{Pictures/UJI.png}
 	};
 	
 	% --- 2. NOMBRE DE LA TITULACIÓN ---
@@ -1549,7 +1549,7 @@ La utilidad de este apartado radica en exponer el procedimiento que se ha diseñ
 	\item \textbf{Activación final del módulo:} Modificación del bit de habilitación global por hardware (como el bit \texttt{QPEN} en el caso de la lógica \textit{eQEP}) para indicar a la CPU que el periférico se encuentra plenamente operativo.
 \end{itemize}
 
-Con el propósito de garantizar la modularidad y legibilidad del software, la totalidad de este proceso de configuración general se ha encapsulado en el archivo de código fuente \texttt{perifericos.c}. La implementación íntegra del firmware desarrollado y la estructura de directorios del proyecto se encuentran accesibles de forma pública en el \href{https://github.com/MPV247/TFG_Control_MiguelPorcar}{\textbf{repositorio oficial del proyecto}} \cite{Porcar2026TFG}. Dada la relevancia de estos submódulos, en los siguientes apartados se analiza con detalle su implementación y funcionamiento interno.
+Con el propósito de garantizar la modularidad y legibilidad del software, la totalidad de este proceso de configuración general se ha encapsulado en el archivo de código fuente \href{https://github.com/MPV247/TFG_Control_MiguelPorcar/blob/main/firmware_C2000/f280049c_ws/control/src/perifericos.c}{\texttt{perifericos.c}}. La implementación íntegra del firmware desarrollado y la estructura de directorios del proyecto se encuentran accesibles de forma pública en el \href{https://github.com/MPV247/TFG_Control_MiguelPorcar}{\textbf{repositorio oficial del proyecto}} \cite{Porcar2026TFG}. Dada la relevancia de estos submódulos, en los siguientes apartados se analiza con detalle su implementación y funcionamiento interno.
 
 \subsection{Módulo eQEP (Lectura del Encoder)}
 
@@ -2310,7 +2310,7 @@ A continuación, se detalla el diseño modular y la responsabilidad analítica d
 	\label{fig:implement_control}
 \end{figure}
 
-El código fuente completo se encuentra disponible para su consulta en el \href{https://github.com/MPV247/TFG_Control_MiguelPorcar}{\textbf{repositorio oficial del proyecto}} \cite{Porcar2026TFG}, concretamente en el archivo \texttt{control.c}. Este script se diseñó como una capa de abstracción de todo el hardware, aislando la complejidad de bajo nivel para permitir la experimentación y modificación de algoritmos de forma ágil y sencilla. A continuación, el análisis se focaliza únicamente en la función \texttt{calcula\_u()}, dado que es la encargada de dictaminar la ley de control.
+El código fuente completo se encuentra disponible para su consulta en el \href{https://github.com/MPV247/TFG_Control_MiguelPorcar}{\textbf{repositorio oficial del proyecto}} \cite{Porcar2026TFG}, concretamente en el archivo \href{https://github.com/MPV247/TFG_Control_MiguelPorcar/blob/main/firmware_C2000/f280049c_ws/control/src/control.c}{\texttt{control.c}}. Este script se diseñó como una capa de abstracción de todo el hardware, aislando la complejidad de bajo nivel para permitir la experimentación y modificación de algoritmos de forma ágil y sencilla. A continuación, el análisis se focaliza únicamente en la función \texttt{calcula\_u()}, dado que es la encargada de dictaminar la ley de control.
 
 \newpage
 
