@@ -65,6 +65,7 @@
 \usepackage{amssymb}
 \usepackage{tabularx}
 \usepackage{pgfgantt}
+\usepackage{cancel}
 
 \tcbuselibrary{listings, skins}
 
@@ -626,7 +627,7 @@ Esta elección de coordenadas establece de forma implícita el marco de trabajo 
 Una vez establecida la convención de signos del sistema y tener una visión esquemática ofrecida en la Figura \ref{fig:esquema_pendulo}, es momento de desarrollar la ecuación \ref{eq:lagrangiano} hasta obtener la forma matricial compacta de la Ecuación \ref{eq:matrices_dinamica}. La energía potencial y cinética del sistema en concreto se puede representar como \cite{tedrake2023}:
 \begin{equation}
 	\begin{cases}
-		E_{\text{c}} = \frac{1}{2}(M + m)\dot{x}^2 + m\dot{x}\dot{\theta} l\cos(\theta) + \frac{1}{2}  ml^2\dot{\theta}^2 \\
+		E_{\text{c}} = \frac{1}{2}(M + m)\dot{x}^2 + m\dot{x}\dot{\theta} l\cos(\theta) + \frac{1}{2} (I +ml^2)\dot{\theta}^2 \\
 		E_{\text{p}} = -mgl\cos(\theta)
 	\end{cases}\label{eq:energia_sistema}
 \end{equation}
@@ -635,7 +636,7 @@ A partir de formular la energía cinética y potencial, se desarrolla el Lagrang
 \begin{equation}
 	\begin{cases}
 		(M + m)\ddot{x} + ml\ddot{\theta}\cos(\theta) - ml\dot{\theta}^2\sin(\theta) = u \\
-		ml\ddot{x}\cos(\theta) + ml^2\ddot{\theta} + mgl\sin(\theta) = 0
+		ml\ddot{x}\cos(\theta) + (I + ml^2)\ddot{\theta} + mgl\sin(\theta) = 0
 	\end{cases}\label{eq:ec_movimiento}
 \end{equation}
 
@@ -643,7 +644,7 @@ Antes de compactar las ecuaciones en la forma matricial de la Ecuación \ref{eq:
 \begin{equation}
 	\begin{cases}
 		(M + m)\ddot{x} + ml\ddot{\theta}\cos(\theta) + c_x\dot{x} - ml\dot{\theta}^2\sin(\theta) = u \\
-		ml\ddot{x}\cos(\theta) + ml^2\ddot{\theta} + c_{\theta}\dot{\theta} + mgl\sin(\theta) = 0
+		ml\ddot{x}\cos(\theta) + (I + ml^2)\ddot{\theta} + c_{\theta}\dot{\theta} + mgl\sin(\theta) = 0
 	\end{cases}\label{eq:ec_movimiento_final}
 \end{equation}
 
@@ -2570,8 +2571,138 @@ Trabajo a futuro --> Implementación en HAL, uso de algoritmos no basados en mod
 \subsection{Desarrollo del Lagrangiano}
 \label{anexo:desarrollo_dinamico}
 
-En este anexo se detalla el desarrollo matemático paso a paso del formalismo de Euler-Lagrange, partiendo de las energías del sistema hasta obtener la formulación matricial.
-\clearpage
+Este apéndice se centra en desarrollar el Lagrangiano para obtener las ecuaciones de movimiento que caracterizan al sistema de péndulo invertido sobre carro. Recordemos el punto de partida del desarrollo:
+\begin{equation}
+	L = E_c - E_p
+	\label{eq:lagrangiano_ap}
+\end{equation}
+
+\paragraph{Energía cinética}
+La energía cinética total del sistema ($E_c$) se compone de la energía del carro de masa $M$ y la del péndulo de masa $m$ e inercia $I$:
+\begin{equation}
+	E_c = E_{c,\text{carro}} + E_{c,\text{péndulo}}
+\end{equation}
+
+El carro únicamente experimenta un movimiento de traslación horizontal, por lo que su energía cinética es:
+\begin{equation}
+	E_{c,\text{carro}} = \frac{1}{2}M\dot{x}^2
+\end{equation}
+
+Por otra parte, la posición en coordenadas cartesianas del centro de masas del péndulo se define como:
+\begin{equation}
+	\begin{cases}
+		x_m = x + l\sin\theta \\
+		y_m = -l\cos\theta
+	\end{cases}
+\end{equation}
+
+Al derivar estas coordenadas respecto al tiempo mediante la regla de la cadena, se obtienen las velocidades lineales en ambos ejes \cite{franco_lagrange}:
+\begin{equation}
+	\begin{cases}
+		\dot{x}_m = \dot{x} + l\dot{\theta}\cos\theta \\
+		\dot{y}_m = l\dot{\theta}\sin\theta
+	\end{cases}
+\end{equation}
+
+El cuadrado del módulo de la velocidad lineal del péndulo ($v_m^2 = \dot{x}_m^2 + \dot{y}_m^2$) se calcula como \cite{franco_lagrange}:
+\begin{equation}
+	v_m^2 = (\dot{x} + l\dot{\theta}\cos\theta)^2 + (l\dot{\theta}\sin\theta)^2 = \dot{x}^2 + 2l\dot{x}\dot{\theta}\cos\theta + l^2\dot{\theta}^2
+\end{equation}
+
+La energía cinética del péndulo incluye tanto la traslación de su centro de masas como la rotación pura sobre su eje \cite{franco_lagrange}:
+\begin{equation}
+	E_{c,\text{péndulo}} = \frac{1}{2}m v_m^2 + \frac{1}{2}I\dot{\theta}^2 = \frac{1}{2}m\dot{x}^2 + ml\dot{x}\dot{\theta}\cos\theta + \frac{1}{2}(I + ml^2)\dot{\theta}^2
+\end{equation}
+
+Sumando ambas contribuciones, obtenemos la expresión final de la energía cinética total del sistema:
+\begin{equation}
+	E_c = \frac{1}{2}(M + m)\dot{x}^2 + ml\dot{x}\dot{\theta}\cos\theta + \frac{1}{2}(I + ml^2)\dot{\theta}^2
+\end{equation}
+
+\paragraph{Energía potencial}
+Estableciendo el origen de energía potencial en la altura del raíl ($y = 0$), la energía potencial gravitatoria del sistema depende exclusivamente de la altura del centro de masas del péndulo ($y_m = -l\cos\theta$):
+\begin{equation}
+	E_p = m g y_m = -mgl\cos\theta
+\end{equation}
+
+Al sustituir las expresiones de energía cinética y potencial en la Ecuación~\ref{eq:lagrangiano_ap}, se obtiene la función de Lagrange que caracteriza el sistema:
+\begin{equation}
+	L = \frac{1}{2}(M + m)\dot{x}^2 + ml\dot{x}\dot{\theta}\cos\theta + \frac{1}{2}(I + ml^2)\dot{\theta}^2 + mgl\cos\theta
+\end{equation}
+
+\paragraph{Fuerzas generalizadas $Q$}
+De acuerdo con el formalismo de Euler-Lagrange para sistemas mecánicos no conservativos, las fuerzas generalizadas $Q_i$ asociadas a cada coordenada $q_i$ se obtienen contabilizando tanto las acciones externas activas ($\tau_i$) como los efectos disipativos provocados por el rozamiento ($F_{r,i}$) \cite{Penarrocha_Tema6}:
+\begin{equation}
+	Q_i = \tau_i - F_{r,i}
+\end{equation}
+
+Para el sistema bajo estudio, estas contribuciones se analizan de manera independiente para cada uno de los dos grados de libertad:
+\begin{itemize}
+	\item \textbf{Coordenada de traslación del carro ($q_1 = x$):} 
+	El carro se encuentra actuado por una fuerza horizontal, la cual define nuestra acción de control ($\tau_x = u$). Por otro lado, se introduce el efecto del rozamiento viscoso, asumiéndose proporcional a la velocidad lineal del carro ($F_{r,x} = c_x \dot{x}$). Combinando ambos términos se obtiene:
+	\begin{equation}
+		Q_x = u - c_x \dot{x}
+	\end{equation}
+	
+	\item \textbf{Coordenada de rotación del péndulo ($q_2 = \theta$):} 
+	La articulación del pivote es libre y carece de un actuador directo que aplique un par sobre el eje del péndulo ($\tau_\theta = 0$). No obstante, el giro experimenta pérdidas energéticas causadas por la fricción viscosa interna del rodamiento, la cual es proporcional a la velocidad angular ($\tau_{r,\theta} = c_\theta \dot{\theta}$). Por lo tanto, el par generalizado resulta en:
+	\begin{equation}
+		Q_\theta = -c_\theta \dot{\theta}
+	\end{equation}
+\end{itemize}
+
+Agrupando ambos componentes en forma matricial, el vector de fuerzas generalizadas del sistema queda completamente caracterizado como:
+\begin{equation}
+	\mathbf{Q} = \begin{bmatrix} Q_x \\ Q_\theta \end{bmatrix} = \begin{bmatrix} u - c_x \dot{x} \\ -c_\theta \dot{\theta} \end{bmatrix}
+\end{equation}
+
+\paragraph{Aplicación de las ecuaciones de Lagrange}
+El comportamiento dinámico se determina aplicando el principio de Euler-Lagrange para cada una de las coordenadas generalizadas del sistema \cite{Penarrocha_Tema6}:
+\begin{equation}
+	\frac{d}{dt}\left(\frac{\partial L}{\partial \dot{q}_i}\right) - \frac{\partial L}{\partial q_i} = Q_i
+	\label{lagrange0}
+\end{equation}
+
+\paragraph{Desarrollo para la coordenada del carro ($q_1 = x$):}
+En primer lugar, se calculan las derivadas parciales de la función Lagrangiana respecto a la velocidad lineal $\dot{x}$ y a la posición $x$:
+\begin{equation}
+	\frac{\partial L}{\partial \dot{x}} = (M + m)\dot{x} + ml\dot{\theta}\cos\theta
+	\label{eq:dt_x}
+\end{equation}
+\begin{equation}
+	\frac{\partial L}{\partial x} = 0
+\end{equation}
+
+Aplicando la derivada total respecto al tiempo a la Ecuación \ref{eq:dt_x} mediante la regla de la cadena, se obtiene:
+\begin{equation}
+	\frac{d}{dt}\left(\frac{\partial L}{\partial \dot{x}}\right) = (M + m)\ddot{x} + ml\ddot{\theta}\cos\theta - ml\dot{\theta}^2\sin\theta
+\end{equation}
+
+Sustituyendo estos resultados junto con su fuerza generalizada ($Q_x = u - c_x\dot{x}$), resulta en la primera ecuación diferencial del movimiento:
+\begin{equation}
+	(M + m)\ddot{x} + ml\cos\theta\ddot{\theta} + c_x\dot{x} - ml\dot{\theta}^2\sin\theta = u
+\end{equation}
+
+\paragraph{Desarrollo para la coordenada del péndulo ($q_2 = \theta$):}
+De igual manera, se opera para la coordenada angular calculando las derivadas parciales correspondientes:
+\begin{equation}
+	\frac{\partial L}{\partial \dot{\theta}} = ml\dot{x}\cos\theta + (I + ml^2)\dot{\theta}
+\end{equation}
+\begin{equation}
+	\frac{\partial L}{\partial \theta} = -ml\dot{x}\dot{\theta}\sin\theta - mgl\sin\theta
+	\label{lagrange1}
+\end{equation}
+
+\begin{equation}
+	\frac{d}{dt}\left(\frac{\partial L}{\partial \dot{\theta}}\right) = ml\ddot{x}\cos\theta - ml\dot{x}\dot{\theta}\sin\theta + (I + ml^2)\ddot{\theta}
+	\label{lagrange2}
+\end{equation}
+
+Al sustituir las Ecuaciones \ref{lagrange1} y \ref{lagrange2} en la estructura de Lagrange (\ref{lagrange0}) junto con $Q_\theta = -c_\theta\dot{\theta}$ y aplicar cancelación y reagrupación de términos, se obtiene la segunda ecuación diferencial del sistema:
+\begin{equation}
+	ml\cos\theta\ddot{x} + (I + ml^2)\ddot{\theta} + c_\theta\dot{\theta} + mgl\sin\theta = 0
+\end{equation}
+
 
 \subsection{Análisis de la dinámica eléctrica del actuador}
 \label{ap:dinamica_electrica}
