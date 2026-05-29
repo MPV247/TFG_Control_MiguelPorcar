@@ -2168,7 +2168,7 @@ Una vez determinado $c_x$, se sustituye dicho valor en la segunda relación para
 
 El rozamiento presente en el eje del péndulo es la fuerza que evita que oscile indefinidamente. Para caracterizar este fenómeno de forma empírica, se diseñó un ensayo de \textbf{oscilación libre}, manteniendo el motor del carro completamente desactivado ($u = 0\,\text{V}$) y bloqueado en una posición fija del raíl.
 
-El firmware desarrollado para el microcontrolador TMS320F280049C (cuyo código fuente se encuentra en el repositorio del proyecto \cite{Porcar2026TFG}) se encarga de leer el encoder del péndulo (\texttt{eQEP2}) a una tasa de muestreo síncrona de $100\,\text{Hz}$ ($T = 10\,\text{ms}$) y transmitir los valores angulares en radianes ($\theta$) bajo formato \textit{CSV} vía UART-SCI para su posterior análisis en MATLAB.
+El firmware desarrollado para el microcontrolador TMS320F280049C se encarga de leer el encoder del péndulo (\texttt{eQEP2}) a una tasa de muestreo síncrona de $100\,\text{Hz}$ ($T = 10\,\text{ms}$) y transmitir los valores angulares en radianes ($\theta$) bajo formato \textit{CSV} vía UART-SCI para su posterior análisis en MATLAB.
 
 \subsubsection{Diseño del experimento y decremento logarítmico}
 
