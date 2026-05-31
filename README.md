@@ -54,7 +54,7 @@ Con el objetivo de obtener las constantes físicas precisas para el modelo diná
 El proyecto está organizado de manera modular para separar las fases de análisis, simulación, despliegue y documentación:
 ```diff
 TFG_Control_MiguelPorcar/
-+ 📊 analisis_ensayos/                  # Scripts de procesamiento de datos experimentales reales
++ analisis_ensayos/                  # Scripts de procesamiento de datos experimentales reales
 │   ├── controladores_Kx_cartpole/     # Comparativas de transitorios con matrices Q y R
 │   ├── control_Kx_integrador_cartpole # Ensayos del controlador con acción integral
 │   ├── conversion_par_voltaje/        # Caracterización del motor y puente en H
@@ -62,19 +62,19 @@ TFG_Control_MiguelPorcar/
 │   ├── rozamiento_pendulo/            # Ensayos de oscilación libre y amortiguamiento
 │   └── zona_muerta_frec_PWM/          # Comportamiento del motor según la frecuencia de PWM
 │
-+ 🦾 firmware_C2000/                    # Código fuente embebido (Code Composer Studio)
++ firmware_C2000/                    # Código fuente embebido (Code Composer Studio)
 │   ├── experimentos/                  # Módulos lógicos y archivos de control .c individuales
 │   └── f280049c_ws/                   # Workspace de CCS con drivers HAL y periféricos
 │
-+ 💻 simulacion/                        # Entornos virtuales previos al despliegue físico
++ simulacion/                        # Entornos virtuales previos al despliegue físico
 │   ├── simulaciones_codigo/           # Algoritmos de control híbrido, swing-up y LQR (.m)
 │   └── simulink/                      # Modelos de bloques .slx y pasarela ROS
 │
-+ 🤖 ros2_ws/                           # Workspace de ROS 2 Humble (Nodos de visualización)
++ ros2_ws/                           # Workspace de ROS 2 Humble (Nodos de visualización)
 │   └── src/cartpole_digital_twin/
 │       ├── launch/                    # Lanzadores duales (sistema real y simulación)
 │       ├── rviz/                      # Configuraciones gráficas de RViz
 │       ├── urdf/                      # Modelo geométrico y físico del robot
 │       └── cartpole_digital_twin/     # Nodos e hilos en Python de lectura serie
 │
-+ 📂 docs/                              # Memoria técnica del TFG, planos y vídeos demostrativos
++ docs/                              # Memoria técnica del TFG, planos y vídeos demostrativos
