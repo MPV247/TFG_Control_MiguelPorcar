@@ -1,7 +1,7 @@
 # Control No Lineal y Estabilización en Tiempo Real de un Sistema Subactuado utilizando Arquitectura C2000
 
 [![MATLAB](https://img.shields.io/badge/MATLAB-R2024b+-ED7D31?style=for-the-badge&logo=mathworks&logoColor=white)](https://www.mathworks.com/products/matlab.html)
-[![ROS 2](https://img.shields.io/badge/ROS_2-Humble-22314E?style=for-the-badge&logo=ros&logoColor=white)](https://docs.ros.org/)
+[![ROS 2](https://img.shields.io/badge/ROS_2-Humble-22314E?style=for-the-badge&logo=ros&logoColor=white)](https://docs.ros.org/en/humble/index.html)
 [![C2000 TI](https://img.shields.io/badge/Texas_Instruments-TMS320F280049C-CC0000?style=for-the-badge&logo=texas-instruments&logoColor=white)](https://www.ti.com/product/es-mx/TMS320F280049C)
 [![Languages](https://img.shields.io/badge/Languages-C%20%2F%20Python%20%2F%20MATLAB-00599C?style=for-the-badge&logo=cplusplus&logoColor=white)](./)
 
