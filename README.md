@@ -9,6 +9,12 @@ Este repositorio contiene el ecosistema completo de software, firmware y herrami
 
 El proyecto aborda de forma integral el modelado matemático, la identificación paramétrica experimental, la simulación híbrida, el control en tiempo real estricto y la telemetría 3D de un **sistema subactuado de péndulo invertido (Cart-Pole)** utilizando la plataforma de control en tiempo real **TI C2000**.
 
+<p align="center">
+  <img src="memoria/Pictures/modelo_3D.png" width="550" alt="Modelo 3D del Sistema Cart-Pole Péndulo Invertido">
+  <br>
+  <em>Gometría y diseño conceptual del sistema.</em>
+</p>
+
 ---
 
 ## Características Clave
