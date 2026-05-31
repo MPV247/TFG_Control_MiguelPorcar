@@ -17,24 +17,38 @@ El proyecto aborda de forma integral el modelado matemático, la identificación
 
 ---
 
-## Características Clave
+## Características Clave del Sistema
 
-* **Firmware:** Implementación en C sobre el microcontrolador `TMS320F280049C`, configurando de forma nativa periféricos críticos como `ePWM` (control del motor), `eQEP` (lectura de encoders en cuadratura por hardware) y `SCI` (comunicación serie asíncrona).
-* **Estrategias de Control Avanzado:**
-  * **Swing-up:** Control no lineal basado en energía y linealización parcial por realimentación (*Partial Feedback Linearization - PFL*).
-  * **Estabilización:** Control por realimentación del estado ($Kx$) diseñado mediante LQR, incluyendo variantes con acción integral.
-  * **Control Híbrido Conmutado:** Transición suave y segura en tiempo real entre el algoritmo de swing-up y el control de estabilización en la vecindad del punto de equilibrio inestable.
-* **Identificación Experimental:** Ensayos específicos orientados a la obtención del modelo dinámico real del sistema:
-  * **Caracterización de la Zona Muerta del Actuador:** Análisis del comportamiento estático del motor y el puente en H a diferentes frecuencias de PWM (de 200 Hz a 10 kHz) para determinar el umbral mínimo de tensión necesario para vencer la fricción estática.
-  * **Relación Par-Voltaje:** Ensayos dinámicos utilizando controladores P y PI de velocidad para caracterizar la constante del motor y modelar de forma precisa la conversión entre el par de control calculado y el voltaje aplicado.
-  * **Identificación en Bucle Cerrado del Carro:** Ensayos experimentales aplicando un control proporcional (P) de posición sobre el carro para excitar el sistema de forma segura en bucle cerrado, permitiendo estimar la masa efectiva y sus coeficientes de fricción.
-  * **Identificación del Rozamiento del Péndulo:** Ensayos de oscilación libre del péndulo y aplicación del método de decremento logarítmico en MATLAB para aislar y modelar el coeficiente de amortiguamiento viscoso del eje.
-* **Gemelo Digital y Telemetría en ROS 2:** Visualización 3D en tiempo real del estado del sistema utilizando un modelo `URDF` en `RViz`. Implementa una arquitectura versátil con doble vía de entrada de datos:
-  * **Modo Simulación:** Conexión directa con **MATLAB/Simulink** para validar la respuesta de los controladores en el entorno virtual.
-  * **Modo Sistema Real:** Monitorización del prototipo físico mediante un nodo dedicado en Python (`serial_node.py`) que monitoriza de forma eficiente los datos de telemetría recibidos por el puerto serie (`SCI`) del microcontrolador. 
+### Firmware
+Implementación nativa en **C** sobre el microcontrolador de control en tiempo real `TMS320F280049C`. Configuración a bajo nivel de periféricos críticos para garantizar determinismo estricto:
+* `ePWM`: Modulación por ancho de pulsos para el control dinámico del motor de continua.
+* `eQEP`: Decodificación por hardware de encoders en cuadratura para la lectura posicional.
+* `SCI`: Interfaz de comunicación serie asíncrona dedicada a la transmisión de telemetría de alta velocidad.
+
+### Estrategias de Control Avanzado
+* **Algoritmo de Swing-Up:** Ley de control no lineal basada en funciones de energía y linealización parcial por realimentación (*Partial Feedback Linearization - PFL*) para elevar el péndulo desde su posición de reposo.
+* **Control de Estabilización:** Regulación robusta mediante realimentación del estado ($Kx$) diseñada a través de un regulador óptimo lineal cuadrático (**LQR**), incluyendo extensiones con acción integral para el rechazo de perturbaciones estáticas en el carro.
+* **Control Híbrido Conmutado:** Autómata de control que gestiona la transición suave, determinista y segura en tiempo real entre el lazo de balanceo y el lazo de estabilización dentro de la región de atracción del punto de equilibrio inestable.
+
+### Gemelo Digital (ROS 2 Humble)
+Desacoplamiento de la capa de control crítico de la capa de visualización 3D en `RViz` mediante un modelo geométrico `URDF`, operando bajo una arquitectura dual:
+* **Modo Simulación:** Co-simulación directa con **MATLAB/Simulink** a través de *ROS Toolbox* para la validación previa de los algoritmos en entornos virtuales.
+* **Modo Sistema Real:** Monitorización del prototipo físico mediante el nodo `serial_node.py` en Python, encargado de monitorizar eficientemente de las tramas provenientes del periférico `SCI`.
 
 ---
 
+## Caracterización e Identificación Experimental
+
+Con el objetivo de obtener las constantes físicas precisas para el modelo dinámico formal, se diseñó e implementó la siguiente metodología de ensayos:
+
+| Módulo del Sistema | Método Experimental | Variable Identificada | Propósito en el Modelo |
+| :--- | :--- | :--- | :--- |
+| **Actuador y Puente en H** | Análisis estático variando frecuencias de ciclo de trabajo en el rango de `200 Hz` a `10 kHz`. | **Zona Muerta ($V_{dead}$)** | Determinar el umbral mínimo de tensión necesario para vencer la fricción estática del motor. |
+| **Planta Motriz** | Ensayos dinámicos en bucle cerrado mediante controladores de velocidad de tipo P y PI. | **Relación Par-Voltaje ($K_t$)** | Caracterizar la ganancia electromecánica del motor y modelar la conversión par-tensión. |
+| **Dinámica del Carro** | Excitación controlada en bucle cerrado aplicando una ley de control proporcional de posición. | **Masa efectiva ($M$) y Fricción ($B_c$)** | Estimar la inercia lineal del carro y modelar sus coeficientes de rozamiento hardware. |
+| **Eje del Péndulo** | Ensayos de oscilación libre desde condiciones iniciales no nulas procesados en MATLAB. | **Amortiguamiento ($B_p$)** | Aislar el coeficiente de fricción viscosa del eje rotatorio mediante **decremento logarítmico**. |
+
+--- 
 ## Estructura del Repositorio
 
 El proyecto está organizado de manera modular para separar las fases de análisis, simulación, despliegue y documentación:
