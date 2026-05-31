@@ -11,19 +11,21 @@ El proyecto aborda de forma integral el modelado matemático, la identificación
 
 ---
 
-## 🚀 Características Clave
+## Características Clave
 
-* **Firmware Bare-Metal de Alta Prioridad:** Implementación en C sobre el microcontrolador `TMS320F280049C`, configurando de forma nativa periféricos críticos como `ePWM` (control del motor), `eQEP` (lectura de encoders en cuadratura por hardware) y `SCI` (comunicación serie asíncrona).
+* **Firmware:** Implementación en C sobre el microcontrolador `TMS320F280049C`, configurando de forma nativa periféricos críticos como `ePWM` (control del motor), `eQEP` (lectura de encoders en cuadratura por hardware) y `SCI` (comunicación serie asíncrona).
 * **Estrategias de Control Avanzado:**
   * **Swing-up:** Control no lineal basado en energía y linealización parcial por realimentación (*Partial Feedback Linearization - PFL*).
-  * **Estabilización:** Control por realimentación del estado ($Kx$) diseñado mediante LQR, incluyendo variantes con acción integral para el rechazo de perturbaciones en la posición del carro.
+  * **Estabilización:** Control por realimentación del estado ($Kx$) diseñado mediante LQR, incluyendo variantes con acción integral.
   * **Control Híbrido Conmutado:** Transición suave y segura en tiempo real entre el algoritmo de swing-up y el control de estabilización en la vecindad del punto de equilibrio inestable.
-* **Identificación Experimental:** Ensayos específicos para la caracterización de la zona muerta del actuador, la relación par-voltaje mediante controladores PI de velocidad, y la identificación del rozamiento del péndulo por decremento logarítmico.
-* **Gemelo Digital en ROS 2:** Nodo de telemetría en Python que parsea los datos en tiempo real del microcontrolador y publica el estado del sistema en un modelo virtual `URDF` visualizable en `RViz`.
+* **Identificación Experimental:** Ensayos específicos para la caracterización de la zona muerta del actuador, la relación par-voltaje, la identificación en bucle cerrado de las masa y el rozamineto del carro y la identificación del rozamiento del péndulo por decremento logarítmico.
+* **Gemelo Digital y Telemetría en ROS 2:** Visualización 3D en tiempo real del estado del sistema utilizando un modelo `URDF` en `RViz`. Implementa una arquitectura versátil con doble vía de entrada de datos:
+  * **Modo Simulación:** Conexión directa con **MATLAB/Simulink** para validar la respuesta de los controladores en el entorno virtual.
+  * **Modo Sistema Real:** Monitorización del prototipo físico mediante un nodo dedicado en Python (`serial_node.py`) que monitoriza de forma eficiente los datos de telemetría recibidos por el puerto serie (`SCI`) del microcontrolador. 
 
 ---
 
-## 📂 Estructura del Repositorio
+## Estructura del Repositorio
 
 El proyecto está organizado de manera modular para separar las fases de análisis, simulación, despliegue y documentación:
 
