@@ -52,28 +52,29 @@ Con el objetivo de obtener las constantes físicas precisas para el modelo diná
 ## Estructura del Repositorio
 
 El proyecto está organizado de manera modular para separar las fases de análisis, simulación, despliegue y documentación:
-```text
-├── analisis_ensayos/          # Scripts de MATLAB para procesar datos experimentales reales
-│   ├── controladores_Kx_cartpole/     # Comparativa de transitorios con diferentes matrices Q y R
-│   ├── control_Kx_integrador_cartpole/# Ensayos del controlador con acción integral
+```diff
+TFG_Control_MiguelPorcar/
++ 📊 analisis_ensayos/                  # Scripts de procesamiento de datos experimentales reales
+│   ├── controladores_Kx_cartpole/     # Comparativas de transitorios con matrices Q y R
+│   ├── control_Kx_integrador_cartpole # Ensayos del controlador con acción integral
 │   ├── conversion_par_voltaje/        # Caracterización del motor y puente en H
-│   ├── ident_BC_carro/                # Identificación de la dinámica del carro
-│   ├── rozamiento_pendulo/            # Ensayos de oscilación libre para modelar la fricción
-│   └── zona_muerta_frec_PWM/          # Análisis del comportamiento del motor según la freq del PWM
+│   ├── ident_BC_carro/                # Identificación de la dinámica y masa del carro
+│   ├── rozamiento_pendulo/            # Ensayos de oscilación libre y amortiguamiento
+│   └── zona_muerta_frec_PWM/          # Comportamiento del motor según la frecuencia de PWM
 │
-├── firmware_C2000/            # Código fuente (Code Composer Studio)
-│   ├── experimentos/                  # Controladores específicos probados de forma aislada (código .c)
-│   └── f280049c_ws/                   # Workspace de CCS con los drivers HAL y periféricos configurados
++ 🦾 firmware_C2000/                    # Código fuente embebido (Code Composer Studio)
+│   ├── experimentos/                  # Módulos lógicos y archivos de control .c individuales
+│   └── f280049c_ws/                   # Workspace de CCS con drivers HAL y periféricos
 │
-├── simulacion/                # Entornos de simulación
-│   ├── simulaciones_codigo/           # Scripts .m de control híbrido, swing-up y LQR
-│   └── simulink/                      # Modelos .slx y pasarela de comunicación con ROS
++ 💻 simulacion/                        # Entornos virtuales previos al despliegue físico
+│   ├── simulaciones_codigo/           # Algoritmos de control híbrido, swing-up y LQR (.m)
+│   └── simulink/                      # Modelos de bloques .slx y pasarela ROS
 │
-├── ros2_ws/                   # Workspace de ROS 2 para la monitorización en tiempo real
++ 🤖 ros2_ws/                           # Workspace de ROS 2 Humble (Nodos de visualización)
 │   └── src/cartpole_digital_twin/
-│       ├── launch/                    # Launch files para telemetría y gemelo digital
-│       ├── rviz/                      # Configuración del entorno visual de RViz
-│       ├── urdf/                      # Modelo geométrico y físico del Péndulo-Carro
-│       └── cartpole_digital_twin/     # Nodo Python para lectura del puerto serie e hilos de ejecución
+│       ├── launch/                    # Lanzadores duales (sistema real y simulación)
+│       ├── rviz/                      # Configuraciones gráficas de RViz
+│       ├── urdf/                      # Modelo geométrico y físico del robot
+│       └── cartpole_digital_twin/     # Nodos e hilos en Python de lectura serie
 │
-└── docs/                      # Memoria técnica del TFG, planos y vídeos demostrativos
++ 📂 docs/                              # Memoria técnica del TFG, planos y vídeos demostrativos
