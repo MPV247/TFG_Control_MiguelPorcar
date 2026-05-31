@@ -18,7 +18,11 @@ El proyecto aborda de forma integral el modelado matemático, la identificación
   * **Swing-up:** Control no lineal basado en energía y linealización parcial por realimentación (*Partial Feedback Linearization - PFL*).
   * **Estabilización:** Control por realimentación del estado ($Kx$) diseñado mediante LQR, incluyendo variantes con acción integral.
   * **Control Híbrido Conmutado:** Transición suave y segura en tiempo real entre el algoritmo de swing-up y el control de estabilización en la vecindad del punto de equilibrio inestable.
-* **Identificación Experimental:** Ensayos específicos para la caracterización de la zona muerta del actuador, la relación par-voltaje, la identificación en bucle cerrado de las masa y el rozamineto del carro y la identificación del rozamiento del péndulo por decremento logarítmico.
+* **Identificación Experimental:** Ensayos específicos orientados a la obtención del modelo dinámico real del sistema:
+  * **Caracterización de la Zona Muerta del Actuador:** Análisis del comportamiento estático del motor y el puente en H a diferentes frecuencias de PWM (de 200 Hz a 10 kHz) para determinar el umbral mínimo de tensión necesario para vencer la fricción estática.
+  * **Relación Par-Voltaje:** Ensayos dinámicos utilizando controladores P y PI de velocidad para caracterizar la constante del motor y modelar de forma precisa la conversión entre el par de control calculado y el voltaje aplicado.
+  * **Identificación en Bucle Cerrado del Carro:** Ensayos experimentales aplicando un control proporcional (P) de posición sobre el carro para excitar el sistema de forma segura en bucle cerrado, permitiendo estimar la masa efectiva y sus coeficientes de fricción.
+  * **Identificación del Rozamiento del Péndulo:** Ensayos de oscilación libre del péndulo y aplicación del método de decremento logarítmico en MATLAB para aislar y modelar el coeficiente de amortiguamiento viscoso del eje.
 * **Gemelo Digital y Telemetría en ROS 2:** Visualización 3D en tiempo real del estado del sistema utilizando un modelo `URDF` en `RViz`. Implementa una arquitectura versátil con doble vía de entrada de datos:
   * **Modo Simulación:** Conexión directa con **MATLAB/Simulink** para validar la respuesta de los controladores en el entorno virtual.
   * **Modo Sistema Real:** Monitorización del prototipo físico mediante un nodo dedicado en Python (`serial_node.py`) que monitoriza de forma eficiente los datos de telemetría recibidos por el puerto serie (`SCI`) del microcontrolador. 
