@@ -1,0 +1,54 @@
+# Control No Lineal y Estabilización en Tiempo Real de un Sistema Subactuado utilizando Arquitectura C2000
+
+[![MATLAB](https://img.shields.io/badge/MATLAB-R2024b+-ED7D31?style=for-the-badge&logo=mathworks&logoColor=white)](https://www.mathworks.com/products/matlab.html)
+[![ROS 2](https://img.shields.io/badge/ROS_2-Humble%20%2F%20Jazzy-22314E?style=for-the-badge&logo=ros&logoColor=white)](https://docs.ros.org/)
+[![C2000 TI](https://img.shields.io/badge/Texas_Instruments-TMS320F280049C-CC0000?style=for-the-badge&logo=texas-instruments&logoColor=white)](https://www.ti.com/microcontrollers-mcus-processors/microcontrollers/c2000-real-time-control-mcus/overview.html)
+[![Languages](https://img.shields.io/badge/Languages-C%20%2F%20Python%20%2F%20MATLAB-00599C?style=for-the-badge&logo=cplusplus&logoColor=white)](./)
+
+Este repositorio contiene el ecosistema completo de software, firmware y herramientas de análisis desarrolladas para mi Trabajo de Final de Grado (TFG) en el **Grado en Inteligencia Robótica** de la **Universitat Jaume I (UJI)**.
+
+El proyecto aborda de forma integral el modelado matemático, la identificación paramétrica experimental, la simulación híbrida, el control en tiempo real estricto y la telemetría 3D de un **sistema subactuado de péndulo invertido (Cart-Pole)** utilizando la plataforma de control en tiempo real **TI C2000**.
+
+---
+
+## 🚀 Características Clave
+
+* **Firmware Bare-Metal de Alta Prioridad:** Implementación en C sobre el microcontrolador `TMS320F280049C`, configurando de forma nativa periféricos críticos como `ePWM` (control del motor), `eQEP` (lectura de encoders en cuadratura por hardware) y `SCI` (comunicación serie asíncrona).
+* **Estrategias de Control Avanzado:**
+  * **Swing-up:** Control no lineal basado en energía y linealización parcial por realimentación (*Partial Feedback Linearization - PFL*).
+  * **Estabilización:** Control por realimentación del estado ($Kx$) diseñado mediante LQR, incluyendo variantes con acción integral para el rechazo de perturbaciones en la posición del carro.
+  * **Control Híbrido Conmutado:** Transición suave y segura en tiempo real entre el algoritmo de swing-up y el control de estabilización en la vecindad del punto de equilibrio inestable.
+* **Identificación Experimental:** Ensayos específicos para la caracterización de la zona muerta del actuador, la relación par-voltaje mediante controladores PI de velocidad, y la identificación del rozamiento del péndulo por decremento logarítmico.
+* **Gemelo Digital en ROS 2:** Nodo de telemetría en Python que parsea los datos en tiempo real del microcontrolador y publica el estado del sistema en un modelo virtual `URDF` visualizable en `RViz`.
+
+---
+
+## 📂 Estructura del Repositorio
+
+El proyecto está organizado de manera modular para separar las fases de análisis, simulación, despliegue y documentación:
+
+```text
+├── analisis_ensayos/          # Scripts de MATLAB para procesar datos experimentales reales
+│   ├── controladores_Kx_cartpole/     # Comparativa de transitorios con diferentes matrices Q y R
+│   ├── control_Kx_integrador_cartpole/# Ensayos del controlador con acción integral
+│   ├── conversion_par_voltaje/        # Caracterización del motor y puente en H
+│   ├── ident_BC_carro/                # Identificación de la dinámica del carro
+│   ├── rozamiento_pendulo/            # Ensayos de oscilación libre para modelar la fricción
+│   └── zona_muerta_frec_PWM/          # Análisis del comportamiento del motor según la freq del PWM
+│
+├── firmware_C2000/            # Código fuente (Code Composer Studio)
+│   ├── experimentos/                  # Controladores específicos probados de forma aislada (código .c)
+│   └── f280049c_ws/                   # Workspace de CCS con los drivers y periféricos configurados
+│
+├── simulacion/                # Entornos virtuales previos al despliegue físico
+│   ├── simulaciones_codigo/           # Scripts .m de control híbrido, swing-up y LQR
+│   └── simulink/                      # Modelos .slx y pasarela de comunicación con ROS
+│
+├── ros2_ws/                   # Workspace de ROS 2 para la monitorización en tiempo real
+│   └── src/cartpole_digital_twin/
+│       ├── launch/                    # Launch files para telemetría y gemelo digital
+│       ├── rviz/                      # Configuración del entorno visual de RViz
+│       ├── urdf/                      # Modelo geométrico y físico del Péndulo-Carro
+│       └── cartpole_digital_twin/     # Nodo Python para lectura del puerto serie e hilos de ejecución
+│
+└── docs/                      # Memoria técnica del TFG, planos y vídeos demostrativos
