@@ -36,6 +36,20 @@ Desacoplo de la capa de control crítico de la capa de visualización 3D en `RVi
 * **Modo Sistema Real:** Monitorización del prototipo físico mediante el nodo `serial_node.py` en Python, encargado de monitorizar eficientemente de las tramas provenientes del periférico `SCI`.
 
 ---
+## Requisitos del Sistema
+
+Para compilar, simular y desplegar el proyecto, es necesario contar con el siguiente entorno de hardware y software:
+
+| Categoría | Componente / Herramienta | Versión Recomendada | Notas Adicionales |
+| :--- | :--- | :--- | :--- |
+| **Hardware** | <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/Texas_Instruments_logo.svg/512px-Texas_Instruments_logo.svg.png" width="18" align="center"/> TI LAUNCHXL-F280049C | Rev. A o superior | Placa de desarrollo principal. |
+| **Hardware** | Módulo Puente en H | - | Compatible con señales PWM de 3.3V. |
+| **Software** | <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/ubuntu/ubuntu-original.svg" width="18" align="center"/> Ubuntu Linux | 22.04 LTS (Jammy) | Requerido para la compatibilidad con ROS 2. |
+| **Software** | <img src="https://upload.wikimedia.org/wikipedia/commons/b/bb/Ros_logo.svg" width="18" align="center"/> ROS 2 | Humble | Para el Gemelo Digital y telemetría. |
+| **Software** | <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/matlab/matlab-original.svg" width="18" align="center"/> MATLAB & Simulink | R2024b o superior | Incluyendo *ROS Toolbox* y *Control System Toolbox*. |
+| **Software** | <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/c/c-original.svg" width="18" align="center"/> Code Composer Studio | 20.x o superior | IDE para la programación, compilación y flasheo del firmware en C. |
+
+---
 
 ## Caracterización e Identificación Experimental
 
@@ -46,7 +60,7 @@ Con el objetivo de obtener las constantes físicas precisas para el modelo diná
 | **Actuador y Puente en H** | Análisis estático variando frecuencias de ciclo de trabajo en el rango de `200 Hz` a `10 kHz`. | **Zona Muerta ($ZM$)** | Determinar el umbral mínimo de tensión necesario para vencer la fricción estática del motor para cada frecuencia. |
 | **Planta Motriz** | Control de posición del eje del motor aplicando el concepto de palanca con pesos calibrados. | **Relación Par-Voltaje ($K_m$)** | Caracterizar la ganancia electromecánica del motor y modelar la conversión par-tensión. |
 | **Dinámica del Carro** | Control de posición tipo P. | **Masa  ($M$) y Fricción ($c_x$)** | Estimar la masa del carro y su coeficiente de rozamiento viscoso. |
-| **Eje del Péndulo** | Ensayos de oscilación libre desde condiciones iniciales no nulas | **Amortiguamiento ($c_{\theta})$)** | Aislar el coeficiente de fricción viscosa del eje rotatorio mediante **decremento logarítmico**. |
+| **Eje del Péndulo** | Ensayos de oscilación libre desde condiciones iniciales no nulas | **Amortiguamiento ($c_p)$)** | Aislar el coeficiente de fricción viscosa del eje rotatorio mediante **decremento logarítmico**. |
 
 --- 
 ## Estructura del Repositorio
