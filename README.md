@@ -46,7 +46,7 @@ Con el objetivo de obtener las constantes físicas precisas para el modelo diná
 | **Actuador y Puente en H** | Análisis estático variando frecuencias de ciclo de trabajo en el rango de `200 Hz` a `10 kHz`. | **Zona Muerta ($ZM$)** | Determinar el umbral mínimo de tensión necesario para vencer la fricción estática del motor para cada frecuencia. |
 | **Planta Motriz** | Control de posición del eje del motor aplicando el concepto de palanca con pesos calibrados. | **Relación Par-Voltaje ($K_m$)** | Caracterizar la ganancia electromecánica del motor y modelar la conversión par-tensión. |
 | **Dinámica del Carro** | Control de posición tipo P. | **Masa  ($M$) y Fricción ($c_x$)** | Estimar la masa del carro y su coeficiente de rozamiento viscoso. |
-| **Eje del Péndulo** | Ensayos de oscilación libre desde condiciones iniciales no nulas | **Amortiguamiento ($c_\thetas$)** | Aislar el coeficiente de fricción viscosa del eje rotatorio mediante **decremento logarítmico**. |
+| **Eje del Péndulo** | Ensayos de oscilación libre desde condiciones iniciales no nulas | **Amortiguamiento ($c_{\theta})$)** | Aislar el coeficiente de fricción viscosa del eje rotatorio mediante **decremento logarítmico**. |
 
 --- 
 ## Estructura del Repositorio
