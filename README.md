@@ -22,6 +22,7 @@ El proyecto aborda de forma integral el modelado matemático, la identificación
 - [Requisitos del Sistema](#requisitos-del-sistema)
 - [Caracterización e Identificación Experimental](#caracterización-e-identificación-experimental)
 - [Estructura del Repositorio](#estructura-del-repositorio)
+- [Instrucciones de Uso y Ejecución](#instrucciones-de-uso-y-ejecución)
 - [Autor y Agradecimientos](#autor-y-agradecimientos)
 ---
 
