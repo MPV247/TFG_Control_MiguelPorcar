@@ -66,6 +66,7 @@
 \usepackage{tabularx}
 \usepackage{pgfgantt}
 \usepackage{cancel}
+\usepackage[official]{eurosym}
 
 \tcbuselibrary{listings, skins}
 
@@ -486,9 +487,102 @@ Se ha elaborado el diagrama de Gantt de la Figura~\ref{fig:diagrama_gantt}. Como
 \end{figure}
 \FloatBarrier
 
-\section{Estimación de costes}
-% Aquí incluyes el coste del ingeniero (25€/h x 300h), 
-% el coste proporcional del equipo Feedback y el software MATLAB.
+\paragraph{Coste en recursos humanos}
+El desarrollo del proyecto ha sido llevado a cabo por un único ingeniero de software y control en calidad de Ingeniero Junior. Tomando de referencia el portal \textit{Indeed} \cite{sueldo_junior}, el sueldo de un programador junior es de 10,48~\euro/h; para las 300~h del proyecto, esto supone un coste de 3\,144~\euro. 
+
+Asimismo, se consideran las horas de consultoría y supervisión por parte del tutor del proyecto (Ingeniero Industrial / Profesor Universitario), estimadas en un total de 25~horas con un coste de 18,31~\euro/h según el portal de empleo \textit{Indeed} \cite{sueldo_senior}. 
+
+Finalmente, se incluyen también las 5~horas empleadas por el técnico de laboratorio para el mantenimiento y la reparación de la unidad mecánica. El coste estimado según el portal \textit{Indeed} \cite{sueldo_tecnico} es de 12,77~\euro/h. En el Cuadro~\ref{tab:coste_rrhh} se detalla el desglose de los recursos humanos.
+
+\begin{table}[!htbp]
+	\centering
+	\caption{Desglose de costes en recursos humanos.}
+	\label{tab:coste_rrhh}
+	\begin{tabular}{lccc}
+		\hline
+		\textbf{Rol} & \textbf{Dedicación (h)} & \textbf{Precio/Hora (\euro/h)} & \textbf{Subtotal (\euro)} \\ \hline
+		Estudiante & 300 & 10.48 & 3\,144.00 \\
+		Tutor     & 25  & 18.31 & 457.75 \\ 
+		Técnico   & 5   & 12.77 & 63.85 \\ \hline
+		\textbf{Total RR.HH} & & & \textbf{3\,665.60} \\ \hline
+	\end{tabular}
+\end{table}
+
+\paragraph{Material}
+Para la cuantificación del coste material, se incluye tanto el valor de los bienes de equipo preexistentes como los costes directos asociados a la renovación y puesta a punto del banco de pruebas. Se diferencia explícitamente entre el valor de mercado original del equipamiento principal y el coste de adquisición de los nuevos componentes y repuestos. En el Cuadro~\ref{tab:coste_material} se detalla el desglose individualizado de cada uno de los elementos utilizados:
+
+\begin{table}[!htbp]
+	\centering
+	\caption{Desglose de costes de material, activos preexistentes y componentes de renovación.}
+	\label{tab:coste_material}
+	\small
+	\begin{tabularx}{\textwidth}{@{} X l r r @{}}
+		\toprule
+		\textbf{Elemento / Componente} & \textbf{Tipo de Activo} & \textbf{Valor Base (\euro)} & \textbf{Coste Imputado (\euro)} \\ 
+		\midrule
+		\textit{Digital Pendulum 33-005} & Preexistente (Amortizado) & 6\,000.00 & 0.00 \\
+		Ordenador portátil               & Preexistente (Amortizado) & 700.00    & 0.00 \\
+		Tarjeta de desarrollo (LaunchPad) & Adquisición (Renovación)   & 43.60     & 43.60 \\
+		Driver (Puente H)                & Adquisición (Renovación)   & 15.75     & 15.75 \\
+		Correa dentada de recambio       & Adquisición (Renovación)   & 117.98    & 117.98 \\
+		Disco óptico de repuesto         & Adquisición (Renovación)   & 22.89     & 22.89 \\
+		Fuente de alimentación Jesiva    & Adquisición (Renovación)   & 45.00     & 45.00 \\ 
+		\midrule
+		\textbf{Total Material}          &                            & \textbf{6\,945.22} & \textbf{245.22} \\ 
+		\bottomrule
+	\end{tabularx}
+\end{table}
+\FloatBarrier
+
+Como se puede extraer del balance del Cuadro~\ref{tab:coste_material}, los activos clasificados como \textit{Preexistentes} representan una inversión previa; por tanto, su coste imputado es nulo dado que la unidad mecánica tiene más de 25 años y el ordenador ya superó su vida útil. Por el contrario, los elementos clasificados como \textit{Adquisición} constituyen el gasto directo de renovación del banco de pruebas, donde el valor base coincide plenamente con el coste imputado al tratarse de bienes de consumo íntegro para el proyecto.
+
+\newpage
+\paragraph{Software}
+La política de desarrollo del proyecto ha priorizado el uso de herramientas de código abierto (\textit{Open-Source}). Tanto el sistema operativo (Ubuntu Linux) como el middleware de robótica (ROS) y el entorno de programación de Texas Instruments (Code Composer Studio) disponen de licencias gratuitas.
+
+No obstante, se ha empleado el entorno MATLAB de \textit{MathWorks} para las simulaciones y el análisis matemático. Al tratarse de un proyecto académico, se añade el coste proporcional de una licencia de estudiante, cuyo coste anual es de $106\,\text{\euro}$ ($85\,\text{\euro}$ licencia + $21\,\text{\euro}$ \textit{ROS Toolbox}). En la Cuadro~\ref{tab:coste_software} se recoge este concepto.
+
+\begin{table}[!htbp]
+	\centering
+	\caption{Desglose de costes de licencias de software y herramientas de desarrollo.}
+	\label{tab:coste_software}
+	\small % Mantiene la misma escala tipográfica y elegancia que la tabla de materiales
+	\begin{tabularx}{\textwidth}{@{} X l l r @{}}
+		\toprule
+		\textbf{Software / Herramienta} & \textbf{Tipo de Licencia} & \textbf{Periodo} & \textbf{Coste (\euro)} \\ 
+		\midrule
+		Ubuntu 22.04 LTS                & Open-Source / Gratuita    & 4 meses          & 0.00 \\
+		Robot Operating System (ROS)    & Open-Source / Gratuita    & 4 meses          & 0.00 \\
+		Code Composer Studio (CCS)      & Gratuita (Soporte TI)     & 4 meses          & 0.00 \\
+		MATLAB                          & Académica Individual      & 4 meses          & 35.33 \\ 
+		\midrule
+		\textbf{Total Software}         &                           &                  & \textbf{35.33} \\ 
+		\bottomrule
+	\end{tabularx}
+\end{table}
+\FloatBarrier
+
+\paragraph{Coste total}
+Finalmente, el Cuadro~\ref{tab:coste_total} muestra el coste total que supone el desarrollo del proyecto. Se observa como el grueso del presupuesto se destina a los recursos humanos mientras que el coste de hardware y software es residual en comparación. Por otro lado, también destaca el ahorro que supone la reparación de la unidad mecánica existente ($3\,946.15$\euro) en lugar de comprar una nueva ($6\,000.00$\euro). 
+
+\begin{table}[!htbp]
+	\centering
+	\caption{Consolidación del presupuesto general del proyecto (Balance total).}
+	\label{tab:coste_total}
+	\small % Mantiene la armonía de escala con las tablas de material y software
+	\begin{tabularx}{\textwidth}{@{} X r r @{}}
+		\toprule
+		\textbf{Partida Presupuestaria / Concepto} & \textbf{Coste Imputado (\euro)} & \textbf{Porcentaje del Total (\%)} \\ 
+		\midrule
+		Costes de Recursos Humanos (RR.HH.)        & 3\,665.60                       & 92.89 \%                           \\
+		Costes de Material (Hardware)              & 245.22                          & 6.21 \%                            \\
+		Costes de Licencias de Software            & 35.33                           & 0.90 \%                            \\ 
+		\midrule
+		\textbf{Coste Total del Proyecto}          & \textbf{3\,946.15}              & \textbf{100.00 \%}                 \\ 
+		\bottomrule
+	\end{tabularx}
+\end{table}
+\FloatBarrier 
 
 \chapter{Análisis}
 \label{cap:analisis}
