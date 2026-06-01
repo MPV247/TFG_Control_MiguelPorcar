@@ -16,6 +16,17 @@ El proyecto aborda de forma integral el modelado matemático, la identificación
 </p>
 
 ---
+## Tabla de Contenidos
+
+- [Características Clave del Sistema](#características-clave-del-sistema)
+  - [Firmware](#firmware)
+  - [Estrategias de Control Avanzado](#estrategias-de-control-avanzado)
+  - [Gemelo Digital (ROS 2 Humble)](#gemelo-digital-ros-2-humble)
+- [Requisitos del Sistema](#requisitos-del-sistema)
+- [Caracterización e Identificación Experimental](#caracterización-e-identificación-experimental)
+- [Estructura del Repositorio](#estructura-del-repositorio)
+- [Autor y Agradecimientos](#autor-y-agradecimientos)
+---
 
 ## Características Clave del Sistema
 
@@ -60,7 +71,7 @@ Con el objetivo de obtener las constantes físicas precisas para el modelo diná
 | **Actuador y Puente en H** | Análisis estático variando frecuencias de ciclo de trabajo en el rango de `200 Hz` a `10 kHz`. | **Zona Muerta ($ZM$)** | Determinar el umbral mínimo de tensión necesario para vencer la fricción estática del motor para cada frecuencia. |
 | **Planta Motriz** | Control de posición del eje del motor aplicando el concepto de palanca con pesos calibrados. | **Relación Par-Voltaje ($K_m$)** | Caracterizar la ganancia electromecánica del motor y modelar la conversión par-tensión. |
 | **Dinámica del Carro** | Control de posición tipo P. | **Masa  ($M$) y Fricción ($c_x$)** | Estimar la masa del carro y su coeficiente de rozamiento viscoso. |
-| **Eje del Péndulo** | Ensayos de oscilación libre desde condiciones iniciales no nulas | **Amortiguamiento ($c_p)$)** | Aislar el coeficiente de fricción viscosa del eje rotatorio mediante **decremento logarítmico**. |
+| **Eje del Péndulo** | Ensayos de oscilación libre desde condiciones iniciales no nulas | **Amortiguamiento ($c_p$))** | Aislar el coeficiente de fricción viscosa del eje rotatorio mediante **decremento logarítmico**. |
 
 --- 
 ## Estructura del Repositorio
@@ -92,3 +103,12 @@ TFG_Control_MiguelPorcar/
 │       └── cartpole_digital_twin/     # Nodos e hilos en Python de lectura serie
 │
 + docs/                              # Memoria técnica del TFG, planos y vídeos demostrativos
+``` 
+---
+
+## Autor y Agradecimientos
+* **Autor:** Miguel Porcar Vicent.
+* **Universidad:** Universitat Juame I.
+* **Tutor:** Ignacio Peñarrocha Alós.
+
+Este proyecto ha sido realizado como Trabajo de Final de Grado. Agradecimientos al _Departamento de Ingeniería de Sistemas Industriales y Diseño_ por facilitar los conocimeintos y las herramientas necesarias para el correcto desarrollo. 
