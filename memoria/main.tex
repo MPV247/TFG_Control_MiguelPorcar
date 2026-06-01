@@ -2618,7 +2618,27 @@ Aquí hacer una tabla comparativa entre los objetivos propuestos y los resultado
 
 \chapter{Conclusiones y posible trabajo futuro}
 
-Trabajo a futuro --> Implementación en HAL, uso de algoritmos no basados en modelo (Reinformemnt Learning)
+\section{Conclusiones}
+El desarrollo de este Trabajo de Final de Grado ha permitido cumplir con éxito la totalidad de los objetivos generales y específicos propuestos al inicio del proyecto, culminando con la puesta en marcha, caracterización y estabilización en tiempo real de una plataforma de péndulo invertido subactuada mediante la arquitectura C2000. 
+
+A nivel técnico, el logro más significativo ha sido el rescate y la modernización completa de un equipo educativo clásico (el \textit{Digital Pendulum 33-005} de Feedback Instruments Ltd.) que se encontraba en un estado de obsolescencia tecnológica total tras más de veinticinco años en los laboratorios. Al sustituir la antigua electrónica propietaria y cerrada —ligada a sistemas operativos y versiones de software descatalogadas— por un microcontrolador de altas prestaciones moderno como el TMS320F280049C, se ha transformado el sistema en una plataforma de código abierto plenamente funcional. Esta intervención dota a la universidad de un banco de pruebas flexible y transparente para la docencia y la investigación en el control de bajo nivel.
+
+El enfoque metodológico adoptado a través del Diseño Basado en Modelos (MBD) ha demostrado una gran eficacia. La obtención del modelo matemático mediante la formulación de Euler-Lagrange y la posterior identificación experimental de los parámetros físicos reales en el laboratorio (tales como las masas de los componentes, las ganancias de voltaje-fuerza y los coeficientes de fricción) permitieron construir una simulación numérica de alta fidelidad en MATLAB/Simulink. La precisión de este modelado se constató empíricamente en la fase de validación sobre la planta física: las ganancias del controlador por realimentación del estado sintetizadas mediante optimización LQR en el entorno virtual fueron capaces de estabilizar el péndulo inestable de forma directa, sin necesidad de recurrir a reajustes empíricos por prueba y error.
+
+Por otra parte, la transición al hardware real puso de manifiesto los desafíos inherentes a las plataformas físicas que quedan fuera del alcance de los modelos teóricos ideales. Fenómenos no lineales como la zona muerta del actuador o la elasticidad de la correa de transmisión generaban inicialmente un error estacionario en la posición horizontal del carro. La resolución de esta discrepancia mediante la adición de una acción integral integrada en el espacio de estados demostró la robustez del algoritmo, logrando anular por completo el error residual y garantizando un posicionamiento exacto sobre el raíl. Asimismo, la correcta implementación del control de energía para la maniobra de \textit{swing-up} y el ajuste de la lógica de conmutación automatizaron el ciclo completo de operación, elevando el péndulo desde el reposo hasta su vertical inestable de forma autónoma.
+
+En conclusión, este proyecto representa una aportación de valor para el Departamento de Ingeniería de Sistemas Industriales y Diseño de la Universitat Jaume I. Como culminación de la labor iniciada durante la Beca de Colaboración, se entrega una infraestructura didáctica completamente operativa que permitirá a futuros estudiantes de robótica comprender y experimentar con las restricciones críticas de determinismo temporal, gestión de interrupciones periódicas e instrumentación que definen a la capa reactiva real.
+
+\section{Posible trabajo futuro}
+La arquitectura abierta y el firmware desarrollados en este proyecto sientan una base sólida sobre la cual se pueden plantear diferentes líneas de desarrollo para continuar expandiendo las capacidades de la plataforma en el futuro:
+
+\begin{itemize}
+	\item \textbf{Uso de algoritmos de control no basados en modelo (Reinforcement Learning):} Dado que el sistema físico cuenta con una infraestructura de adquisición de datos y telemetría en tiempo real ya consolidada, una línea de gran interés científico sería el despliegue de técnicas de Aprendizaje por Refuerzo (\textit{Reinforcement Learning}). Esto permitiría contrastar de forma empírica la robustez, la eficiencia y los tiempos de convergencia de las políticas de control aprendidas por agentes autónomos frente a las estrategias clásicas basadas en el modelo dinámico y el control de energía implementadas en este trabajo.
+	
+	\item \textbf{Desarrollo de una plataforma de simulación Hardware-in-the-Loop (HIL):} Con el fin de aislar y evaluar el comportamiento del firmware de control de manera exhaustiva, se plantea la creación de un entorno HIL. Esto consistiría en conectar el microcontrolador C2000 real a una FPGA u otro microcontrolador encargado de ejecutar el comportamiento de la planta en tiempo real. Esta configuración permitiría validar el determinismo temporal de las tareas críticas y probar de forma segura la respuesta del controlador ante escenarios límite, fallos simulados en los sensores o perturbaciones extremas, eliminando por completo el riesgo de daños estructurales en la plataforma mecánica original.
+	
+	\item \textbf{Ampliación de la integración con ROS y gemelos digitales:} Se plantea explotar el protocolo de comunicación serie desarrollado para transferir un volumen de telemetría más denso y veloz hacia sistemas de nivel superior bajo el ecosistema ROS. Esto posibilitaría la monitorización remota a través de entornos gráficos tridimensionales avanzados o la sincronización del péndulo real con modelos predictivos en paralelo como gemelos digitales.
+\end{itemize}
 
 
 %---------------
