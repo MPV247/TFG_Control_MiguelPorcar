@@ -86,7 +86,7 @@ TFG_Control_MiguelPorcar/
 │   └── zona_muerta_frec_PWM/          # Comportamiento del motor según la frecuencia de PWM
 │
 + firmware_C2000/                    # Código fuente embebido (Code Composer Studio)
-│   ├── experimentos/                  # Módulos lógicos y archivos de control .c individuales
+│   ├── experimentos/                  # Controles y experimentos listos para copiar y pegar en control.c
 │   └── f280049c_ws/                   # Workspace de CCS con drivers HAL y periféricos
 │
 + simulacion/                        # Entornos virtuales previos al despliegue físico
@@ -122,8 +122,8 @@ source install/setup.bash
 ros2 launch cartpole_digital_twin matlab_to_ros.launch.py
 ```
 
-* Abrir MATLAB y ejecutar el script principal de inicialización de variables.
-* Abrir el modelo de Simulink en la carpeta simulacion/simulink/ y ejecutar la simulación. El Gemelo Digital en RViz reflejará el movimiento virtual en tiempo real.
+* Abrir MATLAB y ejecutar el script principal de inicialización de variables (`parametros_planta.m`).
+* Abrir el modelo de Simulink en la carpeta `simulacion/simulink/` y ejecutar la simulación. El Gemelo Digital en RViz reflejará el movimiento virtual en tiempo real.
 
 ### 3. Despliegue en el Sistema Físico (TMS32F280049C)
 * Importar el proyecto firmware_C2000/f280049c_ws en Code Composer Studio.
