@@ -7,7 +7,7 @@
 
 Este repositorio contiene el ecosistema completo de software, firmware y herramientas de análisis desarrolladas para mi Trabajo de Final de Grado (TFG) en el **Grado en Inteligencia Robótica** de la **Universitat Jaume I (UJI)**.
 
-El proyecto aborda de forma integral el modelado matemático, la identificación paramétrica experimental, la simulación híbrida, el control en tiempo real estricto y la telemetría 3D de un **sistema subactuado de péndulo invertido sobre carro (Cart-Pole)** utilizando la plataforma de control en tiempo real **TI C2000**.
+El proyecto aborda de forma integral el modelado matemático, la identificación experimental, la simulación, el control en tiempo real y la telemetría 3D de un **sistema subactuado de péndulo invertido sobre carro (Cart-Pole)** utilizando la plataforma de control en tiempo real **TI C2000**.
 
 <p align="center">
   <img src="memoria/Pictures/modelo_3D.png" width="550" alt="Modelo 3D del Sistema Cart-Pole Péndulo Invertido">
@@ -21,17 +21,17 @@ El proyecto aborda de forma integral el modelado matemático, la identificación
 
 ### Firmware
 Implementación nativa en **C** sobre el microcontrolador de control en tiempo real `TMS320F280049C`. Configuración a bajo nivel de periféricos críticos para garantizar determinismo estricto:
-* `ePWM`: Modulación por ancho de pulsos para el control dinámico del motor de continua.
+* `ePWM`: Modulación por ancho de pulsos para el control del motor de continua.
 * `eQEP`: Decodificación por hardware de encoders en cuadratura para la lectura posicional.
 * `SCI`: Interfaz de comunicación serie asíncrona dedicada a la transmisión de telemetría de alta velocidad.
 
 ### Estrategias de Control Avanzado
-* **Algoritmo de Swing-Up:** Ley de control no lineal basada en funciones de energía y linealización parcial por realimentación (*Partial Feedback Linearization - PFL*) para elevar el péndulo desde su posición de reposo.
-* **Control de Estabilización:** Regulación robusta mediante realimentación del estado ($Kx$) diseñada a través de un regulador óptimo lineal cuadrático (**LQR**), incluyendo extensiones con acción integral para el rechazo de perturbaciones estáticas en el carro.
-* **Control Híbrido Conmutado:** Autómata de control que gestiona la transición suave, determinista y segura en tiempo real entre el lazo de balanceo y el lazo de estabilización dentro de la región de atracción del punto de equilibrio inestable.
+* **Algoritmo de Swing-Up:** Ley de control no lineal basada en energía y linealización parcial por realimentación (*Partial Feedback Linearization - PFL*) para elevar el péndulo desde su posición de reposo.
+* **Control de Estabilización:** Regulación robusta mediante realimentación del estado ($Kx$) diseñada a través de un regulador óptimo lineal cuadrático (**LQR**), incluyendo extensiones con acción integral.
+* **Control Híbrido Conmutado:** Autómata de control que gestiona la transición entre el lazo de balanceo y el lazo de estabilización dentro de la región de atracción del punto de equilibrio inestable.
 
 ### Gemelo Digital (ROS 2 Humble)
-Desacoplamiento de la capa de control crítico de la capa de visualización 3D en `RViz` mediante un modelo geométrico `URDF`, operando bajo una arquitectura dual:
+Desacoplo de la capa de control crítico de la capa de visualización 3D en `RViz` mediante un modelo geométrico `URDF`, operando bajo una arquitectura dual:
 * **Modo Simulación:** Co-simulación directa con **MATLAB/Simulink** a través de *ROS Toolbox* para la validación previa de los algoritmos en entornos virtuales.
 * **Modo Sistema Real:** Monitorización del prototipo físico mediante el nodo `serial_node.py` en Python, encargado de monitorizar eficientemente de las tramas provenientes del periférico `SCI`.
 
@@ -43,10 +43,10 @@ Con el objetivo de obtener las constantes físicas precisas para el modelo diná
 
 | Módulo del Sistema | Método Experimental | Variable Identificada | Propósito en el Modelo |
 | :--- | :--- | :--- | :--- |
-| **Actuador y Puente en H** | Análisis estático variando frecuencias de ciclo de trabajo en el rango de `200 Hz` a `10 kHz`. | **Zona Muerta ($V_{dead}$)** | Determinar el umbral mínimo de tensión necesario para vencer la fricción estática del motor. |
-| **Planta Motriz** | Ensayos dinámicos en bucle cerrado mediante controladores de velocidad de tipo P y PI. | **Relación Par-Voltaje ($K_t$)** | Caracterizar la ganancia electromecánica del motor y modelar la conversión par-tensión. |
-| **Dinámica del Carro** | Excitación controlada en bucle cerrado aplicando una ley de control proporcional de posición. | **Masa efectiva ($M$) y Fricción ($B_c$)** | Estimar la inercia lineal del carro y modelar sus coeficientes de rozamiento hardware. |
-| **Eje del Péndulo** | Ensayos de oscilación libre desde condiciones iniciales no nulas procesados en MATLAB. | **Amortiguamiento ($B_p$)** | Aislar el coeficiente de fricción viscosa del eje rotatorio mediante **decremento logarítmico**. |
+| **Actuador y Puente en H** | Análisis estático variando frecuencias de ciclo de trabajo en el rango de `200 Hz` a `10 kHz`. | **Zona Muerta ($ZM$)** | Determinar el umbral mínimo de tensión necesario para vencer la fricción estática del motor para cada frecuencia. |
+| **Planta Motriz** | Control de posición del eje del motor aplicando el concepto de palanca con pesos calibrados. | **Relación Par-Voltaje ($K_m$)** | Caracterizar la ganancia electromecánica del motor y modelar la conversión par-tensión. |
+| **Dinámica del Carro** | Control de posición tipo P. | **Masa  ($M$) y Fricción ($c_x$)** | Estimar la masa del carro y su coeficiente de rozamiento viscoso. |
+| **Eje del Péndulo** | Ensayos de oscilación libre desde condiciones iniciales no nulas | **Amortiguamiento ($c_\thetas$)** | Aislar el coeficiente de fricción viscosa del eje rotatorio mediante **decremento logarítmico**. |
 
 --- 
 ## Estructura del Repositorio
