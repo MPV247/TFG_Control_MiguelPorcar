@@ -19,9 +19,6 @@ El proyecto aborda de forma integral el modelado matemático, la identificación
 ## Tabla de Contenidos
 
 - [Características Clave del Sistema](#características-clave-del-sistema)
-  - [Firmware](#firmware)
-  - [Estrategias de Control Avanzado](#estrategias-de-control-avanzado)
-  - [Gemelo Digital (ROS 2 Humble)](#gemelo-digital-ros-2-humble)
 - [Requisitos del Sistema](#requisitos-del-sistema)
 - [Caracterización e Identificación Experimental](#caracterización-e-identificación-experimental)
 - [Estructura del Repositorio](#estructura-del-repositorio)
