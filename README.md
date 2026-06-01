@@ -42,12 +42,12 @@ Para compilar, simular y desplegar el proyecto, es necesario contar con el sigui
 
 | Categoría | Componente / Herramienta | Versión Recomendada | Notas Adicionales |
 | :--- | :--- | :--- | :--- |
-| **Hardware** | <img src="https://www.ti.com/content/dam/ticom/images/products/ic/microcontrollers/performance/evm-board/launchxl-f280049c-angled.png" width="26" align="center"/> TI LAUNCHXL-F280049C | - | Placa de desarrollo principal. |
-| **Hardware** | <img src="https://www.geekfactory.mx/wp-content/uploads/l298n-modulo-puente-h-doble-control-de-motor-700x700.webp" width="26" align="center"/> Módulo Puente en H | - | Compatible con señales PWM de 3.3V. |
-| **Software** | <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/ubuntu/ubuntu-original.svg" width="26" align="center"/> Ubuntu Linux | 22.04 LTS (Jammy) | Requerido para la compatibilidad con ROS 2. |
-| **Software** | <img src="https://upload.wikimedia.org/wikipedia/commons/b/bb/Ros_logo.svg" width="26" align="center"/> ROS 2 | Humble | Para el Gemelo Digital y telemetría. |
-| **Software** | <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/matlab/matlab-original.svg" width="26" align="center"/> MATLAB & Simulink | R2024b o superior | Incluyendo *ROS Toolbox* y *Control System Toolbox*. |
-| **Software** | <img src="https://images.g2crowd.com/uploads/product/image/0c7c3fc7a19fbe7d808e6a7218b041c6/code-composer-studio.jpg" width="26" align="center"/> Code Composer Studio | 20.x o superior | IDE para la programación, compilación y flasheo del firmware en C. |
+| **Hardware** | <img src="https://www.ti.com/content/dam/ticom/images/products/ic/microcontrollers/performance/evm-board/launchxl-f280049c-angled.png" width="48" align="center"/> TI LAUNCHXL-F280049C | - | Placa de desarrollo principal. |
+| **Hardware** | <img src="https://www.geekfactory.mx/wp-content/uploads/l298n-modulo-puente-h-doble-control-de-motor-700x700.webp" width="24" align="center"/> Módulo Puente en H | - | Compatible con señales PWM de 3.3V. |
+| **Software** | <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/ubuntu/ubuntu-original.svg" width="20" align="center"/> Ubuntu Linux | 22.04 LTS (Jammy) | Requerido para la compatibilidad con ROS 2. |
+| **Software** | <img src="https://upload.wikimedia.org/wikipedia/commons/b/bb/Ros_logo.svg" width="42" align="center"/> ROS 2 | Humble | Para el Gemelo Digital y telemetría. |
+| **Software** | <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/matlab/matlab-original.svg" width="24" align="center"/> MATLAB & Simulink | R2024b o superior | Incluyendo *ROS Toolbox* y *Control System Toolbox*. |
+| **Software** | <img src="https://images.g2crowd.com/uploads/product/image/0c7c3fc7a19fbe7d808e6a7218b041c6/code-composer-studio.jpg" width="24" align="center"/> Code Composer Studio | 20.x o superior | IDE para la programación, compilación y flasheo del firmware en C. |
 
 ---
 
