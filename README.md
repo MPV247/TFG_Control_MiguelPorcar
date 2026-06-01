@@ -102,7 +102,38 @@ TFG_Control_MiguelPorcar/
 + docs/                              # Memoria técnica del TFG, planos y vídeos demostrativos
 ``` 
 ---
+## Instrucciones de Uso y Ejecución
 
+Debido a la naturaleza híbrida del proyecto, la ejecución se divide en la simulación virtual y el despliegue físico.
+### 1. Clonar el repositorio
+```bash
+git clone [https://github.com/TU_USUARIO/TFG_Control_MiguelPorcar.git](https://github.com/TU_USUARIO/TFG_Control_MiguelPorcar.git)
+cd TFG_Control_MiguelPorcar
+```
+
+### 2. Simulación (MATLAB/Simulink y ROS 2)
+
+    * Construir el workspace de ROS 2:
+    ```bash
+    cd ros2_ws
+    colcon build
+    source install/setup.bash
+    ros2 launch cartpole_digital_twin matlab_to_ros.launch.py
+    ``
+    * Abrir MATLAB y ejecutar el script principal de inicialización de variables.
+    * Abrir el modelo de Simulink en la carpeta simulacion/simulink/ y ejecutar la simulación. El Gemelo Digital en RViz reflejará el movimiento virtual en tiempo real.
+
+### 3. Despliegue en el Sistema Físico (TMS32F280049C)
+
+    * Importar el proyecto firmware_C2000/f280049c_ws en Code Composer Studio.
+    * Compilar y flashear el firmware en la tarjeta TI LAUNCHXL-F280049C.
+    * Para monitorizar la telemetría real, lanzar el nodo de lectura serie en ROS 2:
+    ```bash
+    cd ros2_ws
+    source install/setup.bash
+    ros2 launch cartpole_digital_twin real_system_telemetry.launch.py
+    ``
+---
 ## Autor y Agradecimientos
 * **Autor:** Miguel Porcar Vicent.
 * **Universidad:** Universitat Juame I.
