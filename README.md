@@ -42,12 +42,12 @@ Para compilar, simular y desplegar el proyecto, es necesario contar con el sigui
 
 | Categoría | Componente / Herramienta | Versión Recomendada | Notas Adicionales |
 | :--- | :--- | :--- | :--- |
-| **Hardware** | <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/Texas_Instruments_logo.svg/512px-Texas_Instruments_logo.svg.png" width="18" align="center"/> TI LAUNCHXL-F280049C | Rev. A o superior | Placa de desarrollo principal. |
-| **Hardware** | Módulo Puente en H | - | Compatible con señales PWM de 3.3V. |
-| **Software** | <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/ubuntu/ubuntu-original.svg" width="18" align="center"/> Ubuntu Linux | 22.04 LTS (Jammy) | Requerido para la compatibilidad con ROS 2. |
-| **Software** | <img src="https://upload.wikimedia.org/wikipedia/commons/b/bb/Ros_logo.svg" width="18" align="center"/> ROS 2 | Humble | Para el Gemelo Digital y telemetría. |
-| **Software** | <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/matlab/matlab-original.svg" width="18" align="center"/> MATLAB & Simulink | R2024b o superior | Incluyendo *ROS Toolbox* y *Control System Toolbox*. |
-| **Software** | <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/c/c-original.svg" width="18" align="center"/> Code Composer Studio | 20.x o superior | IDE para la programación, compilación y flasheo del firmware en C. |
+| **Hardware** | <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/IC_chip_icon.svg/512px-IC_chip_icon.svg.png" width="26" align="center"/> TI LAUNCHXL-F280049C | Rev. A o superior | Placa de desarrollo principal. |
+| **Hardware** | <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/H_bridge.svg/512px-H_bridge.svg.png" width="26" align="center"/> Módulo Puente en H | - | Compatible con señales PWM de 3.3V. |
+| **Software** | <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/ubuntu/ubuntu-original.svg" width="26" align="center"/> Ubuntu Linux | 22.04 LTS (Jammy) | Requerido para la compatibilidad con ROS 2. |
+| **Software** | <img src="https://upload.wikimedia.org/wikipedia/commons/b/bb/Ros_logo.svg" width="26" align="center"/> ROS 2 | Humble | Para el Gemelo Digital y telemetría. |
+| **Software** | <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/matlab/matlab-original.svg" width="26" align="center"/> MATLAB & Simulink | R2024b o superior | Incluyendo *ROS Toolbox* y *Control System Toolbox*. |
+| **Software** | <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/c/c-original.svg" width="26" align="center"/> Code Composer Studio | 20.x o superior | IDE para la programación, compilación y flasheo del firmware en C. |
 
 ---
 
