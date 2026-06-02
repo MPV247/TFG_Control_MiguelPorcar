@@ -47,7 +47,7 @@
 long pulsos1, pulsos2;
 float x, x_ant, x_dot, theta, theta_ant, theta_dot, Ie;            //Variables de estado
 
-float u, u_zm, ref_theta, E_ref, E_m;                              //Variables de control
+float u, u_zm, ref_x, ref_theta, E_ref, E_m;                              //Variables de control
 int16_t u_dig; 
 
 char txBuffer[100];                                                //Variables envio puerto serie
@@ -123,8 +123,9 @@ void condiciones_iniciales(void)
     u_zm = 0.0f;                          // (V)
     u_dig = 0;                            // Unidades digitales (u dig)
 
-    //Referencia y error de medida:                           
-    ref_theta = 0.0f;                      // Referencia angulo del pendulo
+    //Referencia y error de medida:
+    ref_x = 0.0f;                          //Referencia en el eje X
+    ref_theta = M_PI;                      //Referencia posición péndulo                     
     Ie = 0.0f;                             //Error integral
     E_ref = m * g * Lcm;                   //Energía de referencia
     E_m = 0.0f;                            //Energía mecánica del sistema 
@@ -187,33 +188,34 @@ void mide_encoder(void)
 void calcula_accion_control(void)
 {
     float e1 = ref_x - x;
-    float e2 =  ref_theta - theta; 
-    e2 = atan2f(sinf(e2), cosf(e2));    //Normalizar error
+    float e2 = ref_theta - theta; 
     float e3 = 0.0f - x_dot;
     float e4 = 0.0f - theta_dot;
-    Ie = Ie + T_sec * (ref_x - x);
- 
-    if (fabs(e2) < 0.2){ //Kx
+    
+    // --- UMBRAL DE CONMUTACIÓN ---
+    e2 = atan2f(sinf(e2), cosf(e2));    // Normalizar error a [-pi, pi]
+    // Bandera para saber en qué región de control estamos
+    bool region_lineal = (fabs(e2) < 0.2f);
 
-        // Ley de control por realimentacion del estado: u = K * e
+    if (region_lineal) { // Control Kx (Realimentación de estado)
+
+        // 1. Integrar el error SOLO si estamos en el control estabilizador
+        Ie = Ie + T_sec * e1;
+        
+        // 2. Ley de control
         u = K1 * e1 + K2 * e2 + K3 * e3 + K4 * e4 + KI * Ie;
-        //Ciclo límite (evitar desgaste excesivo del actuador)
-        if (fabs(e1) < 0.001 && fabs(e2) < 0.003){
-            u = 0; 
+        
+        // 3. Ciclo límite (evitar desgaste del actuador)
+        if (fabs(e1) < 0.001f && fabs(e2) < 0.003f) {
+            u = 0.0f; 
         }
-        //Saturación y anti-windup aquí: 
-        if (u < -UMAX){
-            u = -UMAX; 
-            Ie = Ie - T_sec * (ref_x - x);
-        }
-        else if (u > UMAX) {
-            u = UMAX; 
-            Ie = Ie - T_sec * (ref_x - x);
-        }
-    }
-    else{ //SWP + PFL
 
-        // 1. Energía mecánica instantánea (Kin + Pot)
+    } else { // Control SWP + PFL (Swing-up)
+
+        // 1. Evitar acumulación en Ie: asegurar valor 0 cuando se conmuta
+        Ie = 0.0f; 
+
+        // 2. Energía mecánica 
         E_m = 0.5f * J * theta_dot * theta_dot - m * g * Lcm * cosf(theta);
         
         // 2. Ley de bombeo de energía (Aceleración virtual deseada del carro)
@@ -225,14 +227,20 @@ void calcula_accion_control(void)
         // 4. PFL - Cálculo de la Fuerza física "u" (N) para desacoplar no linealidades
         u = (M + m) * x_ddot_r + m * Lcm * cosf(theta) * theta_ddot - m * Lcm * sinf(theta) * (theta_dot * theta_dot) + Cx * x_dot;
 
-        u = u / 0.64f; //Conversión a voltios
-        
-        // 5. Saturación del actuador
-        if (u < -UMAX) {
-            u = -UMAX; 
+        u = u / 0.64f * 0.0f; //Conversión a voltios
+    }
+
+    // --- BLOQUE DE SATURACIÓN ---
+    if (u < -UMAX) {
+        u = -UMAX; 
+        if (region_lineal) { // Anti-windup solo para control lineal
+            Ie = Ie - T_sec * e1;
         }
-        else if (u > UMAX) {
-            u = UMAX; 
+    }
+    else if (u > UMAX) {
+        u = UMAX; 
+        if (region_lineal) {
+            Ie = Ie - T_sec * e1;
         }
     }
 }
