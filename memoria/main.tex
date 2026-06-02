@@ -268,14 +268,59 @@ Finalmente, quiero dar las gracias a mis padres por su apoyo incondicional y pac
 \pagestyle{fancy} % Print headers again
 
 \chapter{Introducción}
+\label{ch:introduccion}
 
-El objeto de este proyecto es el estudio y control de un péndulo invertido sobre un carro móvil. Aunque a primera vista pueda parecer un sistema mecánico simple, en el ámbito de la \textbf{Robótica} este dispositivo constituye uno de los problemas fundamentales de control y equilibrio dinámico. 
+El objeto de este proyecto es el estudio, modernización y control en tiempo real de un péndulo invertido sobre carro. Aunque a primera vista pueda parecer un sistema mecánico simple, en el ámbito de la robótica este dispositivo constituye uno de los problemas fundamentales. Al tratarse de un \textbf{sistema no lineal}, \textbf{inestable} y \textbf{subactuado} —se dispone de menos actuadores que grados de libertad—, el péndulo invertido representa el banco de pruebas ideal para validar algoritmos de control que posteriormente se despliegan en sistemas robóticos complejos.
 
-La relevancia de este sistema reside en su transferencia directa a tecnologías críticas de la robótica moderna. El reto de mantener una barra inestable en equilibrio vertical es, en esencia, el mismo principio físico que permite a un \textbf{robot humanoide} caminar sin desplomarse, a un cohete mantenerse estable durante el despegue o a vehículos de transporte personal (como los \textit{Segways}) desplazarse de forma autónoma. Controlar este sistema implica dominar la capacidad de un robot para reaccionar ante la gravedad y las perturbaciones externas en milisegundos.
+\section{Estado del arte: El péndulo invertido como pilar en robótica}
+La relevancia del péndulo invertido no reside únicamente en su interés académico, sino en su transferencia directa hacia la robótica. Lejos de ser un problema aislado, las ecuaciones dinámicas que gobiernan este sistema y las estrategias diseñadas para su estabilización constituyen la base teórica de tres grandes familias de robots: 
+\begin{itemize}[]
+	\item \textbf{Robots humanoides.}
+	\item \textbf{Vehículos móviles tipo \textit{Segway}.}
+	\item \textbf{Exoesqueletos de rehabilitación médica.}
+\end{itemize}
 
-En ingeniería, este reto se utiliza para evaluar la eficacia de un sistema de control. El objetivo es que un microcontrolador (cerebro) interprete la inclinación de la barra mediante sensores (ojos) y actúe sobre un motor (músculos) con una velocidad y precisión tales que desafíen la inestabilidad natural del sistema. 
+\paragraph{Locomoción bípeda y estabilidad en robótica humanoide}
+El reto de mantener una barra inestable en equilibrio vertical mediante el movimiento horizontal de su base es, en esencia, el mismo principio físico que permite a un robot humanoide mantenerse en pie o caminar. La complejidad dimensional de un robot bípedo se simplifica mediante el uso de modelos de orden reducido. El más extendido es el modelo de péndulo invertido lineal o \textit{Linear Inverted Pendulum Model} (LIPM) \cite{stephens2008}. 
 
-Finalmente, en el marco de la robótica, este proyecto se sitúa en la denominada \textbf{capa reactiva}. Mientras que gran parte de la robótica actual se enfoca en procesos cognitivos de alto nivel —como la navegación mediante SLAM—, este sistema aborda el control a bajo nivel, equiparable a los \textbf{reflejos motores} de un ser vivo. No se trata de "pensar" una trayectoria a largo plazo, sino de reaccionar en milisegundos para corregir desviaciones imperceptibles. Esta capacidad de respuesta inmediata es la que garantiza que el robot sea capaz de interactuar con el mundo físico de forma segura, sirviendo de base fundamental sobre la que se construyen las capas de inteligencia superior. 
+\newpage
+El comportamiento del centro de masas (CoM) de un humanoide puede modelarse aproximando las piernas del robot como la barra libre de un péndulo y la masa del torso como el extremo superior \cite{stephens2008}. 
+\begin{figure}[ht]
+	\centering
+	% Usamos [t] para alinear las subfiguras por su parte superior
+	\begin{subfigure}[t]{0.48\textwidth}
+		\centering
+		% Fijamos una altura común (p.ej. 4.5cm o la que mejor se adapte a tus gráficos)
+		\includegraphics[height=4.5cm, width=\textwidth, keepaspectratio]{Pictures/regiones_apoyo} 
+		\caption{Configuraciones del apoyo al caminar}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[t]{0.48\textwidth}
+		\centering
+		% Usamos la misma altura exacta y protegemos la relación de aspecto
+		\includegraphics[height=4.5cm, width=\textwidth, keepaspectratio]{Pictures/LIMP} 
+		\caption{Modelado LIPM en robot humanoide}
+	\end{subfigure}
+	\caption{Relación entre el péndulo invertido y la locomoción bípeda \cite{stephens2008}}
+	\label{fig:LIPM}
+\end{figure}
+
+Este enfoque no se limita a simulaciones teóricas; en el desarrollo del robot humanoide \textit{Atlas} de Boston Dynamics, los algoritmos de planificación de pisadas y control de cuerpo completo se apoyan en optimizaciones dinámicas que tratan al robot como un sistema subactuado y con dinámica de péndulo \cite{kuandersma2014}. Controlar con éxito el carro y la barra en el laboratorio implica, conocer la complejidad de la dinámica así como las técnicas de control para conseguir equilibrar robots humanoides.
+
+\paragraph{Robótica móvil}
+Otra aplicación directa del sistema estudiado se encuentra en los robots móviles de auto-balanceados, cuyo ejemplo comercial más conocido es el \textit{Segway}. Estos sistemas alteran la configuración física del péndulo sobre carro: en lugar de un raíl lineal, el eje de rotación del péndulo se sitúa directamente sobre el eje de dos ruedas motorizadas independientes.
+
+El trabajo pionero de Grasser et al. \cite{grasser2002} con el robot \textit{JOE} demostró que un vehículo de dos ruedas coaxiales puede realizar giros sobre su propio eje y desplazarse de manera ágil si se modela explícitamente como un problema de espacio de estados de péndulo invertido móvil. El control en bajo nivel debe interpretar constantemente la inclinación del chasis para accionar los motores de las ruedas en la dirección de la caída inminente, transformando la inestabilidad natural en una ventaja que dota al robot de una maniobrabilidad excepcional en entornos interiores concurridos.
+
+\paragraph{Sistemas de asistencia y exoesqueletos de rehabilitación}
+En los últimos años, la intersección entre el control óptimo y la robótica biomédica ha cobrado un impulso significativo, especialmente en el desarrollo de órtesis activas y exoesqueletos para las piernas. Estas estructuras mecánicas acopladas al cuerpo humano requieren de una sincronización perfecta y segura para asistir la marcha de pacientes con afecciones motoras \cite{mashud2024}.
+
+En este escenario, el diseño de controladores avanzados capaces de optimizar el esfuerzo del actuador protegiendo la integridad del usuario es un requisito crítico. Técnicas de control óptimo como el Regulador Lineal Cuadrático (LQR) y el Control Predictivo Basado en Modelo (MPC) son ampliamente utilizadas en exoesqueletos para calcular los pares de asistencia necesarios en la cadera y la rodilla durante el ciclo de marcha \cite{mashud2024}. Dado que la dinámica de la pierna humana durante la marcha comparte la naturaleza pendular inestable, la experimentación con algoritmos LQR sobre plantas físicas de laboratorio ofrece una transferencia directa de conocimiento hacia el ajuste de interfaces humano-robot seguras.
+
+\subsection{La capa reactiva}
+En el marco conceptual de la robótica y el control, las aplicaciones robóticas descritas anteriormente exigen una arquitectura de cómputo dividida en niveles jerárquicos. Mientras que las capas superiores se centran en procesos cognitivos de alto nivel con una tolerancia temporal flexible —como la planificación de rutas globales o la percepción mediante visión computacional—, la estabilidad física del robot depende enteramente de la denominada \textbf{capa reactiva} o de control a bajo nivel.
+
+Esta capa actúa como los reflejos motores de un ser vivo: no computa estrategias a largo plazo, sino que ejecuta bucles de control en el orden de los milisegundos para corregir pequeñas desviaciones antes de que causen un fallo catastrófico (la caída del robot). Para garantizar este comportamiento determinista, es imprescindible contar con un hardware diseñado específicamente para el control en tiempo real. 
 
 \newpage
 \section{Punto de partida}
