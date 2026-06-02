@@ -272,7 +272,7 @@ Finalmente, quiero dar las gracias a mis padres por su apoyo incondicional y pac
 
 El objeto de este proyecto es el estudio, modernización y control en tiempo real de un péndulo invertido sobre carro. Aunque a primera vista pueda parecer un sistema mecánico simple, en el ámbito de la robótica este dispositivo constituye uno de los problemas fundamentales. Al tratarse de un \textbf{sistema no lineal}, \textbf{inestable} y \textbf{subactuado} —se dispone de menos actuadores que grados de libertad—, el péndulo invertido representa el banco de pruebas ideal para validar algoritmos de control que posteriormente se despliegan en sistemas robóticos complejos.
 
-\section{Estado del arte: El péndulo invertido como pilar en robótica}
+\section{Estado del arte}
 La relevancia del péndulo invertido no reside únicamente en su interés académico, sino en su transferencia directa hacia la robótica. Lejos de ser un problema aislado, las ecuaciones dinámicas que gobiernan este sistema y las estrategias diseñadas para su estabilización constituyen la base teórica de tres grandes familias de robots: 
 \begin{itemize}[]
 	\item \textbf{Robots humanoides.}
@@ -280,11 +280,12 @@ La relevancia del péndulo invertido no reside únicamente en su interés acadé
 	\item \textbf{Exoesqueletos de rehabilitación médica.}
 \end{itemize}
 
+A continuación se examina el impacto y la adaptación del péndulo invertido en cada una de estas tres vertientes tecnológicas. Por otro lado, se concluye con el análisis de la arquitectura híbrida, la cual establece la organización jerárquica indispensable para coordinar el control de alto y bajo nivel en un sistema robótico.
+\newpage
 \paragraph{Locomoción bípeda y estabilidad en robótica humanoide}
 El reto de mantener una barra inestable en equilibrio vertical mediante el movimiento horizontal de su base es, en esencia, el mismo principio físico que permite a un robot humanoide mantenerse en pie o caminar. La complejidad dimensional de un robot bípedo se simplifica mediante el uso de modelos de orden reducido. El más extendido es el modelo de péndulo invertido lineal o \textit{Linear Inverted Pendulum Model} (LIPM) \cite{stephens2008}. 
 
-\newpage
-El comportamiento del centro de masas (CoM) de un humanoide puede modelarse aproximando las piernas del robot como la barra libre de un péndulo y la masa del torso como el extremo superior \cite{stephens2008}. 
+El comportamiento del centro de masas de un robot bípedo puede modelarse aproximando las piernas del robot como la barra libre de un péndulo y la masa del torso como el extremo superior \cite{stephens2008}. 
 \begin{figure}[ht]
 	\centering
 	% Usamos [t] para alinear las subfiguras por su parte superior
@@ -305,23 +306,73 @@ El comportamiento del centro de masas (CoM) de un humanoide puede modelarse apro
 	\label{fig:LIPM}
 \end{figure}
 
-Este enfoque no se limita a simulaciones teóricas; en el desarrollo del robot humanoide \textit{Atlas} de Boston Dynamics, los algoritmos de planificación de pisadas y control de cuerpo completo se apoyan en optimizaciones dinámicas que tratan al robot como un sistema subactuado y con dinámica de péndulo \cite{kuandersma2014}. Controlar con éxito el carro y la barra en el laboratorio implica, conocer la complejidad de la dinámica así como las técnicas de control para conseguir equilibrar robots humanoides.
+Este enfoque no se limita a simulaciones teóricas; en el desarrollo del robot humanoide \textit{Atlas} de Boston Dynamics, los algoritmos de planificación de pisadas y control de cuerpo completo se apoyan en optimizaciones dinámicas que tratan al robot como un sistema subactuado y con dinámica de péndulo \cite{kuandersma2014}. 
+\begin{figure}[ht]
+	\centering
+	\begin{subfigure}{0.48\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{Pictures/atlas_sim} % Foto de la electrónica vieja
+		\caption{Planificación de pisadas en simulación}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{0.48\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{Pictures/atlas_real} % Foto de la suciedad en el raíl
+		\caption{Planificación de pisadas sobre el robot \textit{Atlas}}
+	\end{subfigure}
+	\caption{Robot \textit{Atlas} de \textit{Boston Dynamics} \cite{kuandersma2014}}
+	\label{fig:atlas_robot}
+\end{figure}
+
+Controlar con éxito el carro y la barra en el laboratorio implica, conocer la complejidad de la dinámica así como las técnicas de control para posteriormente dar el paso a mecanismos más complejos como los robots humanoides.
 
 \paragraph{Robótica móvil}
-Otra aplicación directa del sistema estudiado se encuentra en los robots móviles de auto-balanceados, cuyo ejemplo comercial más conocido es el \textit{Segway}. Estos sistemas alteran la configuración física del péndulo sobre carro: en lugar de un raíl lineal, el eje de rotación del péndulo se sitúa directamente sobre el eje de dos ruedas motorizadas independientes.
+Otra aplicación directa del sistema estudiado se encuentra en los robots móviles de auto-balanceados, cuyo ejemplo más conocido es el \textit{Segway}. Estos sistemas alteran la configuración física del péndulo sobre carro: en lugar de un raíl lineal, el eje de rotación del péndulo se sitúa directamente sobre el eje de dos ruedas motorizadas independientes.
 
-El trabajo pionero de Grasser et al. \cite{grasser2002} con el robot \textit{JOE} demostró que un vehículo de dos ruedas coaxiales puede realizar giros sobre su propio eje y desplazarse de manera ágil si se modela explícitamente como un problema de espacio de estados de péndulo invertido móvil. El control en bajo nivel debe interpretar constantemente la inclinación del chasis para accionar los motores de las ruedas en la dirección de la caída inminente, transformando la inestabilidad natural en una ventaja que dota al robot de una maniobrabilidad excepcional en entornos interiores concurridos.
+Un vehículo de dos ruedas coaxiales puede realizar giros sobre su propio eje y desplazarse de manera ágil si se modela explícitamente como un problema de espacio de estados de péndulo invertido móvil \cite{grasser2002}. 
+\begin{figure}[ht]
+	\centering
+	% Usamos [b] para que ambas imágenes se apoyen sobre la misma línea base (suelo)
+	\begin{subfigure}[b]{0.48\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{Pictures/joe_normal} 
+		\caption{Robot móvil tipo \textit{Segway}}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[b]{0.48\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{Pictures/joe_fuerzas} 
+		\caption{Ejes de rotación \textit{Roll Pitch Yaw} y variables de control}
+	\end{subfigure}
+	\caption{Robot móvil de auto-balanceo y descomposición del problema de control \cite{grasser2002}}
+	\label{fig:joe_robot}
+\end{figure}
+
+El control debe interpretar constantemente la inclinación del chasis para accionar los motores de las ruedas en la dirección de la caída, transformando la inestabilidad natural en una ventaja que dota al robot de la capacidad de maniobrar con facilidad en entornos concurridos.
 
 \paragraph{Sistemas de asistencia y exoesqueletos de rehabilitación}
-En los últimos años, la intersección entre el control óptimo y la robótica biomédica ha cobrado un impulso significativo, especialmente en el desarrollo de órtesis activas y exoesqueletos para las piernas. Estas estructuras mecánicas acopladas al cuerpo humano requieren de una sincronización perfecta y segura para asistir la marcha de pacientes con afecciones motoras \cite{mashud2024}.
+En los últimos años, la intersección entre el control óptimo y la robótica biomédica ha cobrado un impulso significativo, especialmente en el desarrollo exoesqueletos para las piernas. Estas estructuras mecánicas acopladas al cuerpo humano requieren de una sincronización perfecta y segura para asistir la marcha de pacientes con afecciones motoras \cite{mashud2024}.
 
-En este escenario, el diseño de controladores avanzados capaces de optimizar el esfuerzo del actuador protegiendo la integridad del usuario es un requisito crítico. Técnicas de control óptimo como el Regulador Lineal Cuadrático (LQR) y el Control Predictivo Basado en Modelo (MPC) son ampliamente utilizadas en exoesqueletos para calcular los pares de asistencia necesarios en la cadera y la rodilla durante el ciclo de marcha \cite{mashud2024}. Dado que la dinámica de la pierna humana durante la marcha comparte la naturaleza pendular inestable, la experimentación con algoritmos LQR sobre plantas físicas de laboratorio ofrece una transferencia directa de conocimiento hacia el ajuste de interfaces humano-robot seguras.
+En este escenario, el diseño de controladores avanzados capaces de optimizar el esfuerzo del actuador protegiendo la integridad del usuario es un requisito crítico. Técnicas de control óptimo como el Regulador Lineal Cuadrático (LQR) y el Control Predictivo Basado en Modelo (MPC) son ampliamente utilizadas en exoesqueletos para calcular los pares de asistencia necesarios en la cadera y la rodilla durante el ciclo de marcha \cite{mashud2024}. Dado que la dinámica de la pierna humana durante la marcha comparte la naturaleza pendular inestable, la experimentación con algoritmos LQR sobre plantas físicas de laboratorio ofrece una transferencia directa de conocimiento.
 
-\subsection{La capa reactiva}
-En el marco conceptual de la robótica y el control, las aplicaciones robóticas descritas anteriormente exigen una arquitectura de cómputo dividida en niveles jerárquicos. Mientras que las capas superiores se centran en procesos cognitivos de alto nivel con una tolerancia temporal flexible —como la planificación de rutas globales o la percepción mediante visión computacional—, la estabilidad física del robot depende enteramente de la denominada \textbf{capa reactiva} o de control a bajo nivel.
+\paragraph{Arquitectura híbrida y niveles jerárquicos}
+En el marco conceptual de la robótica y el control, las aplicaciones dinámicas exigen una organización estructurada en niveles jerárquicos. De acuerdo con \cite{gavilan_agentes}, este diseño responde formalmente al paradigma de las \textbf{arquitecturas híbridas}, las cuales logran mitigar las limitaciones de los enfoques puros mediante una estrategia de descomposición de tareas:
+\begin{itemize}[]
+	\item \textbf{Capa deliberativa:} Se rige por el ciclo clásico \textit{sense-plan-act} (percibir-planificar-actuar) para gestionar procesos cognitivos complejos (Ejemplo: planificación de rutas globales) con una \textbf{tolerancia temporal flexible}. 
+	
+	\item \textbf{Capa reactiva:} La estabilidad física y estructural del robot recae de forma exclusiva sobre este nivel jerárquico. El \textbf{control en tiempo real} es una condición estrictamente necesaria en este contexto y prescinde de bases de conocimiento explícitas o de costosos algoritmos de búsqueda, acoplando de forma directa las percepciones de los sensores con las acciones de los actuadores bajo un modelo estricto de \textbf{estímulo-respuesta}. 
+\end{itemize}
+\begin{figure}[ht]
+	\centering
+	\resizebox{\textwidth}{!}{%
+		\input{Pictures/figuras/paradigma_hibrido.tex}
+	}
+	\caption{Esquema con el concepto de \textit{Arquitectura Híbrida}}
+	\label{fig:paradigma_hibrido}
+\end{figure}
 
-Esta capa actúa como los reflejos motores de un ser vivo: no computa estrategias a largo plazo, sino que ejecuta bucles de control en el orden de los milisegundos para corregir pequeñas desviaciones antes de que causen un fallo catastrófico (la caída del robot). Para garantizar este comportamiento determinista, es imprescindible contar con un hardware diseñado específicamente para el control en tiempo real. 
-
+Esta segmentación presenta un paralelismo neurológico y cognitivo con el funcionamiento de los seres vivos \cite{gavilan_agentes}. Así, mientras la capa deliberativa emula los procesos de razonamiento y decisión conscientes, la capa reactiva actúa de manera homóloga a los reflejos motores. 
+Para explotar las ventajas de velocidad, robustez y tolerancia a perturbaciones propias de la aproximación reactiva, resulta imprescindible delegar en un hardware, diseñado específicamente para operar bajo \textbf{restricciones de tiempo real}.
 \newpage
 \section{Punto de partida}
 El trabajo se realiza sobre un equipo educativo clásico: el \textbf{Digital Pendulum 33-005} de la marca \textit{Feedback Instruments Ltd}. Este sistema se divide en dos partes: el controlador 33-201 (la caja con la electrónica) y la unidad mecánica 33-200 (el raíl con el carro y la barra).
