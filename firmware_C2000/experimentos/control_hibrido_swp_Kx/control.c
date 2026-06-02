@@ -89,11 +89,11 @@
 #define K3 -82.96f               // Ganancia para velocidad (x_dot)
 #define K4 51.87f               // Ganancia para velocidad angular (theta_dot) 
 #define KI -54.77f              // Ganancia para el error integral en la posicion (x)
-
-// Parámetros Físicos del Proceso (Cart-Pole)
 #define Ke 30.0f               // Ganancia del bombeo de energía del Swing-Up
 #define Kp 16.0f               // Ganancia proporcional para el control del carro
 #define Kd 4.16f               // Ganancia derivativa para el control del carro
+
+// Parámetros Físicos del Proceso (Cart-Pole)
 #define J 0.0139f              // Momento de inercia del péndulo (Kg·m²)
 #define M 1.08f                // Masa del carro (Kg)
 #define m 0.12f                // Masa del péndulo (Kg)
