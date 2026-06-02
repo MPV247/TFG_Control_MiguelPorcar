@@ -1,44 +1,64 @@
 //#############################################################################
-//
-// FILE:        control.c
-//
-// TITLE:       TFG - Control por Realimentación del Estado con Integrador
-//              para Péndulo Invertido sobre Carro Lineal.
-//
-// AUTHOR:      Miguel Porcar
-// DATE:        Mayo 2026
-// TARGET:      TI C2000 (TMS320F28004x)
-//
 // DESCRIPCIÓN:
-// Éste módulo ejecuta un algoritmo de control por realimentación del vector de
-// estados extendido mediante un integrador para estabilizar el péndulo invertido 
-// en su punto de equilibrio inestable (theta = pi) y regular la posición 
-// horizontal del carro (x). Funciona a una frecuencia de 100 Hz (T = 10 ms).
+//
+// Este módulo implementa un algoritmo de CONTROL HÍBRIDO CONMUTADO para un
+// sistema de péndulo invertido sobre un carro (Cart-Pole). 
+//
+// Atendiendo a un umbral estricto en el error angular del péndulo, el sistema
+// conmuta automáticamente entre dos regímenes de operación:
+//   1. Modo No Lineal: Control de energía (Swing-Up) para elevar el péndulo.
+//   2. Modo Lineal: Realimentación de estados para estabilizarlo en la vertical.
+//
 //
 // ARQUITECTURA DEL SISTEMA DE CONTROL:
-// 1. Vector de Estados Extendido: El estado de la planta se define como 
-//    x_vec = [x, theta, x_dot, theta_dot]^T. Se añade un estado
-//    auxiliar integrador Ie = integral(ref_x - x) dt para eliminar por completo
-//    el error en estado estacionario de la posición del carro ante fricciones.
-// 2. Ley de Control Implementada: 
+//
+//
+// --- MODALIDAD A: CONTROL NO LINEAL (Swing-Up + PFL Colocada) ---
+// Fuera del umbral de captura, el sistema busca ganar energía:
+//
+// 1. Control de Energía: Modula la aceleración virtual del carro (x_ddot_r) 
+//    basándose en el error entre la energía mecánica instantánea (E_m) 
+//    y la energía de la vertical inestable de referencia (E_ref = m * g * Lcm).
+//
+// 2. Desacoplamiento No Lineal (PFL): Cancela de forma exacta las dinámicas 
+//    secundarias de la planta (gravedad, fuerzas centrífugas de Coriolis y 
+//    fricciones) inyectando la fuerza física "u" calculada al motor.
+//
+// --- MODALIDAD B: CONTROL LINEAL (Realimentación de Estados Extendido) ---
+// Dentro del umbral de captura, el sistema se comporta como un regulador local:
+//
+// 1. Vector de Estados Extendido: Se define mediante los estados nativos
+//    x_vec = [x, theta, x_dot, theta_dot]^T más un estado auxiliar integrador:
+//    Ie = integral(ref_x - x) dt, cuyo fin es eliminar por completo el error 
+//    en estado estacionario del carro provocado por la fricción estática/viscosa.
+//
+// 2. Ley de Control Implementada:
 //    u = K1*(ref_x - x) + K2*(ref_theta - theta) + K3*(0 - x_dot) + K4*(0 - theta_dot) + KI*Ie
-// 3. Envoltura Trigonométrica (Acondicionamiento de Ángulo): Se utiliza la función 
-//    `atan2f(sinf(e), cosf(e))` para normalizar el error angular en el intervalo 
-//    [-pi, pi]. Esto evita discontinuidades catastróficas en el cálculo de la 
-//    acción de control cuando el péndulo oscila cerca de la vertical superior.
-// 4. Anti-Windup Condicional: Cuando la acción de control intermedio u supera la 
-//    saturación física impuesta por seguridad (UMAX = 4.68V), el acumulador del 
-//    integrador Ie se congela de manera estricta para prevenir la saturación 
-//    del lazo y sobreoscilaciones incontrolables.
+//
+//
+// ACONDICIONAMIENTO DE SEÑALES Y SEGURIDAD:
+//
+//
+// 1. Envoltura Trigonométrica (Acondicionamiento de Ángulo):
+//    Se utiliza la función `atan2f(sinf(e), cosf(e))` para normalizar el error 
+//    angular en el intervalo simétrico [-pi, pi]. Esto evita discontinuidades 
+//    catastróficas (saltos de 2*pi) en la acción de control cuando el péndulo 
+//    cruza velozmente la vertical superior.
+//
+// 2. Anti-Windup Condicional:
+//    Cuando la acción de control calculada supera la saturación física de 
+//    seguridad (UMAX = 4.68V), el acumulador integral Ie se congela de manera 
+//    estricta. Esto previene la saturación del lazo y evita sobreoscilaciones 
+//    incontrolables al salir de la saturación.
+//
 //
 // SECUENCIA EXPERIMENTAL DE REFERENCIAS (Perfil de Ensayos):
-// - 0 a 10s: Período de calma / Calibración (Motor apagado, u=0). El péndulo debe llevarse manualmente a la vertical.
-// - 10 a 20s: Estabilización inicial en el origen (ref_x = 0.0 m, ref_theta = pi rad).
-// - 20 a 25s: Escalón positivo de posición horizontal (ref_x = 0.15 m).
-// - 25 a 30s: Retorno al origen horizontal (ref_x = 0.0 m).
-// - > 30s: Escalón negativo de posición horizontal (ref_x = -0.15 m).
+//
+// - 0 a 10s:   Calibración / Calma (Motor deshabilitado, u = 0V).
+// - > 10s:     Activación del Swing-Up.
 //
 // TELEMETRÍA (Salida Serial CSV):
+//
 // [ x(m), ref_x(m), theta(rad), ref_theta(rad), x_dot(m/s), theta_dot(rad/s), u(V) ]
 //
 //#############################################################################
@@ -54,7 +74,7 @@
 
 //
 // Defines
-// -115.7189  260.3190  -82.9727   51.8767  -54.7723
+// 
 #define ENCODER1_CPR 6597       //Relacion pulsos-riel
 #define ENCODER2_CPR 2000       //Relacion pulsos-pendulo
 #define T 10000                 //Periodo de ISR (10000 mcs = 10 ms)
@@ -69,7 +89,18 @@
 #define K3 -82.96f               // Ganancia para velocidad (x_dot)
 #define K4 51.87f               // Ganancia para velocidad angular (theta_dot) 
 #define KI -54.77f              // Ganancia para el error integral en la posicion (x)
-#define CUENTAS_10S 1000        //Contador para esperar 10 s hasta aplicar el control
+#define Ke 30.0f               // Ganancia del bombeo de energía del Swing-Up
+#define Kp 16.0f               // Ganancia proporcional para el control del carro
+#define Kd 4.16f               // Ganancia derivativa para el control del carro
+
+// Parámetros Físicos del Proceso (Cart-Pole)
+#define J 0.0139f              // Momento de inercia del péndulo (Kg·m²)
+#define M 1.08f                // Masa del carro (Kg)
+#define m 0.12f                // Masa del péndulo (Kg)
+#define Cx 4.08f               // Coeficiente de fricción viscosa del carro (N·s/m)
+#define Cth 0.0002f            // Coeficiente de fricción viscosa del péndulo (N·m·s/rad)
+#define Lcm 0.305f             // Distancia al centro de masas del péndulo (m)
+#define g 9.81f                // Aceleración de la gravedad (m/s^2)
 
 //
 // Globals
@@ -77,7 +108,7 @@
 long pulsos1, pulsos2;
 float x, x_ant, x_dot, theta, theta_ant, theta_dot, Ie;            //Variables de estado
 
-float u, u_zm, ref_theta, ref_x;                                   //Variables de control
+float u, u_zm, ref_x, ref_theta, E_ref, E_m;                              //Variables de control
 int16_t u_dig; 
 
 char txBuffer[100];                                                //Variables envio puerto serie
@@ -153,10 +184,12 @@ void condiciones_iniciales(void)
     u_zm = 0.0f;                          // (V)
     u_dig = 0;                            // Unidades digitales (u dig)
 
-    //Referencia y error de medida:                           
-    ref_theta = 0.0f;                      // Referencia angulo del pendulo
-    ref_x = 0.0f; 
+    //Referencia y error de medida:
+    ref_x = 0.0f;                          //Referencia en el eje X
+    ref_theta = M_PI;                      //Referencia posición péndulo                     
     Ie = 0.0f;                             //Error integral
+    E_ref = m * g * Lcm;                   //Energía de referencia
+    E_m = 0.0f;                            //Energía mecánica del sistema 
 }
 
 //Envio datos
@@ -216,29 +249,60 @@ void mide_encoder(void)
 void calcula_accion_control(void)
 {
     float e1 = ref_x - x;
-    float e2 =  ref_theta - theta; 
-    e2 = atan2f(sinf(e2), cosf(e2));    //Normalizar error
+    float e2 = ref_theta - theta; 
     float e3 = 0.0f - x_dot;
     float e4 = 0.0f - theta_dot;
-    Ie = Ie + T_sec * (ref_x - x);
- 
-    // Ley de control por realimentacion del estado: u = K * e
-    u = K1 * e1 + K2 * e2 + K3 * e3 + K4 * e4 + KI * Ie;
     
-    //Ciclo límite (evitar desgaste excesivo del actuador)
-    if (fabs(e1) < 0.001 && fabs(e2) < 0.003){
-        u = 0;
+    // --- UMBRAL DE CONMUTACIÓN ---
+    e2 = atan2f(sinf(e2), cosf(e2));    // Normalizar error a [-pi, pi]
+    // Bandera para saber en qué región de control estamos
+    bool region_lineal = (fabs(e2) < 0.15f);
+
+    if (region_lineal) { // Control Kx (Realimentación de estado)
+
+        // 1. Integrar el error SOLO si estamos en el control estabilizador
+        Ie = Ie + T_sec * e1;
         
+        // 2. Ley de control
+        u = K1 * e1 + K2 * e2 + K3 * e3 + K4 * e4 + KI * Ie;
+        
+        // 3. Ciclo límite (evitar desgaste del actuador)
+        if (fabs(e1) < 0.001f && fabs(e2) < 0.003f) {
+            u = 0.0f; 
+        }
+
+    } else { // Control SWP + PFL (Swing-up)
+
+        // 1. Evitar acumulación en Ie: asegurar valor 0 cuando se conmuta
+        Ie = 0.0f; 
+
+        // 2. Energía mecánica 
+        E_m = 0.5f * J * theta_dot * theta_dot - m * g * Lcm * cosf(theta);
+        
+        // 2. Ley de bombeo de energía (Aceleración virtual deseada del carro)
+        float x_ddot_r = Ke * theta_dot * cosf(theta) * (E_m - E_ref) - Kp * x - Kd * x_dot;
+
+        // 3. PFL - Aceleración angular inducida en el péndulo (lambda)
+        float theta_ddot = (1.0f / J) * (-m * g * Lcm * sinf(theta) - m * Lcm * cosf(theta) * x_ddot_r - Cth * theta_dot);
+
+        // 4. PFL - Cálculo de la Fuerza física "u" (N) para desacoplar no linealidades
+        u = (M + m) * x_ddot_r + m * Lcm * cosf(theta) * theta_ddot - m * Lcm * sinf(theta) * (theta_dot * theta_dot) + Cx * x_dot;
+
+        u = u / 0.64f * 0.0f; //Conversión a voltios
     }
 
-    //Saturación y anti-windup aquí: 
-    if (u < -UMAX){
+    // --- BLOQUE DE SATURACIÓN ---
+    if (u < -UMAX) {
         u = -UMAX; 
-        Ie = Ie - T_sec * (ref_x - x);
+        if (region_lineal) { // Anti-windup solo para control lineal
+            Ie = Ie - T_sec * e1;
+        }
     }
     else if (u > UMAX) {
         u = UMAX; 
-        Ie = Ie - T_sec * (ref_x - x);
+        if (region_lineal) {
+            Ie = Ie - T_sec * e1;
+        }
     }
 }
 
@@ -288,31 +352,19 @@ void aplica_u(float u)
 __interrupt void control(void)
 {
     CpuTimer0.InterruptCount++; 
-    mide_encoder();
-    timer_ref++;
-    if (timer_ref < CUENTAS_10S)
+   timer_ref++; // Incremento del contador temporal hardware
+
+    if (timer_ref < 1000) 
     {
-        u = 0.0f; //Primeros 10 s sin control.
+        // 0 a 10 segundos: Ventana de calma para calibración manual. Motor desconectado.
+        mide_encoder();
+        u = 0.0f;
+        aplica_u(0.0f);
     }
-    else{
-        ref_theta = M_PI;
-        if (timer_ref < 2*CUENTAS_10S)
-        {
-            ref_x = 0.0f; 
-        }
-        else if (timer_ref < 2.5*CUENTAS_10S)
-        {
-            ref_x = 0.15f; 
-        }
-        else if (timer_ref < 3*CUENTAS_10S)
-        {
-            ref_x = 0.0f; 
-        }
-        else
-        {
-            ref_x = -0.15f; 
-        }
+    else 
+    {
         // --- BUCLE DE CONTROL ---
+        mide_encoder();
         calcula_accion_control();
         aplica_u(u); 
     }
