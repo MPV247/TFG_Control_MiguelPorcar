@@ -1,5 +1,66 @@
 //#############################################################################
-// DESCRIPCIÓN 
+// DESCRIPCIÓN:
+//
+// Este módulo implementa un algoritmo de CONTROL HÍBRIDO CONMUTADO para un
+// sistema de péndulo invertido sobre un carro (Cart-Pole). 
+//
+// Atendiendo a un umbral estricto en el error angular del péndulo, el sistema
+// conmuta automáticamente entre dos regímenes de operación:
+//   1. Modo No Lineal: Control de energía (Swing-Up) para elevar el péndulo.
+//   2. Modo Lineal: Realimentación de estados para estabilizarlo en la vertical.
+//
+//
+// ARQUITECTURA DEL SISTEMA DE CONTROL:
+//
+//
+// --- MODALIDAD A: CONTROL NO LINEAL (Swing-Up + PFL Colocada) ---
+// Fuera del umbral de captura, el sistema busca ganar energía:
+//
+// 1. Control de Energía: Modula la aceleración virtual del carro (x_ddot_r) 
+//    basándose en el error entre la energía mecánica instantánea (E_m) 
+//    y la energía de la vertical inestable de referencia (E_ref = m * g * Lcm).
+//
+// 2. Desacoplamiento No Lineal (PFL): Cancela de forma exacta las dinámicas 
+//    secundarias de la planta (gravedad, fuerzas centrífugas de Coriolis y 
+//    fricciones) inyectando la fuerza física "u" calculada al motor.
+//
+// --- MODALIDAD B: CONTROL LINEAL (Realimentación de Estados Extendido) ---
+// Dentro del umbral de captura, el sistema se comporta como un regulador local:
+//
+// 1. Vector de Estados Extendido: Se define mediante los estados nativos
+//    x_vec = [x, theta, x_dot, theta_dot]^T más un estado auxiliar integrador:
+//    Ie = integral(ref_x - x) dt, cuyo fin es eliminar por completo el error 
+//    en estado estacionario del carro provocado por la fricción estática/viscosa.
+//
+// 2. Ley de Control Implementada:
+//    u = K1*(ref_x - x) + K2*(ref_theta - theta) + K3*(0 - x_dot) + K4*(0 - theta_dot) + KI*Ie
+//
+//
+// ACONDICIONAMIENTO DE SEÑALES Y SEGURIDAD:
+//
+//
+// 1. Envoltura Trigonométrica (Acondicionamiento de Ángulo):
+//    Se utiliza la función `atan2f(sinf(e), cosf(e))` para normalizar el error 
+//    angular en el intervalo simétrico [-pi, pi]. Esto evita discontinuidades 
+//    catastróficas (saltos de 2*pi) en la acción de control cuando el péndulo 
+//    cruza velozmente la vertical superior.
+//
+// 2. Anti-Windup Condicional:
+//    Cuando la acción de control calculada supera la saturación física de 
+//    seguridad (UMAX = 4.68V), el acumulador integral Ie se congela de manera 
+//    estricta. Esto previene la saturación del lazo y evita sobreoscilaciones 
+//    incontrolables al salir de la saturación.
+//
+//
+// SECUENCIA EXPERIMENTAL DE REFERENCIAS (Perfil de Ensayos):
+//
+// - 0 a 10s:   Calibración / Calma (Motor deshabilitado, u = 0V).
+// - > 10s:     Activación del Swing-Up.
+//
+// TELEMETRÍA (Salida Serial CSV):
+//
+// [ x(m), ref_x(m), theta(rad), ref_theta(rad), x_dot(m/s), theta_dot(rad/s), u(V) ]
+//
 //#############################################################################
 
 //
@@ -291,11 +352,22 @@ void aplica_u(float u)
 __interrupt void control(void)
 {
     CpuTimer0.InterruptCount++; 
-    // --- BUCLE DE CONTROL ---
-    mide_encoder();
-    calcula_accion_control();
-    aplica_u(u); 
+   timer_ref++; // Incremento del contador temporal hardware
 
+    if (timer_ref < 1000) 
+    {
+        // 0 a 10 segundos: Ventana de calma para calibración manual. Motor desconectado.
+        mide_encoder();
+        u = 0.0f;
+        aplica_u(0.0f);
+    }
+    else 
+    {
+        // --- BUCLE DE CONTROL ---
+        mide_encoder();
+        calcula_accion_control();
+        aplica_u(u); 
+    }
     
     send_data = true; 
     PieCtrlRegs.PIEACK.all = PIEACK_GROUP1;
