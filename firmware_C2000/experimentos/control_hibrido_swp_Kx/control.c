@@ -85,7 +85,6 @@
 #define K2 246.8238f            // Ganancia para ángulo (theta)
 #define K3 -56.5082f            // Ganancia para velocidad (x_dot)
 #define K4 57.6621f             // Ganancia para velocidad angular (theta_dot) 
-#define KI 0.0f                 //Sin acción integral
 #define Ke 100.0f               // Ganancia del bombeo de energía del Swing-Up
 #define Kp 3.62f               // Ganancia proporcional para el control del carro
 #define Kd 2.66f               // Ganancia derivativa para el control del carro
@@ -103,7 +102,7 @@
 // Globals
 //
 long pulsos1, pulsos2;
-float x, x_ant, x_dot, theta, theta_ant, theta_dot,theta_dot_ant, theta_ddot_m, Ie;            //Variables de estado
+float x, x_ant, x_dot, theta, theta_ant, theta_dot,theta_dot_ant;            //Variables de estado
 float theta_dot_raw, theta_ddot_raw, theta_ddot;
 float u, u_zm, ref_x, ref_theta, E_ref, E_m;                              //Variables de control
 float u_swp, u_kx; 
@@ -186,7 +185,6 @@ void condiciones_iniciales(void)
     //Referencia y error de medida:
     ref_x = 0.0f;                          //Referencia en el eje X
     ref_theta = M_PI;                      //Referencia posición péndulo                     
-    Ie = 0.0f;                             //Error integral
     E_ref = - m * g * Lcm;                   //Energía de referencia
     E_m = 0.0f;                            //Energía mecánica del sistema 
 }
@@ -249,7 +247,7 @@ void mide_encoder(void)
     theta_ant = theta; 
 
     theta_ddot_raw = (theta_dot - theta_dot_ant) * 100.0f;
-    theta_ddot_m = 0.2f * theta_ddot_m + 0.8f * theta_ddot_raw;  //Filtro Paso Bajo
+    theta_ddot = 0.2f * theta_ddot + 0.8f * theta_ddot_raw;  //Filtro Paso Bajo
     theta_dot_ant = theta_dot;
 }
 
@@ -289,11 +287,9 @@ void calcula_accion_control(void)
         // 2. Ley de bombeo de energía (Aceleración virtual deseada del carro)
         float x_ddot_r = Ke * theta_dot * cosf(theta) * (E_m - E_ref) - Kp *( x-ref_x) - Kd * x_dot;
 
-        // 3. PFL - Aceleración angular en el péndulo
-        theta_ddot = theta_ddot_m;
         // 4. PFL - Cálculo de la Fuerza física "u" (N) para desacoplar no linealidades
-       u = (M + m) * x_ddot_r + m * Lcm * cosf(theta) * theta_ddot - m * Lcm * sinf(theta) * (theta_dot * theta_dot) + Cx * x_dot;
-       u = u / 0.64f; //Conversión a voltios
+        u = (M + m) * x_ddot_r + m * Lcm * cosf(theta) * theta_ddot - m * Lcm * sinf(theta) * (theta_dot * theta_dot) + Cx * x_dot;
+        u = u / 0.64f; //Conversión a voltios
     }
 
     // --- BLOQUE DE SATURACIÓN ---
