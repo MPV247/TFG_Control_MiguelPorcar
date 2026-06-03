@@ -24,16 +24,14 @@
 //    secundarias de la planta (gravedad, fuerzas centrífugas de Coriolis y 
 //    fricciones) inyectando la fuerza física "u" calculada al motor.
 //
-// --- MODALIDAD B: CONTROL LINEAL (Realimentación de Estados Extendido) ---
+// --- MODALIDAD B: CONTROL LINEAL (Realimentación de Estados) ---
 // Dentro del umbral de captura, el sistema se comporta como un regulador local:
 //
-// 1. Vector de Estados Extendido: Se define mediante los estados nativos
-//    x_vec = [x, theta, x_dot, theta_dot]^T más un estado auxiliar integrador:
-//    Ie = integral(ref_x - x) dt, cuyo fin es eliminar por completo el error 
-//    en estado estacionario del carro provocado por la fricción estática/viscosa.
+// 1. Vector de Estados: Se define mediante los estados nativos
+//    x_vec = [x, theta, x_dot, theta_dot]^T.
 //
 // 2. Ley de Control Implementada:
-//    u = K1*(ref_x - x) + K2*(ref_theta - theta) + K3*(0 - x_dot) + K4*(0 - theta_dot) + KI*Ie
+//    u = K1*(ref_x - x) + K2*(ref_theta - theta) + K3*(0 - x_dot) + K4*(0 - theta_dot)
 //
 //
 // ACONDICIONAMIENTO DE SEÑALES Y SEGURIDAD:
@@ -45,21 +43,20 @@
 //    catastróficas (saltos de 2*pi) en la acción de control cuando el péndulo 
 //    cruza velozmente la vertical superior.
 //
-// 2. Anti-Windup Condicional:
+// 2. Saturación:
 //    Cuando la acción de control calculada supera la saturación física de 
-//    seguridad (UMAX = 4.68V), el acumulador integral Ie se congela de manera 
-//    estricta. Esto previene la saturación del lazo y evita sobreoscilaciones 
-//    incontrolables al salir de la saturación.
+//    seguridad (UMAX = 4.68V).
 //
 //
 // SECUENCIA EXPERIMENTAL DE REFERENCIAS (Perfil de Ensayos):
 //
-// - 0 a 10s:   Calibración / Calma (Motor deshabilitado, u = 0V).
-// - > 10s:     Activación del Swing-Up.
+// - 0 a 10s:   Motor deshabilitado, u = 0V.
+// - > 10s:     Activación del Control híbrido.
 //
 // TELEMETRÍA (Salida Serial CSV):
 //
-// [ x(m), ref_x(m), theta(rad), ref_theta(rad), x_dot(m/s), theta_dot(rad/s), u(V) ]
+// [ x(m), ref_x(m), theta(rad), ref_theta(rad), x_dot(m/s), theta_dot(rad/s), u(V),
+// E_m (J), E_ref (J), tipo_control (bool)]
 //
 //#############################################################################
 
@@ -81,20 +78,20 @@
 #define T_sec 0.01              //Periodo de muestreo en segundos
 #define MAX_PWM 5000            //Saturación acción de control (valor digital)
 #define VCC 15.0f               //Alimentación del motor (V)
-#define UMAX 8.0f              //Saturación del control (V)
+#define UMAX 4.68f              //Saturación del control (V)
 #define ZM_FWD 5.0f             //Zona muerta delante (V)
 #define ZM_BWD 5.0f             //Zona muerta atrás (V)
-#define K1 -115.71f               // Ganancia para posición (x)
-#define K2 260.31f               // Ganancia para ángulo (theta)
-#define K3 -82.96f               // Ganancia para velocidad (x_dot)
-#define K4 51.87f               // Ganancia para velocidad angular (theta_dot) 
-#define KI -54.77f              // Ganancia para el error integral en la posicion (x)
+#define K1 -31.6228f            // Ganancia para posición (x)
+#define K2 246.8238f            // Ganancia para ángulo (theta)
+#define K3 -56.5082f            // Ganancia para velocidad (x_dot)
+#define K4 57.6621f             // Ganancia para velocidad angular (theta_dot) 
+#define KI 0.0f                 //Sin acción integral
 #define Ke 100.0f               // Ganancia del bombeo de energía del Swing-Up
 #define Kp 3.62f               // Ganancia proporcional para el control del carro
 #define Kd 2.66f               // Ganancia derivativa para el control del carro
 
 // Parámetros Físicos del Proceso (Cart-Pole)
-#define J 0.028f              // Momento de inercia del péndulo (Kg·m²)
+#define J 0.028f               // Momento de inercia del péndulo (Kg·m²)
 #define M 1.08f                // Masa del carro (Kg)
 #define m 0.24f                // Masa del péndulo (Kg)
 #define Cx 4.08f               // Coeficiente de fricción viscosa del carro (N·s/m)
@@ -215,14 +212,11 @@ void puerto_serie(void)
     float_parts p_r = desglosar_float(ref_theta);
     float_parts p_rx = desglosar_float(ref_x);
     float_parts p_u = desglosar_float(u);
-    float_parts p_us = desglosar_float(u_swp);
-    float_parts p_ux = desglosar_float(u_kx);
-    float_parts p_theta_dot_raw = desglosar_float(theta_dot_raw);
-    float_parts p_theta_ddot_m = desglosar_float(theta_ddot_m);
-    float_parts p_theta_ddot = desglosar_float(theta_ddot);
+    float_parts p_Em = desglosar_float(E_m);
+    float_parts p_Er = desglosar_float(E_ref);
 
-    //Formato CSV: x, ref_x, theta, ref_theta, x_dot,theta_dot,u
-    sprintf(txBuffer, "%c%d.%04d,%c%d.%04d,%c%d.%04d,%c%d.%04d,%c%d.%04d,%c%d.%04d,%c%d.%04d,%c%d.%04d,%c%d.%04d,%c%d.%04d,%c%d.%04d,%c%d.%04d,%d\r\n",
+    //Formato CSV: x, ref_x, theta, ref_theta, x_dot,theta_dot,u,E_m, E_ref, control
+    sprintf(txBuffer, "%c%d.%04d,%c%d.%04d,%c%d.%04d,%c%d.%04d,%c%d.%04d,%c%d.%04d,%c%d.%04d,%c%d.%04d,%c%d.%04d,%d\r\n",
             p_x.signo, p_x.entero, p_x.decimal,
             p_rx.signo, p_rx.entero, p_rx.decimal,
             p_theta.signo,p_theta.entero, p_theta.decimal,
@@ -230,11 +224,8 @@ void puerto_serie(void)
             p_x_dot.signo, p_x_dot.entero, p_x_dot.decimal,
             p_theta_dot.signo, p_theta_dot.entero, p_theta_dot.decimal,
             p_u.signo,p_u.entero, p_u.decimal,
-            p_theta_dot_raw.signo, p_theta_dot_raw.entero, p_theta_dot_raw.decimal,
-            p_theta_ddot_m.signo, p_theta_ddot_m.entero, p_theta_ddot_m.decimal,
-            p_theta_ddot.signo, p_theta_ddot.entero, p_theta_ddot.decimal,
-            p_us.signo,p_us.entero, p_us.decimal,
-            p_ux.signo,p_ux.entero, p_ux.decimal,
+            p_Em.signo, p_Em.entero, p_Em.decimal,
+            p_Er.signo, p_Er.entero, p_Er.decimal,
             region_lineal);
 
     transmitSCIAMessage((unsigned char *)txBuffer);
@@ -277,25 +268,18 @@ void calcula_accion_control(void)
 
     if (region_lineal) { // Control Kx (Realimentación de estado)
 
-        // 1. Integrar el error SOLO si estamos en el control estabilizador
-        if (fabs(e1) > 0.01f){
-            Ie = Ie + T_sec * e1;   
-        }
+        // 1. Ley de control
+        u = K1 * e1 + K2 * e2 + K3 * e3 + K4 * e4;
         
-        
-        // 2. Ley de control
-        u = K1 * e1 + K2 * e2 + K3 * e3 + K4 * e4 + KI * Ie;
-        
-        // 3. Ciclo límite (evitar desgaste del actuador)
+        // 2. Ciclo límite (evitar desgaste del actuador)
         if (fabs(e1) < 0.001f && fabs(e2) < 0.003f) {
             u = 0.0f; 
         }
 
     } else { // Control SWP + PFL (Swing-up)
 
-        // 1. Evitar acumulación en Ie: asegurar valor 0 cuando se conmuta
-         
-        if (1.5*m * g * Lcm > E_ref + 0.001*m * g * Lcm){
+        // 1. Rampa de energía de referencia
+        if (2*m * g * Lcm > E_ref + 0.001*m * g * Lcm){
             E_ref = E_ref + 0.001*m * g * Lcm;
         }
         
@@ -305,37 +289,19 @@ void calcula_accion_control(void)
         // 2. Ley de bombeo de energía (Aceleración virtual deseada del carro)
         float x_ddot_r = Ke * theta_dot * cosf(theta) * (E_m - E_ref) - Kp *( x-ref_x) - Kd * x_dot;
 
-        // 3. PFL - Aceleración angular inducida en el péndulo (lambda)
-        //theta_ddot = (1.0f / J) * (-m * g * Lcm * sinf(theta) - m * Lcm * cosf(theta) * x_ddot_r - Cth * theta_dot);
+        // 3. PFL - Aceleración angular en el péndulo
         theta_ddot = theta_ddot_m;
         // 4. PFL - Cálculo de la Fuerza física "u" (N) para desacoplar no linealidades
-        u_swp = Ke * theta_dot * cosf(theta) * (E_m - E_ref);
-        u_kx = - Kp * x - Kd * x_dot;
-
-        u = (M + m) * x_ddot_r + m * Lcm * cosf(theta) * theta_ddot - m * Lcm * sinf(theta) * (theta_dot * theta_dot) + Cx * x_dot;
-
-        u = u / 0.64f; //Conversión a voltios
-
-   
+       u = (M + m) * x_ddot_r + m * Lcm * cosf(theta) * theta_ddot - m * Lcm * sinf(theta) * (theta_dot * theta_dot) + Cx * x_dot;
+       u = u / 0.64f; //Conversión a voltios
     }
 
     // --- BLOQUE DE SATURACIÓN ---
     if (u < -UMAX) {
         u = -UMAX; 
-        if (region_lineal) { // Anti-windup solo para control lineal
-            Ie = Ie - T_sec * e1;
-        }
     }
     else if (u > UMAX) {
         u = UMAX; 
-        if (region_lineal) {
-            Ie = Ie - T_sec * e1;
-        }
-    }
-    //Bumpless transfer --> Termino integral que devuelve el mismo voltajes
-    if (region_lineal) {}
-    else{
-        Ie = (u -(K1 * e1 + K2 * e2 + K3 * e3 + K4 * e4)) / KI ;
     }
 }
 

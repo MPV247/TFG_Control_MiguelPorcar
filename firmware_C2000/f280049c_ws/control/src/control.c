@@ -81,17 +81,17 @@
 #define UMAX 4.68f              //Saturación del control (V)
 #define ZM_FWD 5.0f             //Zona muerta delante (V)
 #define ZM_BWD 5.0f             //Zona muerta atrás (V)
-#define K1 -31.6228f               // Ganancia para posición (x)
-#define K2 246.8238f               // Ganancia para ángulo (theta)
-#define K3 -56.5082f               // Ganancia para velocidad (x_dot)
-#define K4 57.6621f               // Ganancia para velocidad angular (theta_dot) 
-#define KI 0.0f
+#define K1 -31.6228f            // Ganancia para posición (x)
+#define K2 246.8238f            // Ganancia para ángulo (theta)
+#define K3 -56.5082f            // Ganancia para velocidad (x_dot)
+#define K4 57.6621f             // Ganancia para velocidad angular (theta_dot) 
+#define KI 0.0f                 //Sin acción integral
 #define Ke 100.0f               // Ganancia del bombeo de energía del Swing-Up
 #define Kp 3.62f               // Ganancia proporcional para el control del carro
 #define Kd 2.66f               // Ganancia derivativa para el control del carro
 
 // Parámetros Físicos del Proceso (Cart-Pole)
-#define J 0.028f              // Momento de inercia del péndulo (Kg·m²)
+#define J 0.028f               // Momento de inercia del péndulo (Kg·m²)
 #define M 1.08f                // Masa del carro (Kg)
 #define m 0.24f                // Masa del péndulo (Kg)
 #define Cx 4.08f               // Coeficiente de fricción viscosa del carro (N·s/m)
@@ -268,24 +268,17 @@ void calcula_accion_control(void)
 
     if (region_lineal) { // Control Kx (Realimentación de estado)
 
-        // 1. Integrar el error SOLO si estamos en el control estabilizador
-        if (fabs(e1) > 0.01f){
-            Ie = Ie + T_sec * e1;   
-        }
+        // 1. Ley de control
+        u = K1 * e1 + K2 * e2 + K3 * e3 + K4 * e4;
         
-        
-        // 2. Ley de control
-        u = K1 * e1 + K2 * e2 + K3 * e3 + K4 * e4 + KI * Ie;
-        
-        // 3. Ciclo límite (evitar desgaste del actuador)
+        // 2. Ciclo límite (evitar desgaste del actuador)
         if (fabs(e1) < 0.001f && fabs(e2) < 0.003f) {
             u = 0.0f; 
         }
 
     } else { // Control SWP + PFL (Swing-up)
 
-        // 1. Evitar acumulación en Ie: asegurar valor 0 cuando se conmuta
-         
+        // 1. Rampa de energía de referencia
         if (2*m * g * Lcm > E_ref + 0.001*m * g * Lcm){
             E_ref = E_ref + 0.001*m * g * Lcm;
         }
@@ -296,37 +289,19 @@ void calcula_accion_control(void)
         // 2. Ley de bombeo de energía (Aceleración virtual deseada del carro)
         float x_ddot_r = Ke * theta_dot * cosf(theta) * (E_m - E_ref) - Kp *( x-ref_x) - Kd * x_dot;
 
-        // 3. PFL - Aceleración angular inducida en el péndulo (lambda)
-        //theta_ddot = (1.0f / J) * (-m * g * Lcm * sinf(theta) - m * Lcm * cosf(theta) * x_ddot_r - Cth * theta_dot);
+        // 3. PFL - Aceleración angular en el péndulo
         theta_ddot = theta_ddot_m;
         // 4. PFL - Cálculo de la Fuerza física "u" (N) para desacoplar no linealidades
-        u_swp = Ke * theta_dot * cosf(theta) * (E_m - E_ref);
-        u_kx = - Kp * x - Kd * x_dot;
-
-        u = (M + m) * x_ddot_r + m * Lcm * cosf(theta) * theta_ddot - m * Lcm * sinf(theta) * (theta_dot * theta_dot) + Cx * x_dot;
-
-        u = u / 0.64f; //Conversión a voltios
-
-   
+       u = (M + m) * x_ddot_r + m * Lcm * cosf(theta) * theta_ddot - m * Lcm * sinf(theta) * (theta_dot * theta_dot) + Cx * x_dot;
+       u = u / 0.64f; //Conversión a voltios
     }
 
     // --- BLOQUE DE SATURACIÓN ---
     if (u < -UMAX) {
         u = -UMAX; 
-        if (region_lineal) { // Anti-windup solo para control lineal
-            //Ie = Ie - T_sec * e1;
-        }
     }
     else if (u > UMAX) {
         u = UMAX; 
-        if (region_lineal) {
-            //Ie = Ie - T_sec * e1;
-        }
-    }
-    //Bumpless transfer --> Termino integral que devuelve el mismo voltajes
-    if (region_lineal) {}
-    else{
-        //Ie = (u -(K1 * e1 + K2 * e2 + K3 * e3 + K4 * e4)) / KI ;
     }
 }
 
