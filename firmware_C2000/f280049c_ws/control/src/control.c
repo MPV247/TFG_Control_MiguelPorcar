@@ -81,14 +81,14 @@
 #define T_sec 0.01              //Periodo de muestreo en segundos
 #define MAX_PWM 5000            //Saturación acción de control (valor digital)
 #define VCC 15.0f               //Alimentación del motor (V)
-#define UMAX 8.0f              //Saturación del control (V)
+#define UMAX 4.68f              //Saturación del control (V)
 #define ZM_FWD 5.0f             //Zona muerta delante (V)
 #define ZM_BWD 5.0f             //Zona muerta atrás (V)
-#define K1 -115.71f               // Ganancia para posición (x)
-#define K2 260.31f               // Ganancia para ángulo (theta)
-#define K3 -82.96f               // Ganancia para velocidad (x_dot)
-#define K4 51.87f               // Ganancia para velocidad angular (theta_dot) 
-#define KI -54.77f              // Ganancia para el error integral en la posicion (x)
+#define K1 -31.6228f               // Ganancia para posición (x)
+#define K2 246.8238f               // Ganancia para ángulo (theta)
+#define K3 -56.5082f               // Ganancia para velocidad (x_dot)
+#define K4 57.6621f               // Ganancia para velocidad angular (theta_dot) 
+#define KI 0.0f
 #define Ke 100.0f               // Ganancia del bombeo de energía del Swing-Up
 #define Kp 3.62f               // Ganancia proporcional para el control del carro
 #define Kd 2.66f               // Ganancia derivativa para el control del carro
@@ -295,7 +295,7 @@ void calcula_accion_control(void)
 
         // 1. Evitar acumulación en Ie: asegurar valor 0 cuando se conmuta
          
-        if (1.5*m * g * Lcm > E_ref + 0.001*m * g * Lcm){
+        if (2*m * g * Lcm > E_ref + 0.001*m * g * Lcm){
             E_ref = E_ref + 0.001*m * g * Lcm;
         }
         
@@ -323,19 +323,19 @@ void calcula_accion_control(void)
     if (u < -UMAX) {
         u = -UMAX; 
         if (region_lineal) { // Anti-windup solo para control lineal
-            Ie = Ie - T_sec * e1;
+            //Ie = Ie - T_sec * e1;
         }
     }
     else if (u > UMAX) {
         u = UMAX; 
         if (region_lineal) {
-            Ie = Ie - T_sec * e1;
+            //Ie = Ie - T_sec * e1;
         }
     }
     //Bumpless transfer --> Termino integral que devuelve el mismo voltajes
     if (region_lineal) {}
     else{
-        Ie = (u -(K1 * e1 + K2 * e2 + K3 * e3 + K4 * e4)) / KI ;
+        //Ie = (u -(K1 * e1 + K2 * e2 + K3 * e3 + K4 * e4)) / KI ;
     }
 }
 
