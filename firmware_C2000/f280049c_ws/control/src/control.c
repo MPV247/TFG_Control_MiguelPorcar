@@ -81,7 +81,7 @@
 #define T_sec 0.01              //Periodo de muestreo en segundos
 #define MAX_PWM 5000            //Saturación acción de control (valor digital)
 #define VCC 15.0f               //Alimentación del motor (V)
-#define UMAX 4.68f              //Saturación del control (V)
+#define UMAX 8.0f              //Saturación del control (V)
 #define ZM_FWD 5.0f             //Zona muerta delante (V)
 #define ZM_BWD 5.0f             //Zona muerta atrás (V)
 #define K1 -115.71f               // Ganancia para posición (x)
@@ -89,14 +89,14 @@
 #define K3 -82.96f               // Ganancia para velocidad (x_dot)
 #define K4 51.87f               // Ganancia para velocidad angular (theta_dot) 
 #define KI -54.77f              // Ganancia para el error integral en la posicion (x)
-#define Ke 30.0f               // Ganancia del bombeo de energía del Swing-Up
-#define Kp 16.0f               // Ganancia proporcional para el control del carro
-#define Kd 4.16f               // Ganancia derivativa para el control del carro
+#define Ke 100.0f               // Ganancia del bombeo de energía del Swing-Up
+#define Kp 3.62f               // Ganancia proporcional para el control del carro
+#define Kd 2.66f               // Ganancia derivativa para el control del carro
 
 // Parámetros Físicos del Proceso (Cart-Pole)
-#define J 0.0139f              // Momento de inercia del péndulo (Kg·m²)
+#define J 0.028f              // Momento de inercia del péndulo (Kg·m²)
 #define M 1.08f                // Masa del carro (Kg)
-#define m 0.12f                // Masa del péndulo (Kg)
+#define m 0.24f                // Masa del péndulo (Kg)
 #define Cx 4.08f               // Coeficiente de fricción viscosa del carro (N·s/m)
 #define Cth 0.0002f            // Coeficiente de fricción viscosa del péndulo (N·m·s/rad)
 #define Lcm 0.305f             // Distancia al centro de masas del péndulo (m)
@@ -106,13 +106,15 @@
 // Globals
 //
 long pulsos1, pulsos2;
-float x, x_ant, x_dot, theta, theta_ant, theta_dot, Ie;            //Variables de estado
-
+float x, x_ant, x_dot, theta, theta_ant, theta_dot,theta_dot_ant, theta_ddot_m, Ie;            //Variables de estado
+float theta_dot_raw, theta_ddot_raw, theta_ddot;
 float u, u_zm, ref_x, ref_theta, E_ref, E_m;                              //Variables de control
+float u_swp, u_kx; 
 int16_t u_dig; 
 
 char txBuffer[100];                                                //Variables envio puerto serie
-bool send_data = false;                                           
+bool send_data = false;
+bool region_lineal = false;                                            
 
 uint32_t timer_ref = 0;                                            // Contador para los 10 segundos iniciales
 
@@ -188,7 +190,7 @@ void condiciones_iniciales(void)
     ref_x = 0.0f;                          //Referencia en el eje X
     ref_theta = M_PI;                      //Referencia posición péndulo                     
     Ie = 0.0f;                             //Error integral
-    E_ref = m * g * Lcm;                   //Energía de referencia
+    E_ref = - m * g * Lcm;                   //Energía de referencia
     E_m = 0.0f;                            //Energía mecánica del sistema 
 }
 
@@ -212,17 +214,28 @@ void puerto_serie(void)
     float_parts p_theta_dot = desglosar_float(theta_dot);
     float_parts p_r = desglosar_float(ref_theta);
     float_parts p_rx = desglosar_float(ref_x);
-    float_parts p_u = desglosar_float(u); 
+    float_parts p_u = desglosar_float(u);
+    float_parts p_us = desglosar_float(u_swp);
+    float_parts p_ux = desglosar_float(u_kx);
+    float_parts p_theta_dot_raw = desglosar_float(theta_dot_raw);
+    float_parts p_theta_ddot_m = desglosar_float(theta_ddot_m);
+    float_parts p_theta_ddot = desglosar_float(theta_ddot);
 
     //Formato CSV: x, ref_x, theta, ref_theta, x_dot,theta_dot,u
-    sprintf(txBuffer, "%c%d.%04d,%c%d.%04d,%c%d.%04d,%c%d.%04d,%c%d.%04d,%c%d.%04d,%c%d.%04d\r\n",
+    sprintf(txBuffer, "%c%d.%04d,%c%d.%04d,%c%d.%04d,%c%d.%04d,%c%d.%04d,%c%d.%04d,%c%d.%04d,%c%d.%04d,%c%d.%04d,%c%d.%04d,%c%d.%04d,%c%d.%04d,%d\r\n",
             p_x.signo, p_x.entero, p_x.decimal,
             p_rx.signo, p_rx.entero, p_rx.decimal,
             p_theta.signo,p_theta.entero, p_theta.decimal,
             p_r.signo, p_r.entero, p_r.decimal,
             p_x_dot.signo, p_x_dot.entero, p_x_dot.decimal,
             p_theta_dot.signo, p_theta_dot.entero, p_theta_dot.decimal,
-            p_u.signo,p_u.entero, p_u.decimal);
+            p_u.signo,p_u.entero, p_u.decimal,
+            p_theta_dot_raw.signo, p_theta_dot_raw.entero, p_theta_dot_raw.decimal,
+            p_theta_ddot_m.signo, p_theta_ddot_m.entero, p_theta_ddot_m.decimal,
+            p_theta_ddot.signo, p_theta_ddot.entero, p_theta_ddot.decimal,
+            p_us.signo,p_us.entero, p_us.decimal,
+            p_ux.signo,p_ux.entero, p_ux.decimal,
+            region_lineal);
 
     transmitSCIAMessage((unsigned char *)txBuffer);
 }
@@ -240,9 +253,13 @@ void mide_encoder(void)
     // ---- MEDICIONES PENDULO ----
     pulsos2 = EQep2Regs.QPOSCNT;
     theta = ((float)pulsos2 / ENCODER2_CPR) * 2 * M_PI;
-    float theta_dot_raw = (theta - theta_ant) * 100.0f;
+    theta_dot_raw = (theta - theta_ant) * 100.0f;
     theta_dot = 0.2f * theta_dot + 0.8f * theta_dot_raw;  //Filtro Paso Bajo
     theta_ant = theta; 
+
+    theta_ddot_raw = (theta_dot - theta_dot_ant) * 100.0f;
+    theta_ddot_m = 0.2f * theta_ddot_m + 0.8f * theta_ddot_raw;  //Filtro Paso Bajo
+    theta_dot_ant = theta_dot;
 }
 
 //Calculo de la acción de control
@@ -256,12 +273,15 @@ void calcula_accion_control(void)
     // --- UMBRAL DE CONMUTACIÓN ---
     e2 = atan2f(sinf(e2), cosf(e2));    // Normalizar error a [-pi, pi]
     // Bandera para saber en qué región de control estamos
-    bool region_lineal = (fabs(e2) < 0.15f);
+    region_lineal = (fabs(e2) < 0.1f);
 
     if (region_lineal) { // Control Kx (Realimentación de estado)
 
         // 1. Integrar el error SOLO si estamos en el control estabilizador
-        Ie = Ie + T_sec * e1;
+        if (fabs(e1) > 0.01f){
+            Ie = Ie + T_sec * e1;   
+        }
+        
         
         // 2. Ley de control
         u = K1 * e1 + K2 * e2 + K3 * e3 + K4 * e4 + KI * Ie;
@@ -274,21 +294,29 @@ void calcula_accion_control(void)
     } else { // Control SWP + PFL (Swing-up)
 
         // 1. Evitar acumulación en Ie: asegurar valor 0 cuando se conmuta
-        Ie = 0.0f; 
-
+         
+        if (1.5*m * g * Lcm > E_ref + 0.001*m * g * Lcm){
+            E_ref = E_ref + 0.001*m * g * Lcm;
+        }
+        
         // 2. Energía mecánica 
         E_m = 0.5f * J * theta_dot * theta_dot - m * g * Lcm * cosf(theta);
         
         // 2. Ley de bombeo de energía (Aceleración virtual deseada del carro)
-        float x_ddot_r = Ke * theta_dot * cosf(theta) * (E_m - E_ref) - Kp * x - Kd * x_dot;
+        float x_ddot_r = Ke * theta_dot * cosf(theta) * (E_m - E_ref) - Kp *( x-ref_x) - Kd * x_dot;
 
         // 3. PFL - Aceleración angular inducida en el péndulo (lambda)
-        float theta_ddot = (1.0f / J) * (-m * g * Lcm * sinf(theta) - m * Lcm * cosf(theta) * x_ddot_r - Cth * theta_dot);
-
+        //theta_ddot = (1.0f / J) * (-m * g * Lcm * sinf(theta) - m * Lcm * cosf(theta) * x_ddot_r - Cth * theta_dot);
+        theta_ddot = theta_ddot_m;
         // 4. PFL - Cálculo de la Fuerza física "u" (N) para desacoplar no linealidades
+        u_swp = Ke * theta_dot * cosf(theta) * (E_m - E_ref);
+        u_kx = - Kp * x - Kd * x_dot;
+
         u = (M + m) * x_ddot_r + m * Lcm * cosf(theta) * theta_ddot - m * Lcm * sinf(theta) * (theta_dot * theta_dot) + Cx * x_dot;
 
-        u = u / 0.64f * 0.0f; //Conversión a voltios
+        u = u / 0.64f; //Conversión a voltios
+
+   
     }
 
     // --- BLOQUE DE SATURACIÓN ---
@@ -303,6 +331,11 @@ void calcula_accion_control(void)
         if (region_lineal) {
             Ie = Ie - T_sec * e1;
         }
+    }
+    //Bumpless transfer --> Termino integral que devuelve el mismo voltajes
+    if (region_lineal) {}
+    else{
+        Ie = (u -(K1 * e1 + K2 * e2 + K3 * e3 + K4 * e4)) / KI ;
     }
 }
 
