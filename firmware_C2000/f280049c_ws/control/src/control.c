@@ -277,7 +277,7 @@ void calcula_accion_control(void)
     } else { // Control SWP + PFL (Swing-up)
 
         // 1. Rampa de energía de referencia
-        if (1.2*m * g * Lcm > E_ref + 0.001*m * g * Lcm){
+        if (1.5*m * g * Lcm > E_ref + 0.001*m * g * Lcm){
             E_ref = E_ref + 0.001*m * g * Lcm;
         }
         
