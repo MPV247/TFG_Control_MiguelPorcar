@@ -277,14 +277,14 @@ void calcula_accion_control(void)
     } else { // Control SWP + PFL (Swing-up)
 
         // 1. Rampa de energía de referencia
-        if (2*m * g * Lcm > E_ref + 0.001*m * g * Lcm){
+        if (1.2*m * g * Lcm > E_ref + 0.001*m * g * Lcm){
             E_ref = E_ref + 0.001*m * g * Lcm;
         }
         
         // 2. Energía mecánica 
         E_m = 0.5f * J * theta_dot * theta_dot - m * g * Lcm * cosf(theta);
         
-        // 2. Ley de bombeo de energía (Aceleración virtual deseada del carro)
+        // 3. Ley de bombeo de energía (Aceleración virtual deseada del carro)
         float x_ddot_r = Ke * theta_dot * cosf(theta) * (E_m - E_ref) - Kp *( x-ref_x) - Kd * x_dot;
 
         // 4. PFL - Cálculo de la Fuerza física "u" (N) para desacoplar no linealidades

@@ -2713,31 +2713,33 @@ Como se aprecia en la Figura~\ref{fig:resultados_integrador}, la inclusión de l
 
 
 \section{Control de energía (Swing-up)}
-A continuación, se analiza sobre la planta real el comportamiento del control de energía en función del valor de las ganancias $K_e, K_p, K_d$. El ensayo detallado en el Cuadro~\ref{tab:ganancias_swp} tiene como propósito evaluar cómo influye la agresividad del control PD de posición sobre el bombeo de energía requerido para el levantamiento del péndulo. Para ello, se fija un valor elevado en la ganancia de inyección energética ($K_e$), lo cual establece el sentido de la acción de control, mientras se sintoniza el control de posición con el fin de garantizar que el carro se mantenga dentro de los límites físicos del riel. 
- 
+Con el fin de evaluar de manera aislada el impacto de la inyección de energía en la velocidad y eficiencia del balanceo del péndulo (swing-up), se plantea un segundo bloque de ensayos. La dinámica del lazo control de posición se mantiene completamente fija mediante unos parámetros de diseño constantes ($\xi = 0.7$ y $t_s = 1.0$ s), lo que garantiza de forma homogénea que el carro respete los límites físicos del riel en todos los escenarios. De este modo, al mitigar la influencia del lazo de posición, es posible analizar con precisión cómo afecta la variación escalonada de la ganancia energética $K_e$ sobre el comportamiento del sistema y la acumulación de energía en el péndulo. Las diferentes configuraciones de controladores evaluadas bajo este criterio se detallan a continuación en el Cuadro~\ref{tab:ganancias_swp}.
 \begin{table}[!htbp]
 	\centering
-	\caption{Configuraciones de los controladores de posición basados en PFL para doble integrador ($K_e = 100$, $\xi = 0.7$)}
+	\caption{Configuraciones de los controladores ($\xi = 0.7$, $t_s = 1.0$ s)}
 	\label{tab:ganancias_swp}
-	% Usamos tabularx fijando el ancho total al de la página (\textwidth)
-	% El tipo de columna X reparte el espacio equitativamente y centra el texto (\centering)
 	\begin{tabularx}{\textwidth}{>{\centering\arraybackslash}X >{\centering\arraybackslash}X >{\centering\arraybackslash}X >{\centering\arraybackslash}X >{\centering\arraybackslash}X}
 		\toprule
-		\textbf{Ref.} & \boldmath{$t_s$} \textbf{(s)} & \textbf{$K_e$} & \textbf{$K_p$} & \textbf{$K_d$} \\ 
+		\textbf{Ref.} & \textbf{$K_e$} & \boldmath{$t_s$} \textbf{(s)} & \textbf{$K_p$} & \textbf{$K_d$} \\ 
 		\midrule
-		C1 & 0.5 & 100 & 130.61 & 16.00 \\
-		C2 & 1.0 & 100 & 32.65  & 8.00  \\
-		C3 & 2.0 & 100 & 8.16   & 4.00  \\
-		C4 & 3.0 & 100 & 3.63   & 2.67  \\
-		C5 & 4.0 & 100 & 2.04   & 2.00  \\ 
+		C1 & 20  & 1.0 & 32.65 & 8.00 \\
+		C2 & 40  & 1.0 & 32.65 & 8.00 \\
+		C3 & 60  & 1.0 & 32.65 & 8.00 \\
+		C4 & 80  & 1.0 & 32.65 & 8.00 \\
+		C5 & 100 & 1.0 & 32.65 & 8.00 \\ 
 		\bottomrule
-		% Ocupamos el ancho completo (\textwidth) para que la nota no deforme las columnas
-		\multicolumn{5}{p{\textwidth}}{\vspace{0.1cm}\small \textbf{Nota:} Las ganancias del control de posición ($K_p$ y $K_d$) se ajustan de forma analítica considerando un modelo de doble integrador ($G(s) = \frac{K}{s^2}$ con $K=1$) gracias a la linealización por realimentación parcial (PFL) \cite{tedrake2023}, mediante las expresiones: $K_p = \frac{16}{\xi^2 t_s^2}$ y $K_d = \frac{8}{t_s}$ \cite{Penarrocha_Resumen_Polos}.}
+		\multicolumn{5}{p{\textwidth}}{\vspace{0.1cm}\small \textbf{Nota:} $K_p$ y $K_d$ se ajustan de forma analítica considerando un modelo de doble integrador ($G(s) = \frac{K}{s^2}$ con $K=1$) gracias a \textit{PFL} \cite{tedrake2023}, utilizando las expresiones de asignación de polos: $K_p = \frac{16}{\xi^2 t_s^2}$ y $K_d = \frac{8}{t_s}$ \cite{Penarrocha_Resumen_Polos}.}
 	\end{tabularx}
 \end{table}
+\begin{figure}[!htbp]
+	\centering
+	\includegraphics[width=0.68\textwidth]{Pictures/Comparativa_SwingUp_Ke_Final} 
+	\caption{Desempeño de los controladores sobre la planta real}
+	\label{fig:resultados_swp}
+\end{figure}
+\FloatBarrier
 
-
-
+Tras la gráficas obtenidas se observa como todos los controladores son capaces de balancear el péndulo hasta la región inestable manteniéndose en los límites del banco de pruebas. 
 \newpage
 \section{Control híbrido}
 Finalmente, tras ajustar ambos controladores por separado fue el momento de combinarlos bajo la ley de conmutación descrita en la Sección~\ref{cap:log_conmu}. 
