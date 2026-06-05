@@ -356,7 +356,7 @@ En los últimos años, la intersección entre el control óptimo y la robótica 
 En este escenario, el diseño de controladores avanzados capaces de optimizar el esfuerzo del actuador protegiendo la integridad del usuario es un requisito crítico. Técnicas de control óptimo como el Regulador Lineal Cuadrático (LQR) y el Control Predictivo Basado en Modelo (MPC) son ampliamente utilizadas en exoesqueletos para calcular los pares de asistencia necesarios en la cadera y la rodilla durante el ciclo de marcha \cite{mashud2024}. Dado que la dinámica de la pierna humana durante la marcha comparte la naturaleza pendular inestable, la experimentación con algoritmos LQR sobre plantas físicas de laboratorio ofrece una transferencia directa de conocimiento.
 
 \paragraph{Arquitectura híbrida y niveles jerárquicos}
-En el marco conceptual de la robótica y el control, las aplicaciones dinámicas exigen una organización estructurada en niveles jerárquicos. De acuerdo con \cite{gavilan_agentes}, este diseño responde formalmente al paradigma de las \textbf{arquitecturas híbridas}, las cuales logran mitigar las limitaciones de los enfoques puros mediante una estrategia de descomposición de tareas:
+En el marco conceptual de la robótica y el control, las aplicaciones dinámicas exigen una organización estructurada en niveles jerárquicos. Este diseño responde formalmente al paradigma de las \textbf{arquitecturas híbridas}, las cuales logran mitigar las limitaciones de los enfoques puros mediante una estrategia de descomposición de tareas \cite{gavilan_agentes}:
 \begin{itemize}[]
 	\item \textbf{Capa deliberativa:} Se rige por el ciclo clásico \textit{sense-plan-act} (percibir-planificar-actuar) para gestionar procesos cognitivos complejos (Ejemplo: planificación de rutas globales) con una \textbf{tolerancia temporal flexible}. 
 	
@@ -373,6 +373,9 @@ En el marco conceptual de la robótica y el control, las aplicaciones dinámicas
 
 Esta segmentación presenta un paralelismo neurológico y cognitivo con el funcionamiento de los seres vivos \cite{gavilan_agentes}. Así, mientras la capa deliberativa emula los procesos de razonamiento y decisión conscientes, la capa reactiva actúa de manera homóloga a los reflejos motores. 
 Para explotar las ventajas de velocidad, robustez y tolerancia a perturbaciones propias de la aproximación reactiva, resulta imprescindible delegar en un hardware, diseñado específicamente para operar bajo \textbf{restricciones de tiempo real}.
+
+Finalmente, con el objetivo de contextualizar el trabajo realizado, el marco de este proyecto se sitúa en la capa reactiva (control a bajo nivel). Es por ello que durante todo el documento se prioriza el determinismo y el tiempo real en el estudio y desarrollo de algoritmos de control así como en la programación del software embebido. 
+ 
 \newpage
 \section{Punto de partida}
 El trabajo se realiza sobre un equipo educativo clásico: el \textbf{Digital Pendulum 33-005} de la marca \textit{Feedback Instruments Ltd}. Este sistema se divide en dos partes: el controlador 33-201 (la caja con la electrónica) y la unidad mecánica 33-200 (el raíl con el carro y la barra).
@@ -438,7 +441,7 @@ Las razones que impulsan el desarrollo de este proyecto combinan el interés per
 \end{itemize}
 
 \section{Planificación}
-
+\label{cap:planificacion}
 Dentro de este apartado se aborda de forma lógica y ordenada los objetivos generales del proyecto y las tareas asociadas para lograr su consecución. Además se expone el \textit{Diagrma de Gantt} para tener una visión general de la planificación de tiempos por cada tarea. 
 
 \subsection{Objetivos}
@@ -2705,13 +2708,13 @@ Este comportamiento experimental fue el que motivó a añadir término integral 
 Como se aprecia en la Figura~\ref{fig:resultados_integrador}, la inclusión de la acción integral consigue llevar al carro a la posición de referencia. En el momento en que el carro se detiene con un error de posición residual ($x_{ref} - x$), comienza a acumularse de forma continua en el tiempo dentro del estado virtual $I_e$. Esta integración numérica genera un aumento progresivo y rampa en la señal de control $u$ que, al cabo de unos instantes, logra romper el umbral de bloqueo mecánico y vencer la resistencia de la correa de transmisión. 
 \begin{figure}[htbp]
 	\centering
-	\includegraphics[width=\textwidth]{Pictures/control_con_integrador} 
+	\includegraphics[width=0.8\textwidth]{Pictures/control_con_integrador} 
 	\caption{Control de posición con integrador sobre la planta real}
 	\label{fig:resultados_integrador}
 \end{figure}
 \FloatBarrier
 
-
+\newpage
 \section{Control de energía (Swing-up)}
 Con el fin de evaluar de manera aislada el impacto de la inyección de energía en la velocidad y eficiencia del balanceo del péndulo (swing-up), se plantea un segundo bloque de ensayos. La dinámica del lazo control de posición se mantiene completamente fija mediante unos parámetros de diseño constantes ($\xi = 0.7$ y $t_s = 1.0$ s), lo que garantiza de forma homogénea que el carro respete los límites físicos del riel en todos los escenarios. De este modo, al mitigar la influencia del lazo de posición, es posible analizar con precisión cómo afecta la variación escalonada de la ganancia energética $K_e$ sobre el comportamiento del sistema y la acumulación de energía en el péndulo. Las diferentes configuraciones de controladores evaluadas bajo este criterio se detallan a continuación en el Cuadro~\ref{tab:ganancias_swp}.
 \begin{table}[!htbp]
@@ -2742,47 +2745,114 @@ Con el fin de evaluar de manera aislada el impacto de la inyección de energía 
 Tras la gráficas obtenidas se observa como todos los controladores son capaces de balancear el péndulo hasta la región inestable manteniéndose en los límites del banco de pruebas. 
 \newpage
 \section{Control híbrido}
-Finalmente, tras ajustar ambos controladores por separado fue el momento de combinarlos bajo la ley de conmutación descrita en la Sección~\ref{cap:log_conmu}. 
+\label{sec:resultados_control_hibrido}
+
+El objetivo último de la arquitectura de control propuesta es la integración armónica de las leyes de control por energía y por realimentación del estado bajo la ley de conmutación descrita en la Sección~\ref{cap:log_conmu}. 
+La Figura~\ref{fig:resultados_conmutacion} expone la evolución temporal de la posición lineal y angular del sistema en tres fases diferenciadas:
+
+\begin{enumerate}
+	\item \textbf{Fase de bombeo energético (\textit{Swing-up}):} La amplitud de las oscilaciones crece de manera progresiva. Durante esta etapa, el control de posición auxiliar basado en \textit{PFL} cumple su cometido, conteniendo el desplazamiento del carro ($x$) dentro de los límites físicos del riel del banco de pruebas.
+	
+	\item \textbf{Instante crítico de conmutación:} La lógica de control conmuta instantáneamente, desactivando el control por energía e inicializando el controlador por realimentación del estado. 
+	
+	\item \textbf{Fase de estabilización:} Tras la conmutación, el controlador lineal absorbe el impacto de la energía cinética remanente del péndulo. Se aprecia un transitorio rápido donde la variable angular $\theta$ converge hacia $\pi\,\text{rad}$. 
+\end{enumerate}
+
 \begin{figure}[!htbp]
 	\centering
-	\includegraphics[width=\textwidth]{Pictures/Hibrido_Secuencia_Swingup} 
-	\caption{Control híbrido, conmutación entre Swing-up y control de posición}
+	\includegraphics[width=0.8\textwidth]{Pictures/Hibrido_Secuencia_Swingup} 
+	\caption{Respuesta temporal del control híbrido}
 	\label{fig:resultados_conmutacion}
 \end{figure}
 \FloatBarrier
 
-Como se aprecia en los resultados, el control de posición evita que el carro sobrepase los límites físicos del riel e intenta mantenerlo cerca de la posición central ($x = 0 m$). Por otro lado, el control de energía provoca un crecimiento en la amplitud de las oscilaciones del péndulo para finalmente conmutar al control de posición cuando se supera el umbral angular establecido de $\theta > 3.04\pi$.
+La transferencia exitosa de esta arquitectura híbrida al hardware real convalida no solo la precisión del modelado dinámico global de la planta, sino también la implementación en el microcontrolador.
 
-Si se desea observar las demostraciones de los controles por separado y de la conmutación entre controles, se encuentran disponibles en el \href{https://github.com/MPV247/TFG_Control_MiguelPorcar}{\textbf{repositorio oficial del proyecto}} \cite{Porcar2026TFG}.
+Para complementar el análisis de las gráficas temporales, se han recopilado demostraciones en vídeo de los ensayos individuales y de la secuencia de conmutación híbrida completa en el \href{https://github.com/MPV247/TFG_Control_MiguelPorcar}{\textbf{repositorio oficial del proyecto}} \cite{Porcar2026TFG}.
 
 \newpage 
 \section{Comparativa entre los resultados alcanzados y los objetivos iniciales}
-Aquí hacer una tabla comparativa entre los objetivos propuestos y los resultados reales y los objetivos propuestos.
+\label{sec:comparativa_objetivos}
+
+\begin{table}[!htbp]
+	\centering
+	\caption{Evaluación del grado de cumplimiento de los objetivos iniciales}
+	\label{tab:cumplimiento_objetivos}
+	\begin{tabularx}{\textwidth}{>{\centering\arraybackslash}m{1.2cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X >{\centering\arraybackslash}m{2.5cm}}
+		\toprule
+		\textbf{Ref.} & \textbf{Objetivo Propuesto} & \textbf{Resultado Real / Evidencia Lograda} & \textbf{Estado / Evidencia} \\ 
+		\midrule
+		\textbf{O1} & Obtención del modelo matemático del sistema de péndulo invertido sobre carro. & Modelo dinámico no lineal deducido mediante formulación Euler-Lagrange. Identificación precisa de parámetros físicos (masas, inercias y fricciones). & \textbf{Completado} \\ \addlinespace
+		\textbf{O2} & Simulación en MATLAB/Simulink para la validación preliminar de los controladores e integración con ROS. & Entorno de simulación numérico desarrollado y validado. Configuración del nodo de comunicación y entorno virtual bajo la arquitectura ROS. & \textbf{Completado} \\ \addlinespace
+		\textbf{O3} & Diseño y evaluación en simulación de diferentes estrategias de control. & Diseño y simulación de controladores lineales mediante LQR y asignación de polos, realimentación del estado con acción integral y control por energía (\textit{Swing-up}). & \textbf{Completado} \\ \addlinespace
+		\textbf{O4} & Caracterización y puesta a punto del hardware de la planta real, incluyendo la etapa de potencia y la lectura de sensores. & Acondicionamiento de señales, reparación de componentes y compensación de no linealidades (zona muerta). & \textbf{Completado} \\ \addlinespace
+		\textbf{O5} & Desarrollo del firmware de bajo nivel en el microcontrolador, garantizando el control en tiempo real. & Configuración de los módulos \textit{eQEP}, \textit{ePWM} y \textit{SCI}. Implementación de la rutina de control como una interrupción periódica asociada al \textit{TIMER0} & \textbf{Completado} \\ \addlinespace
+		\textbf{O6} & Implementación, ajuste y validación experimental de los algoritmos de control sobre la unidad mecánica real. & Ensayos en planta real de 6 controladores posición y 5 variantes de \textit{Swing-up}. Conmutación determinista en tiempo real de la ley de control híbrida. & \textbf{Completado} \\ \addlinespace
+		\textbf{O7} & Documentación técnica del trabajo realizado y los resultados obtenidos. & Redacción de la memoria del proyecto y publicación de scripts, código fuente y datos en bruto en un repositorio abierto de acceso público. & \textbf{Completado} \\
+		\bottomrule
+	\end{tabularx}
+\end{table}
+\FloatBarrier
 
 \section{Evaluación de la planificación temporal y justificación de desviaciones}
+\label{sec:evaluacion_temporal}
+
+En esta sección se presenta una comparación entre la estimación de horas planificada originalmente para las tareas de la Sección~\ref{cap:planificacion} y la dedicación real a lo largo del desarrollo del proyecto.
+
+\begin{table}[!htbp]
+	\centering
+	\caption{Comparativa entre la planificación temporal estimada y la dedicación real}
+	\label{tab:desviaciones_temporales}
+	\begin{tabularx}{\textwidth}{>{\centering\arraybackslash}m{1.0cm} >{\raggedright\arraybackslash}X >{\centering\arraybackslash}m{1.0cm} >{\centering\arraybackslash}m{2.0cm} >{\centering\arraybackslash}m{2.0cm} >{\centering\arraybackslash}m{1.8cm}}
+		\toprule
+		\textbf{Ref.} & \textbf{Descripción de la Tarea} & \textbf{Obj.} & \textbf{Horas Est.} & \textbf{Horas Real} & \textbf{Desv. (h)} \\ 
+		\midrule
+		\textbf{T1} & Modelado matemático y físico & O1 & 30 h & 30 h & 0 h \\ \addlinespace
+		\textbf{T2} & Entorno de simulación e integración con ROS & O2 & 40 h & 52 h & +12 h \\ \addlinespace
+		\textbf{T3} & Diseño de estrategias de control en simulación & O3 & 30 h & 30 h & 0 h \\ \addlinespace
+		\textbf{T4} & Preparación del hardware y electrónica & O4 & 30 h & 30 h & 0 h \\ \addlinespace
+		\textbf{T5} & Desarrollo del firmware de bajo nivel & O5 & 70 h & 100 h & +30 h \\ \addlinespace
+		\textbf{T6} & Validación experimental en el sistema real & O6 & 50 h & 50 h & 0 h \\ \addlinespace
+		\textbf{T7} & Documentación técnica y cierre & O7 & 50 h & 65 h & +15 h \\ 
+		\midrule
+		\multicolumn{3}{l}{\textbf{Total acumulado}} & \textbf{300 h} & \textbf{357 h} & \textbf{+57 h} \\
+		\bottomrule
+	\end{tabularx}
+\end{table}
+\FloatBarrier
+
+A continuación, se justifican de manera pormenorizada las tres áreas críticas que experimentaron una desviación respecto al plan original:
+
+\begin{itemize}
+	\item \textbf{Desviación en T2 (Integración con ROS, +12 horas):} La falta de experiencia previa con el entorno \textit{ROS Toolbox} de MATLAB/Simulink requirió un periodo de adaptación para dominar la herramienta software. Por otro lado, la configuración por defecto basada en \textit{Fast DDS} introdujo pérdidas de paquetes y latencia, lo que obligó a realizar un proceso de estudio del problema y analizar posibles soluciones que concluyeron con el uso de  \textit{Cyclone DDS}. 
+	
+	\item \textbf{Desviación en T5 (Desarrollo del firmware de bajo nivel, +30 horas):} El desarrollo de software embebido supuso el mayor desafío temporal en términos absolutos, requiriendo 100 horas frente a las 70 estimadas. Esta desviación está directamente vinculada con la pronunciada curva de aprendizaje requerida al transicionar desde entornos de prototipado rápido y alto nivel (como \textit{Arduino IDE}) hacia la programación bare-metal en el microcontrolador, exigió un enfoque de desarrollo progresivo, donde cada módulo debió ser validado de forma aislada antes de integrarse.
+	
+	\item \textbf{Desviación en T7 (Documentación técnica y cierre, +15 horas):} Dado el volumen de contenido acumulado durante el desarrollo del proyecto (gráficas, datos en bruto, desarrollo matemático...), fue un reto idear una estructura del documento que permitiera seguir la evolución del proyecto de forma ordenada y visual. Luego fue la organización de ideas y la planificación del texto el factor que introdujo horas de trabajo adicionales para esta tarea.
+\end{itemize}
 
 \chapter{Conclusiones y posible trabajo futuro}
 
 \section{Conclusiones}
-El desarrollo de este Trabajo de Final de Grado ha permitido cumplir con éxito la totalidad de los objetivos generales y específicos propuestos al inicio del proyecto, culminando con la puesta en marcha, caracterización y estabilización en tiempo real de una plataforma de péndulo invertido subactuada mediante la arquitectura C2000. 
+El desarrollo de este Trabajo de Final de Grado ha permitido cumplir con éxito la totalidad de los objetivos propuestos al inicio del proyecto, culminando con la puesta en marcha y estabilización del sistema en el banco de pruebas del laboratorio. 
 
-A nivel técnico, el logro más significativo ha sido el rescate y la modernización completa de un equipo educativo clásico (el \textit{Digital Pendulum 33-005} de Feedback Instruments Ltd.) que se encontraba en un estado de obsolescencia tecnológica total tras más de veinticinco años en los laboratorios. Al sustituir la antigua electrónica propietaria y cerrada —ligada a sistemas operativos y versiones de software descatalogadas— por un microcontrolador de altas prestaciones moderno como el TMS320F280049C, se ha transformado el sistema en una plataforma de código abierto plenamente funcional. Esta intervención dota a la universidad de un banco de pruebas flexible y transparente para la docencia y la investigación en el control de bajo nivel.
+A nivel técnico, el logro más significativo ha sido el rescate y la modernización completa de un equipo educativo clásico (el \textit{Digital Pendulum 33-005} de Feedback Instruments Ltd.) que se encontraba sin uso tras más de veinticinco años en el laboratorio. Al sustituir la antigua electrónica propietaria y cerrada —ligada a sistemas operativos y versiones de software descatalogadas— por un microcontrolador como el TMS320F280049C, se ha transformado el sistema en una plataforma de código abierto plenamente funcional. Esta intervención dota a la universidad de un banco de pruebas flexible y transparente para la docencia y la investigación en el control de bajo nivel.
 
-El enfoque metodológico adoptado a través del Diseño Basado en Modelos (MBD) ha demostrado una gran eficacia. La obtención del modelo matemático mediante la formulación de Euler-Lagrange y la posterior identificación experimental de los parámetros físicos reales en el laboratorio (tales como las masas de los componentes, las ganancias de voltaje-fuerza y los coeficientes de fricción) permitieron construir una simulación numérica de alta fidelidad en MATLAB/Simulink. La precisión de este modelado se constató empíricamente en la fase de validación sobre la planta física: las ganancias del controlador por realimentación del estado sintetizadas mediante optimización LQR en el entorno virtual fueron capaces de estabilizar el péndulo inestable de forma directa, sin necesidad de recurrir a reajustes empíricos por prueba y error.
+El enfoque del Diseño Basado en Modelos (MBD) ha demostrado una gran eficacia. La obtención del modelo matemático mediante la formulación de Euler-Lagrange y la posterior identificación experimental de los parámetros físicos reales en el laboratorio  permitieron construir una simulación en MATLAB/Simulink que fue validada con éxito sobre la planta física. 
 
-Por otra parte, la transición al hardware real puso de manifiesto los desafíos inherentes a las plataformas físicas que quedan fuera del alcance de los modelos teóricos ideales. Fenómenos no lineales como la zona muerta del actuador o la elasticidad de la correa de transmisión generaban inicialmente un error estacionario en la posición horizontal del carro. La resolución de esta discrepancia mediante la adición de una acción integral integrada en el espacio de estados demostró la robustez del algoritmo, logrando anular por completo el error residual y garantizando un posicionamiento exacto sobre el raíl. Asimismo, la correcta implementación del control de energía para la maniobra de \textit{swing-up} y el ajuste de la lógica de conmutación automatizaron el ciclo completo de operación, elevando el péndulo desde el reposo hasta su vertical inestable de forma autónoma.
+Por otra parte, la transición al hardware real puso de manifiesto los desafíos que quedan fuera del alcance de los modelos teóricos ideales. Fenómenos no lineales como la zona muerta del actuador o la elasticidad de la correa de transmisión generaban inicialmente un error estacionario en la posición horizontal del carro. La resolución de esta discrepancia mediante la adición de una acción integral integrada en el espacio de estados demostró la necesidad de diseñar controladores robustos ante perturbaciones externas y discrepancias en el modelado. 
 
-En conclusión, este proyecto representa una aportación de valor para el Departamento de Ingeniería de Sistemas Industriales y Diseño de la Universitat Jaume I. Como culminación de la labor iniciada durante la Beca de Colaboración, se entrega una infraestructura didáctica completamente operativa que permitirá a futuros estudiantes de robótica comprender y experimentar con las restricciones críticas de determinismo temporal, gestión de interrupciones periódicas e instrumentación que definen a la capa reactiva real.
+En conclusión, este proyecto entrega una infraestructura didáctica completamente operativa que permitirá a futuros estudiantes de robótica comprender y experimentar con las restricciones críticas de determinismo temporal, gestión de interrupciones periódicas e instrumentación que definen a la capa reactiva real. Dominar esta plataforma ofrece una transferencia directa de conocimiento hacia sistemas mecánicos más complejos, tales como los exoesqueletos de rehabilitación médica o los robots bípedos, donde la robustez de la electrónica y del control dictan, la estabilidad y la seguridad del sistema global en que se apoyan capas superiores para desarrollar algoritmos más complejos.
 
 \section{Posible trabajo futuro}
-La arquitectura abierta y el firmware desarrollados en este proyecto sientan una base sólida sobre la cual se pueden plantear diferentes líneas de desarrollo para continuar expandiendo las capacidades de la plataforma en el futuro:
+La arquitectura abierta y el firmware desarrollados en este proyecto sientan una base sólida sobre la cual se pueden plantear diferentes líneas de desarrollo para continuar expandiendo las capacidades de la plataforma en el futuro dentro del ámbito de la robótica:
 
 \begin{itemize}
-	\item \textbf{Uso de algoritmos de control no basados en modelo (Reinforcement Learning):} Dado que el sistema físico cuenta con una infraestructura de adquisición de datos y telemetría en tiempo real ya consolidada, una línea de gran interés científico sería el despliegue de técnicas de Aprendizaje por Refuerzo (\textit{Reinforcement Learning}). Esto permitiría contrastar de forma empírica la robustez, la eficiencia y los tiempos de convergencia de las políticas de control aprendidas por agentes autónomos frente a las estrategias clásicas basadas en el modelo dinámico y el control de energía implementadas en este trabajo.
+	\item \textbf{Uso de algoritmos de control no basados en modelo (\textit{Reinforcement Learning}):} Dado que el sistema físico cuenta con una infraestructura de adquisición de datos y telemetría en tiempo real, una línea de gran interés científico sería el despliegue de técnicas de Aprendizaje por Refuerzo (\textit{Reinforcement Learning}). Esta aproximación, en pleno auge dentro de la robótica de locomoción avanzada y la manipulación de brazos robóticos, permitiría contrastar de forma empírica la robustez, la eficiencia y los tiempos de convergencia de las políticas de control aprendidas por agentes autónomos mediante redes neuronales frente a las estrategias clásicas basadas en el modelo dinámico y el control de energía implementadas en este trabajo.
 	
-	\item \textbf{Desarrollo de una plataforma de simulación Hardware-in-the-Loop (HIL):} Con el fin de aislar y evaluar el comportamiento del firmware de control de manera exhaustiva, se plantea la creación de un entorno HIL. Esto consistiría en conectar el microcontrolador C2000 real a una FPGA u otro microcontrolador encargado de ejecutar el comportamiento de la planta en tiempo real. Esta configuración permitiría validar el determinismo temporal de las tareas críticas y probar de forma segura la respuesta del controlador ante escenarios límite, fallos simulados en los sensores o perturbaciones extremas, eliminando por completo el riesgo de daños estructurales en la plataforma mecánica original.
+	\item \textbf{Desarrollo de una plataforma de simulación Hardware-in-the-Loop (HIL):} Con el fin de aislar y evaluar el comportamiento del firmware de control, se plantea la creación de un entorno \textit{HIL}. Esto consistiría en conectar el microcontrolador de la familia C2000 a una FPGA u otro microcontrolador encargado de ejecutar el comportamiento de la planta en tiempo real. Esta configuración permitiría validar el determinismo temporal de las tareas críticas y probar de forma segura la respuesta del controlador ante escenarios límite, fallos simulados en los sensores o perturbaciones extremas, eliminando por completo el riesgo de daños estructurales en la plataforma mecánica original.
 	
-	\item \textbf{Ampliación de la integración con ROS y gemelos digitales:} Se plantea explotar el protocolo de comunicación serie desarrollado para transferir un volumen de telemetría más denso y veloz hacia sistemas de nivel superior bajo el ecosistema ROS. Esto posibilitaría la monitorización remota a través de entornos gráficos tridimensionales avanzados o la sincronización del péndulo real con modelos predictivos en paralelo como gemelos digitales.
+	\item \textbf{Ampliación de la integración con ROS bajo el paradigma de Arquitectura Híbrida:} Se plantea explotar el protocolo de comunicación serie desarrollado para transferir un volumen de telemetría más denso y veloz hacia sistemas de nivel superior bajo el ecosistema ROS. Este despliegue permitiría consolidar la estructura formal de una arquitectura híbrida robotizada: el microcontrolador C2000 actuaría exclusivamente como la capa reactiva de tiempo real estricto (bucle de control síncrono e interrupciones), mientras que el nodo central en ROS operaría como la capa deliberativa (asumiendo tareas cognitivas y de tolerancia temporal flexible). Esta integración facilitaría la monitorización remota a través de entornos gráficos o la sincronización del péndulo real con modelos predictivos en paralelo que actúen como gemelos digitales.
 \end{itemize}
 
 
