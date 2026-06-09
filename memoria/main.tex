@@ -886,7 +886,10 @@ Si se analiza la Ecuación \ref{eq:matrices_dinamica_desarrollada} se deducen tr
 
  \begin{figure}[htpb]
 	\centering
-	\input{Pictures/figuras/modelado_dinamica_bloques.tex}
+	\resizebox{\textwidth}{!}{%
+		\input{Pictures/figuras/modelado_dinamica_bloques.tex}
+	}
+	
 	\caption{Diagrama de bloques del modelado}
 	\label{fig:bloques_modelado}
 \end{figure}
@@ -1022,7 +1025,7 @@ Donde el vector de estados $\mathbf{x}(t) = [x, \theta, \dot{x}, \dot{\theta}]^T
 	\item \textbf{Matriz de transmisión directa ($D$):} Representa el acoplamiento directo entre la entrada y la salida. Para este caso $D$ es cero, ya que la acción de control actúa sobre la dinámica del sistema primero. 
 \end{itemize}
 
-Para sistematizar la transición entre el modelo físico no lineal y el diseño del controlador de estabilidad, se parte de la ecuación \ref{eq:matrices_dinamica}. Al aplicar una linealización por Jacobiano alrededor del punto de equilibrio inestable $x = [0, \pi, 0, 0]^T$, las matrices de la dinámica se transforman en matrices de coeficientes constantes evaluadas en dicho punto \cite{Penarrocha_Tema7}:
+Para sistematizar la transición entre el modelo físico no lineal y el diseño del control de estabilidad, se parte de la ecuación \ref{eq:matrices_dinamica}. Al aplicar una linealización por Jacobiano alrededor del punto de equilibrio inestable $x = [0, \pi, 0, 0]^T$, las matrices de la dinámica se transforman en matrices de coeficientes constantes evaluadas en dicho punto \cite{Penarrocha_Tema7}:
 
 \begin{itemize}
 	\item \textbf{Inercia:} $\bar{M} = M(\bar{q})$
@@ -1064,6 +1067,7 @@ Para el caso en particular del péndulo invertido sobre carro, el sistema lineal
 	\label{eq:matrices_dinamica_lineal}
 \end{equation}
 
+\newpage
 El sistema descrito en la ecuación \ref{eq:matrices_dinamica_lineal} es bajo el que se diseñará el control de posición. Contra más lejos esté el péndulo de su vertical menos efectivo será el control, ya que las diferencias del sistema real respecto del lineal empiezan a acentuarse, este es uno de los motivos por el que se hace necesaria la conmutación entre control de posición y swing-up. 
 
 Definiendo el vector de estados como $\mathbf{x} = [q, \dot{q}]^T$, el sistema puede reescribirse en la representación compacta de espacio de estados mediante la siguiente expresión \cite{Penarrocha_Tema7}:
@@ -1396,7 +1400,7 @@ Para guiar el desarrollo de forma estructurada, el contenido de este capítulo s
 	
 	\item \textbf{Caracterización y compensación de la zona muerta:} Estudio experimental enfocado en conocer los efectos no lineales de la fricción estática del motor.
 	
-	\item \textbf{Identificación paramétrica experimental:} Metodología aplicada para aislar y calcular las constantes físicas reales de la planta de laboratorio y poder ajustar las simulaciones.
+	\item \textbf{Identificación experimental:} Metodología aplicada para aislar y calcular las constantes físicas reales de la planta de laboratorio y poder ajustar las simulaciones.
 	
 	\item \textbf{Implementación del algoritmo de control:} Integración y despliegue final de las leyes de control en el microcontrolador
 \end{itemize}
