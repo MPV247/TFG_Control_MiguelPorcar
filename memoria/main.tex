@@ -270,17 +270,17 @@ Finalmente, quiero dar las gracias a mis padres por su apoyo incondicional y pac
 \chapter{Introducción}
 \label{ch:introduccion}
 
-El objeto de este proyecto es el estudio, modernización y control en tiempo real de un péndulo invertido sobre carro. Aunque a primera vista pueda parecer un sistema mecánico simple, en el ámbito de la robótica este dispositivo constituye uno de los problemas fundamentales. Al tratarse de un \textbf{sistema no lineal}, \textbf{inestable} y \textbf{subactuado} —se dispone de menos actuadores que grados de libertad—, el péndulo invertido representa el banco de pruebas ideal para validar algoritmos de control que posteriormente se despliegan en sistemas robóticos complejos.
+El objetivo de este proyecto es el estudio, modernización y control en tiempo real de un péndulo invertido sobre carro. Aunque a primera vista pueda parecer un sistema mecánico simple, en el ámbito de la robótica este dispositivo constituye uno de los problemas fundamentales. Al tratarse de un \textbf{sistema no lineal}, \textbf{inestable} y \textbf{subactuado} —se dispone de menos actuadores que grados de libertad—, el péndulo invertido representa el banco de pruebas ideal para validar algoritmos de control que posteriormente se despliegan en sistemas robóticos complejos.
 
 \section{Estado del arte}
 La relevancia del péndulo invertido no reside únicamente en su interés académico, sino en su transferencia directa hacia la robótica. Lejos de ser un problema aislado, las ecuaciones dinámicas que gobiernan este sistema y las estrategias diseñadas para su estabilización constituyen la base teórica de tres grandes familias de robots: 
 \begin{itemize}[]
 	\item \textbf{Robots humanoides.}
-	\item \textbf{Vehículos móviles tipo \textit{Segway}.}
+	\item \textbf{Robots móviles tipo \textit{Segway}.}
 	\item \textbf{Exoesqueletos de rehabilitación médica.}
 \end{itemize}
 
-A continuación se examina el impacto y la adaptación del péndulo invertido en cada una de estas tres vertientes tecnológicas. Por otro lado, se concluye con el análisis de la arquitectura híbrida, la cual establece la organización jerárquica indispensable para coordinar el control de alto y bajo nivel en un sistema robótico.
+A continuación se examina la relación del péndulo invertido en cada una de estas tres vertientes tecnológicas y se concluye con el análisis de la arquitectura híbrida, la cual establece la organización jerárquica para coordinar el control de alto y bajo nivel en un sistema robótico.
 \newpage
 \paragraph{Locomoción bípeda y estabilidad en robótica humanoide}
 El reto de mantener una barra inestable en equilibrio vertical mediante el movimiento horizontal de su base es, en esencia, el mismo principio físico que permite a un robot humanoide mantenerse en pie o caminar. La complejidad dimensional de un robot bípedo se simplifica mediante el uso de modelos de orden reducido. El más extendido es el modelo de péndulo invertido lineal o \textit{Linear Inverted Pendulum Model} (LIPM) \cite{stephens2008}. 
@@ -327,7 +327,7 @@ Este enfoque no se limita a simulaciones teóricas; en el desarrollo del robot h
 Controlar con éxito el carro y la barra en el laboratorio implica, conocer la complejidad de la dinámica así como las técnicas de control para posteriormente dar el paso a mecanismos más complejos como los robots humanoides.
 
 \paragraph{Robótica móvil}
-Otra aplicación directa del sistema estudiado se encuentra en los robots móviles de auto-balanceados, cuyo ejemplo más conocido es el \textit{Segway}. Estos sistemas alteran la configuración física del péndulo sobre carro: en lugar de un raíl lineal, el eje de rotación del péndulo se sitúa directamente sobre el eje de dos ruedas motorizadas independientes.
+Otra aplicación directa se encuentra en los robots móviles de auto-balanceados, cuyo ejemplo más conocido es el \textit{Segway}. Estos sistemas alteran la configuración física del péndulo sobre carro: en lugar de un raíl lineal, el eje de rotación del péndulo se sitúa directamente sobre el eje de dos ruedas motorizadas independientes.
 
 Un vehículo de dos ruedas coaxiales puede realizar giros sobre su propio eje y desplazarse de manera ágil si se modela explícitamente como un problema de espacio de estados de péndulo invertido móvil \cite{grasser2002}. 
 \begin{figure}[ht]
@@ -353,7 +353,7 @@ El control debe interpretar constantemente la inclinación del chasis para accio
 \paragraph{Sistemas de asistencia y exoesqueletos de rehabilitación}
 En los últimos años, la intersección entre el control óptimo y la robótica biomédica ha cobrado un impulso significativo, especialmente en el desarrollo exoesqueletos para las piernas. Estas estructuras mecánicas acopladas al cuerpo humano requieren de una sincronización perfecta y segura para asistir la marcha de pacientes con afecciones motoras \cite{mashud2024}.
 
-En este escenario, el diseño de controladores avanzados capaces de optimizar el esfuerzo del actuador protegiendo la integridad del usuario es un requisito crítico. Técnicas de control óptimo como el Regulador Lineal Cuadrático (LQR) y el Control Predictivo Basado en Modelo (MPC) son ampliamente utilizadas en exoesqueletos para calcular los pares de asistencia necesarios en la cadera y la rodilla durante el ciclo de marcha \cite{mashud2024}. Dado que la dinámica de la pierna humana durante la marcha comparte la naturaleza pendular inestable, la experimentación con algoritmos LQR sobre plantas físicas de laboratorio ofrece una transferencia directa de conocimiento.
+En este escenario, el diseño de controladores avanzados capaces de optimizar el esfuerzo del actuador protegiendo la integridad del usuario es un requisito crítico. Técnicas de sintonización de controladores de forma automática como el Regulador Lineal Cuadrático (LQR) y el Control Predictivo Basado en Modelo (MPC) son ampliamente utilizadas en exoesqueletos para calcular los pares de asistencia necesarios en la cadera y la rodilla durante el ciclo de marcha \cite{mashud2024}. 
 
 \paragraph{Arquitectura híbrida y niveles jerárquicos}
 En el marco conceptual de la robótica y el control, las aplicaciones dinámicas exigen una organización estructurada en niveles jerárquicos. Este diseño responde formalmente al paradigma de las \textbf{arquitecturas híbridas}, las cuales logran mitigar las limitaciones de los enfoques puros mediante una estrategia de descomposición de tareas \cite{gavilan_agentes}:
@@ -374,7 +374,7 @@ En el marco conceptual de la robótica y el control, las aplicaciones dinámicas
 Esta segmentación presenta un paralelismo neurológico y cognitivo con el funcionamiento de los seres vivos \cite{gavilan_agentes}. Así, mientras la capa deliberativa emula los procesos de razonamiento y decisión conscientes, la capa reactiva actúa de manera homóloga a los reflejos motores. 
 Para explotar las ventajas de velocidad, robustez y tolerancia a perturbaciones propias de la aproximación reactiva, resulta imprescindible delegar en un hardware, diseñado específicamente para operar bajo \textbf{restricciones de tiempo real}.
 
-Finalmente, con el objetivo de contextualizar el trabajo realizado, el marco de este proyecto se sitúa en la capa reactiva (control a bajo nivel). Es por ello que durante todo el documento se prioriza el determinismo y el tiempo real en el estudio y desarrollo de algoritmos de control así como en la programación del software embebido. 
+Finalmente, con el objetivo de contextualizar el trabajo realizado, el marco de este proyecto se sitúa en la capa reactiva (control a bajo nivel). Es por ello que durante todo el documento se prioriza el determinismo y el tiempo real en el estudio y desarrollo de algoritmos de control así como en la programación del microcontrolador. 
  
 \newpage
 \section{Punto de partida}
@@ -391,7 +391,7 @@ En la Figura \ref{fig:esquema_sistema} se detalla la disposición de la unidad m
 
 Este equipo lleva en los laboratorios de la universidad más de 25 años. Debido a este largo periodo de tiempo, el punto de partida del proyecto se caracteriza por una obsolescencia tecnológica total:
 \begin{itemize}
-	\item \textbf{Electrónica antigua:} Según la documentación del fabricante, este sistema fue diseñado para operar con \textbf{MATLAB 5 y Windows 95}, utilizando protocolos de comunicación y tarjetas de expansión (bus ISA/PCI) que ya no existen en los ordenadores actuales \cite{feedback_external}. Esto lo convertía en una "caja negra" cerrada e incompatible con las herramientas de programación modernas, lo que justificaba su sustitución completa por un sistema de control digital actual.
+	\item \textbf{Electrónica antigua:} Según la documentación del fabricante, este sistema fue diseñado para operar con \textbf{MATLAB 5 y Windows 95}, utilizando protocolos de comunicación y tarjetas de expansión (bus ISA/PCI) que ya no existen en los ordenadores actuales \cite{feedback_external}. Esto lo convertía en una "caja negra" incompatible con las herramientas de programación modernas, lo que justificaba su sustitución completa por un sistema de control digital actual.
 \end{itemize}
 
 \begin{figure}[ht]
@@ -425,7 +425,7 @@ Este equipo lleva en los laboratorios de la universidad más de 25 años. Debido
 
 \FloatBarrier
 
-Luego el punto de partida es el \textbf{rescate de la unidad mecánica}, aprovechando aquellos elementos que aún conservaban su utilidad, como el motor. No obstante, ha sido necesario intervenir en otros componentes que, debido a su naturaleza como piezas de desgaste, presentaban falta de mantenimiento. Por otro lado, para solucionar el problema del control digital obsoleto, se decidió \textbf{sustituir la electrónica antigua} por tecnología actual (microcontrolador de la familia \textit{C2000 de Texas Instruments} y drivers modernos). Esta elección no solo permite que la unidad vuelva a ser plenamente funcional, sino que además la convierte en una plataforma de \textbf{código abierto}, facilitando que futuros usuarios puedan entender, modificar y mejorar el sistema sin las restricciones del hardware propietario original.
+Luego el punto de partida es el \textbf{rescate de la unidad mecánica}, aprovechando aquellos elementos que aún conservaban su utilidad, como el motor. Siendo necesario intervenir en otros componentes que, debido a su naturaleza como piezas de desgaste, presentaban falta de mantenimiento. Para la electrónica original, se decidió sustituirla por tecnología actual (microcontrolador de la familia \textit{C2000 de Texas Instruments} y drivers modernos). Esta elección no solo permite que la unidad vuelva a ser plenamente funcional, sino que además la convierte en una plataforma de \textbf{código abierto}, facilitando que futuros usuarios puedan entender, modificar y mejorar el sistema sin las restricciones del hardware propietario original.
 
 \section{Motivaciones}
 Las razones que impulsan el desarrollo de este proyecto combinan el interés personal por ciertos conocimientos adquiridos en el grado y la oportunidad de brindar un servicio a la universidad:
@@ -433,7 +433,7 @@ Las razones que impulsan el desarrollo de este proyecto combinan el interés per
 \begin{itemize}
 	\item \textbf{Personal y Vocacional:} Mi interés principal dentro del \textit{Grado en Inteligencia Robótica} reside en el control automático, la programación de sistemas empotrados en tiempo real y la electrónica. Este proyecto me permite profundizar en la asignatura de \textit{Sistemas Automáticos Avanzados}, enfrentándome al reto de diseñar algoritmos de control a bajo nivel con restricciones críticas de tiempo y hardware que imponen los sistemas físicos reales.
 	
-	\item \textbf{Curiosidad Científica:} Me motiva entender el funcionamiento interno de las máquinas. El control automático me brinda la oportunidad perfecta para aplicar de forma práctica la física y las matemáticas que subyacen a los sistemas robóticos capaces de equilibrarse y moverse con precisión. 
+	\item \textbf{Curiosidad Científica:} Me motiva entender el funcionamiento interno de las máquinas. El control automático me brinda la oportunidad perfecta para aplicar de forma práctica la física y las matemáticas de fondo en los sistemas robóticos capaces de equilibrarse y moverse con precisión. 
 	
 	\item \textbf{Profesional:} El uso de la familia de microcontroladores \textit{C2000 de Texas Instruments} constituye una motivación clave. Superar las capas de abstracción de \textit{Arduino IDE} para trabajar directamente sobre el registro y el hardware de los \textit{C2000} me permite entender el control de bajo nivel de forma real. Esta capacidad para gestionar sistemas complejos con estándares industriales constituye una ventaja competitiva.
 	
@@ -442,7 +442,6 @@ Las razones que impulsan el desarrollo de este proyecto combinan el interés per
 
 \section{Planificación}
 \label{cap:planificacion}
-Dentro de este apartado se aborda de forma lógica y ordenada los objetivos generales del proyecto y las tareas asociadas para lograr su consecución. Además se expone el \textit{Diagrma de Gantt} para tener una visión general de la planificación de tiempos por cada tarea. 
 
 \subsection{Objetivos}
 \label{cap:objetivos}
@@ -486,7 +485,7 @@ Cada tarea y subtarea tiene un objetivo asociado para facilitar el desarrollo de
 
 \subsubsection{T3. Diseño de estrategias de control en simulación (O3)}
 \begin{itemize}
-	\item \textbf{T3.1} Diseño del control de posición mediante regulador cuadrático lineal (LQR).
+	\item \textbf{T3.1} Diseño del control de posición por realimentación del estado.
 	\item \textbf{T3.2} Desarrollo del algoritmo de \textit{Swing-up} basado en el control de energía.
 \end{itemize}
 
@@ -499,7 +498,7 @@ Cada tarea y subtarea tiene un objetivo asociado para facilitar el desarrollo de
 
 \subsubsection{T5. Desarrollo del firmware de bajo nivel (O5)}
 \begin{itemize}
-	\item \textbf{T5.1} Configuración de periféricos de captura (eQEP) y generación de señales PWM en el microcontrolador.
+	\item \textbf{T5.1} Configuración de periféricos de captura (eQEP) y generación de señales PWM (ePWM) en el microcontrolador.
 	\item \textbf{T5.2} Programación del bucle de control con una rutina de interrupción periódica.
 	\item \textbf{T5.3} Implementación del protocolo de comunicación entre el microcontrolador y el ordenador para obtener la telemetría.
 \end{itemize}
@@ -523,7 +522,7 @@ Cada tarea y subtarea tiene un objetivo asociado para facilitar el desarrollo de
 
 Para garantizar la viabilidad del proyecto dentro de un marco temporal de \textbf{300 horas totales} y con la actividad presencial estructurada en jornadas de \textbf{6 horas diarias} (en horario de 08:00 a 14:00 de lunes a viernes). Se ha estructurado la planificación temporal en un cómputo de 30 horas semanales, fijando la duración total del cronograma en un periodo de \textbf{10 semanas}.
 
-En el Cuadro~\ref{tab:desglose_horas} se detalla la asignación horaria prevista para cada una de las tareas principales y sus objetivos asociados. Dado el desafío técnico que representa la programación a bajo nivel sobre el microcontrolador, se ha otorgado una prioridad destacada al desarrollo del firmware (T5), reservando un total de 70 horas para su correcta ejecución y depuración. Por otro lado, se reservan 30 horas para la redacción final de la memoria técnica y la preparación de la defensa (T7). No obstante, la labor de documentación se plantea como una actividad transversal y continua a lo largo del proyecto.
+En el Cuadro~\ref{tab:desglose_horas} se detalla la asignación horaria prevista para cada una de las tareas principales y sus objetivos asociados. Dado el desafío técnico que representa la programación a bajo nivel sobre el microcontrolador, se ha otorgado una prioridad destacada al desarrollo del firmware (T5), reservando un total de 70 horas para su correcta ejecución y depuración. Por otro lado, se reservan 50 horas para la redacción final de la memoria técnica y la preparación de la defensa (T7). No obstante, la labor de documentación se plantea como una actividad transversal y continua a lo largo del proyecto.
 
 \begin{table}[htbp]
 	\centering
@@ -756,14 +755,14 @@ Los requisitos no funcionales imponen condiciones y restricciones a la implement
 
 \newpage
 \section{Diseño del sistema}
-
 \begin{figure}[ht]
 	\centering
-	\input{Pictures/figuras/arquitectura_control.tex}
+	\resizebox{\textwidth}{!}{%
+		\input{Pictures/figuras/arquitectura_control.tex}
+	}
 	\caption{Arquitectura de control}
 	\label{fig:arquitectura_control}
 \end{figure}
-
 \FloatBarrier
 
 La arquitectura de control propuesta en la Figura \ref{fig:arquitectura_control} se aplica sobre un sistema subactuado tipo SIMO (Single Input Multiple Output). Para la etapa de realimentación, se implementa un observador del estado por inversión. Mediante este enfoque, los estados del sistema se obtienen exclusivamente a partir de las mediciones de salida, dado que, en el caso concreto de sistemas robóticos, el estado coincide con las salidas cinemáticas ($q, \dot{q}$).
