@@ -818,7 +818,7 @@ Esta elección de coordenadas establece de forma implícita el marco de trabajo 
 
 \FloatBarrier
 
-Una vez establecida la convención de signos del sistema y tener una visión esquemática ofrecida en la Figura \ref{fig:esquema_pendulo}, es momento de desarrollar la ecuación \ref{eq:lagrangiano} hasta obtener la forma matricial compacta de la Ecuación \ref{eq:matrices_dinamica}. La energía potencial y cinética del sistema en concreto se puede representar como \cite{tedrake2023}:
+Una vez establecida la convención de signos del sistema y tener una visión esquemática ofrecida en la Figura \ref{fig:esquema_pendulo}, es momento de desarrollar la Ecuación \ref{eq:lagrangiano} hasta obtener la forma matricial compacta de la Ecuación \ref{eq:matrices_dinamica}. La energía potencial y cinética del sistema en concreto se puede representar como \cite{tedrake2023}:
 \begin{equation}
 	\begin{cases}
 		E_{\text{c}} = \frac{1}{2}(M + m)\dot{x}^2 + m\dot{x}\dot{\theta} l\cos(\theta) + \frac{1}{2} (I +ml^2)\dot{\theta}^2 \\
@@ -941,7 +941,7 @@ En función del valor de la ganancia $K$ se conseguirá el objetivo en diferente
 Sin embargo, la ley de control definida en la Ecuación \ref{eq:ley_control_swp} no es directamente transferible al péndulo invertido sobre carro. Los motivos son los siguientes:
 
 \begin{itemize}[topsep=5pt, itemsep=4pt] % Ajuste fino de espacios
-	\item \textbf{Acción de control:} En la ley de control propuesta en \ref{eq:ley_control_swp} el actuador se encuentra en el eje del péndulo. El sistema definido en \ref{eq:matrices_dinamica_desarrollada} es subactuado y solo se tiene control sobre la fuerza de empuje del carro. Para aplicar la estrategia de energía, es necesario convertir la acción de control virtual (el par necesario en el eje) a una aceleración real del carro a través del acoplamiento dinámico del sistema.
+	\item \textbf{Acción de control:} En la ley de control propuesta en la Ecuación~\ref{eq:ley_control_swp} el actuador se encuentra en el eje del péndulo. El sistema definido en la Ecuación~\ref{eq:matrices_dinamica_desarrollada} es subactuado y solo se tiene control sobre la fuerza de empuje del carro. Para aplicar la estrategia de energía, es necesario convertir la acción de control virtual (el par necesario en el eje) a una aceleración real del carro a través del acoplamiento dinámico del sistema.
 	
 	\item \textbf{Límites físicos del riel:} Se hace indispensable, por tanto, un control multiobjetivo que regule la energía del péndulo garantizando simultáneamente la estabilidad de la posición del carro dentro del espacio de trabajo del riel.
 \end{itemize}
@@ -976,7 +976,7 @@ Donde $J = I + ml^2$ es el momento de inercia del péndulo respecto al eje de ro
 	\label{eq:despeje_theta}
 \end{equation}
 
-Al imponer la condición de linealización $\ddot{x} = \ddot{x}_{des}$ y sustituir la expresión \ref{eq:despeje_theta} en la ecuación del carro, se obtiene la fuerza $u$ necesaria para anular la dinámica no lineal del subsistema actuado \cite{tedrake2023}:
+Al imponer la condición de linealización $\ddot{x} = \ddot{x}_{des}$ y sustituir la  Ecuación~\ref{eq:despeje_theta} en la ecuación del carro, se obtiene la fuerza $u$ necesaria para anular la dinámica no lineal del subsistema actuado \cite{tedrake2023}:
 \begin{equation}
 		u = (M + m)\ddot{x}_{des} + ml\cos\theta \left[ \frac{1}{J} (-mgl\sin\theta - ml\cos\theta\ddot{x}_{des} - c_{\theta}\dot{\theta}) \right] - ml\dot{\theta}^2\sin\theta + c_x\dot{x}
 	\label{eq:ley_PFL}
@@ -990,7 +990,7 @@ Como se observa, la fuerza física aplicada ($u$) compensa dinámicamente la mas
 	\label{eq:aceleracion_deseada}
 \end{equation}
 
-La ley de control resultante en la ecuación \ref{eq:aceleracion_deseada} simboliza un compromiso entre la inyección de energía necesaria para el balanceo y la regulación de la posición del carro sobre el riel \cite{tedrake2023}. Se debe ajustar el peso de cada ganancia para obtener un equilibrio óptimo entre ambos controles. 
+La ley de control resultante en la Ecuación \ref{eq:aceleracion_deseada} simboliza un compromiso entre la inyección de energía necesaria para el balanceo y la regulación de la posición del carro sobre el riel \cite{tedrake2023}. Se debe ajustar el peso de cada ganancia para obtener un equilibrio óptimo entre ambos controles. 
 
 \begin{figure}[ht]
 	\centering
@@ -1025,7 +1025,7 @@ Donde el vector de estados $\mathbf{x}(t) = [x, \theta, \dot{x}, \dot{\theta}]^T
 	\item \textbf{Matriz de transmisión directa ($D$):} Representa el acoplamiento directo entre la entrada y la salida. Para este caso $D$ es cero, ya que la acción de control actúa sobre la dinámica del sistema primero. 
 \end{itemize}
 
-Para sistematizar la transición entre el modelo físico no lineal y el diseño del control de estabilidad, se parte de la ecuación \ref{eq:matrices_dinamica}. Al aplicar una linealización por Jacobiano alrededor del punto de equilibrio inestable $x = [0, \pi, 0, 0]^T$, las matrices de la dinámica se transforman en matrices de coeficientes constantes evaluadas en dicho punto \cite{Penarrocha_Tema7}:
+Para sistematizar la transición entre el modelo físico no lineal y el diseño del control de estabilidad, se parte de la Ecuación \ref{eq:matrices_dinamica}. Al aplicar una linealización por Jacobiano alrededor del punto de equilibrio inestable $x = [0, \pi, 0, 0]^T$, las matrices de la dinámica se transforman en matrices de coeficientes constantes evaluadas en dicho punto \cite{Penarrocha_Tema7}:
 
 \begin{itemize}
 	\item \textbf{Inercia:} $\bar{M} = M(\bar{q})$
@@ -1068,7 +1068,7 @@ Para el caso en particular del péndulo invertido sobre carro, el sistema lineal
 \end{equation}
 
 \newpage
-El sistema descrito en la ecuación \ref{eq:matrices_dinamica_lineal} es bajo el que se diseñará el control de posición. Contra más lejos esté el péndulo de su vertical menos efectivo será el control, ya que las diferencias del sistema real respecto del lineal empiezan a acentuarse, este es uno de los motivos por el que se hace necesaria la conmutación entre control de posición y swing-up. 
+El sistema descrito en la Ecuación \ref{eq:matrices_dinamica_lineal} es bajo el que se diseñará el control de posición. Contra más lejos esté el péndulo de su vertical menos efectivo será el control, ya que las diferencias del sistema real respecto del lineal empiezan a acentuarse, este es uno de los motivos por el que se hace necesaria la conmutación entre control de posición y swing-up. 
 
 Definiendo el vector de estados como $\mathbf{x} = [q, \dot{q}]^T$, el sistema puede reescribirse en la representación compacta de espacio de estados mediante la siguiente expresión \cite{Penarrocha_Tema7}:
 
@@ -1095,7 +1095,7 @@ Definiendo el vector de estados como $\mathbf{x} = [q, \dot{q}]^T$, el sistema p
 Las principales ventajas de aplicar esta técnica para la obtención de la representación del sistema en el espacio de estados son:
 
 \begin{itemize}
-	\item \textbf{Abstracción y generalización del modelado:} La técnica es escalable a cualquier sistema que cumpla la dinámica definida en la ecuación \ref{eq:matrices_dinamica}. Permite centrarse en el diseño del controlador en lugar de obtener de forma manual las matrices $A$ y $B$ para cada sistema concreto. 
+	\item \textbf{Abstracción y generalización del modelado:} La técnica es escalable a cualquier sistema que cumpla la dinámica definida en la Ecuación \ref{eq:matrices_dinamica}. Permite centrarse en el diseño del controlador en lugar de obtener de forma manual las matrices $A$ y $B$ para cada sistema concreto. 
 	
 	\item \textbf{Eficiencia en la implementación:} La transición a un marco matricial facilita enormemente la implementación en lenguajes de programación de alto nivel, como \textit{MATLAB} o \textit{Python} (mediante la librería \textit{NumPy}). El programador simplemente define las matrices ($\bar{M}, \bar{C}, \bar{G}\ y\ \bar{B}$) luego el propio lenguaje obtiene en la salida la representación en espacio de estados ($A\ y \ B$). 
 \end{itemize}
@@ -1131,7 +1131,7 @@ Desglosando el vector de ganancias $K = [K_1, K_2, K_3, K_4]$, la fuerza aplicad
 	\label{fig:control_SS}
 \end{figure}
 
-La figura \ref{fig:control_SS} muestra como el controlador obtiene la acción de control a aplicar en cada instante de tiempo en función de los estados y la referencia. Por otro lado, en comparación con la ecuación \ref{eq:def_espacio_estados}, el sistema en bucle cerrado representado en espacio de estados es \cite{Penarrocha_Tema8}:
+La figura \ref{fig:control_SS} muestra como el controlador obtiene la acción de control a aplicar en cada instante de tiempo en función de los estados y la referencia. Por otro lado, en comparación con la Ecuación \ref{eq:def_espacio_estados}, el sistema en bucle cerrado representado en espacio de estados es \cite{Penarrocha_Tema8}:
 \begin{equation}
 	\begin{cases}
 		\dot{x}(t) = Ax(t) + B(Kr\cdot r(t) - K \cdot x(t)) = (A -BK)x(t) + BKr(t)\\
@@ -1241,7 +1241,7 @@ Finalmente la interacción entre el mundo digital y el mundo físico es posible 
 
 \subsection{Especificación de componentes de hardware}
 
-Para la implementación física del sistema de control diseñado, se han seleccionado componentes que garantizan un compromiso óptimo entre precisión de lectura, capacidad de procesamiento y tiempo de respuesta. En la Tabla \ref{tab:componentes_hardware} se resumen los elementos principales del prototipo.
+Para la implementación física del sistema de control diseñado, se han seleccionado componentes que garantizan un compromiso óptimo entre precisión de lectura, capacidad de procesamiento y tiempo de respuesta. En el Cuadro~\ref{tab:componentes_hardware} se resumen los elementos principales del prototipo.
 
 \begin{table}[ht]
 	\centering
@@ -1359,7 +1359,7 @@ El movimiento del carro se realiza mediante un motor de corriente continua de im
 	\end{tabular}
 \end{table}
 
-Los datos del fabricante expuestos en la tabla \ref{tab:datos_motor} son vitales para caracterizar actuador y estimar la relación entre el voltaje aplicado en sus bornes y la fuerza horizontal que empuja el carro. 
+Los datos del fabricante expuestos en el Cuadro~\ref{tab:datos_motor} son vitales para caracterizar actuador y estimar la relación entre el voltaje aplicado en sus bornes y la fuerza horizontal que empuja el carro. 
 
 \begin{figure}[ht]
 	\centering
@@ -1389,12 +1389,12 @@ El sistema utiliza una transmisión por correa dentada (Figura \ref{fig:motor_re
 
 \chapter{Desarrollo}
 
-Este capítulo constituye el núcleo de este trabajo, abarcando desde la validación en entornos virtuales hasta el despliegue definitivo de las leyes de control sobre la plataforma física. Adoptando el paradigma del \textit{Diseño Basado en Modelos} (MBD), el desarrollo se organiza en un flujo de trabajo que unifica la simulación numérica, la programación a bajo nivel del hardware y la identificación experimental de la dinámica real del sistema.
+Este capítulo constituye el núcleo del trabajo, abarcando desde la validación en entornos virtuales hasta el despliegue definitivo de las leyes de control sobre la plataforma física. Adoptando el paradigma del \textit{Diseño Basado en Modelos} (MBD), el desarrollo se organiza en un flujo de trabajo que unifica la simulación numérica, la programación a bajo nivel del hardware y la identificación experimental de la dinámica real del sistema.
 
 Para guiar el desarrollo de forma estructurada, el contenido de este capítulo se organiza en cinco bloques fundamentales:
 
 \begin{itemize}
-	\item \textbf{Trabajo de simulación:} Modelado matemático inicial en \textit{MATLAB/Simulink} y diseño de las estrategias de control (posición, algoritmo de levantamiento o \textit{swing-up} y lógica de conmutación). Asimismo, se detalla la integración de \textit{ROS} dentro de la simulación.
+	\item \textbf{Trabajo de simulación:} Modelado matemático inicial en \textit{MATLAB/Simulink} y diseño de las estrategias de control (posición, algoritmo de levantamiento o \textit{swing-up} y lógica de conmutación). También se detalla la integración de \textit{ROS} dentro de la simulación.
 	
 	\item \textbf{Programación del microcontrolador:} Configuración de bajo nivel y arquitectura del firmware sobre el microcontrolador \textit{TMS320F280049C}. Se detalla la puesta en marcha de los módulos periféricos esenciales:\textit{ eQEP} para la lectura encoders, \textit{ePWM} para la actuación del motor, y el periférico \textit{SCI} para el envío de la telemetría por el puerto serie.
 	
@@ -1405,14 +1405,14 @@ Para guiar el desarrollo de forma estructurada, el contenido de este capítulo s
 	\item \textbf{Implementación del algoritmo de control:} Integración y despliegue final de las leyes de control en el microcontrolador
 \end{itemize}
 
-Por último, cabe destacar que, si bien a lo largo de este documento se incorporan bloques de código específicos para describir detalles de implementación, el grueso del desarrollo se encuentra completamente disponible en el \href{https://github.com/MPV247/TFG_Control_MiguelPorcar}{\textbf{repositorio oficial del proyecto}} \cite{Porcar2026TFG}.
+Cabe destacar que si bien a lo largo de este documento se incorporan bloques de código específicos para describir detalles de implementación, el grueso del desarrollo se encuentra completamente disponible en el \href{https://github.com/MPV247/TFG_Control_MiguelPorcar}{\textbf{repositorio oficial del proyecto}} \cite{Porcar2026TFG}.
 
 \newpage
 \section{Trabajo de simulación}
 
 \subsection{Modelado del sistema en Simulink}
 \label{cap:modelado_sim}
-El punto de partida consistió en trasladar el modelo representado en la Ecuación \ref{eq:matrices_dinamica_desarrollada} hacia un entorno de simulación numérica en \textit{MATLAB/Simulink}. Para una primera aproximación, se emplearon los parámetros de masas, longitudes, inercias y rozamientos proporcionados en la documentación original del fabricante, los cuales se detallan en la Tabla \ref{tab:parametros_fabricante}. No obstante, debido a que la unidad mecánica cuenta con más de 25 años de antigüedad, posteriormente se llevó a cabo la identificación experimental de sus parámetros reales.
+El punto de partida consistió en trasladar el modelo representado en la Ecuación \ref{eq:matrices_dinamica_desarrollada} hacia un entorno de simulación numérica en \textit{MATLAB/Simulink}. Para una primera aproximación, se emplearon los parámetros de masas, longitudes, inercias y rozamientos proporcionados en la documentación original del fabricante, los cuales se detallan en el Cuadro \ref{tab:parametros_fabricante}. No obstante, debido a que la unidad mecánica cuenta con más de 25 años de antigüedad, posteriormente se llevó a cabo la identificación experimental de sus parámetros reales.
 
 \begin{table}[ht]
 	\centering
@@ -1432,7 +1432,7 @@ El punto de partida consistió en trasladar el modelo representado en la Ecuaci�
 	\end{tabular}
 \end{table}
 
-Este enfoque metodológico responde firmemente al paradigma del \textit{Diseño Basado en Modelos} (MBD). Disponer de un modelo matemático bien calibrado para asegurar una transición eficiente entre la teoría y la práctica. Al emular con precisión el comportamiento de la planta real, el entorno virtual permite verificar de manera exhaustiva la estabilidad y robustez de los algoritmos diseñados antes de su implementación en el hardware, mitigando por completo el riesgo de daños mecánicos o eléctricos por pérdidas de control. 
+Este enfoque responde al paradigma del \textit{Diseño Basado en Modelos} (MBD). Disponer de un modelo matemático bien calibrado para asegurar una transición eficiente entre la teoría y la práctica. Al emular con precisión el comportamiento de la planta real, el entorno virtual permite verificar de manera exhaustiva la estabilidad y robustez de los algoritmos diseñados antes de su implementación en el hardware, mitigando por completo el riesgo de daños mecánicos o eléctricos por pérdidas de control. 
 
 \begin{figure}[ht]
 	\centering
@@ -1457,8 +1457,7 @@ Una vez modelada la dinámica del sistema de péndulo invertido sobre carro e im
 Como se ilustra en la Figura~\ref{fig:sim_control_lqr}, la arquitectura implementada establece una dinámica en bucle cerrado donde el bloque del controlador procesa de forma continua los vectores de estado medidos ($q$ y $\dot{q}$). A partir de esta información, el algoritmo computa la acción de control óptima, denotada como la fuerza de empuje $u$. El fundamento matemático detrás de esta técnica fue abordado en el desarrollo teórico de la Sección~\ref{cap:control_kx}.
 
 La ley de control se reduce conceptualmente a una combinación lineal de los estados multiplicados por un vector de ganancias $K$, expresado formalmente como $u = K(\mathrm{ref} - x)$. 
-
-Consecuentemente, como se aprecia en el detalle del diagrama de bloques, esta ley de control se materializa en \textit{Simulink} mediante un único bloque de ganancia matricial (denotado en la simulación como \texttt{K*u}).
+Esta ley de control se materializa en \textit{Simulink} mediante un único bloque de ganancia matricial (denotado en la simulación como \texttt{K*u}).
 
 Para concluir, la obtención numérica de los vectores de ganancia $K$ dentro del entorno de \textit{MATLAB}, se optó por las dos metodologías clásicas de control propuestas en la Sección \ref{cap:control_kx}:
 \begin{itemize}[]
@@ -1645,7 +1644,7 @@ Posteriormente, se desglosa con mayor detalle la configuración a bajo nivel de 
 
 Por último, el firmware completo se encuentra estructurado como un proyecto listo para ser importado, compilado y cargado en el microcontrolador. Asimismo, la versión definitiva del sistema, junto con los diversos códigos y programas de prueba desarrollados durante las fases experimentales intermedias (como los ensayos de la zona muerta o el ajuste individual de controladores), están disponibles de forma organizada en el directorio \texttt{firmware\_C2000} del \href{https://github.com/MPV247/TFG_Control_MiguelPorcar}{\textbf{repositorio oficial del proyecto}} \cite{Porcar2026TFG}.
 \paragraph{Ecosistema de desarrollo}
-El desarrollo del firmware, como se comentó en el Capítulo~\ref{cap:analisis}, se apoya en el entorno de desarrollo integrado (IDE) oficial de Texas Instruments, \textbf{Code Composer Studio (CCS)} \cite{ti_ccs}. Este entorno optimiza la compilación para la arquitectura C28x y proporciona herramientas avanzadas de depuración (\textit{debug}). Gracias a ellas, es posible ejecutar el código línea por línea, así como inspeccionar y monitorizar el valor de los registros del sistema en tiempo real durante la ejecución del programa.
+El desarrollo del firmware, como se expuso en el Capítulo~\ref{cap:analisis}, se apoya en el entorno de desarrollo integrado (IDE) oficial de Texas Instruments, \textbf{Code Composer Studio (CCS)} \cite{ti_ccs}. Este entorno optimiza la compilación para la arquitectura C28x y proporciona herramientas avanzadas de depuración (\textit{debug}). Gracias a ellas, es posible ejecutar el código línea por línea, además de inspeccionar y monitorizar el valor de los registros del sistema en tiempo real durante la ejecución del programa.
 
 Además para programar el microcontrolador \textbf{TMS320F280049C} en el IDE, se tiene la SDK \textbf{C2000Ware} que ofrece tres metodologías de acceso a los periféricos y registros de memoria, cada una con un compromiso (\textit{trade-off}) diferente entre nivel de abstracción, legibilidad y control sobre la programación: el acceso directo por dirección, el mapeo mediante estructuras de campos de bits (\textit{Bit-fields}) y el uso de la librería de funciones \textit{DriverLib} \cite{ti_c2000ware_drivers}. 
 
@@ -1704,7 +1703,7 @@ Antes de proceder con el desarrollo software, se define la interfaz física del 
 	\label{fig:launchpad_pinout}
 \end{figure}
 
-A partir de la distribución espacial provista por el fabricante y considerando los requerimientos operativos (actuación del motor, lectura de encoders y comunicación externa), se seleccionan los pines atendiendo a funcionalidad y localización en la tarjeta de desarrollo. En la Tabla~\ref{tab:pinout_sistema} se consolida el mapeo definitivo de pines
+A partir de la distribución espacial provista por el fabricante y considerando los requerimientos operativos (actuación del motor, lectura de encoders y comunicación externa), se seleccionan los pines atendiendo a funcionalidad y localización en la tarjeta de desarrollo. En el Cuadro~\ref{tab:pinout_sistema} se consolida el mapeo definitivo de pines
 \begin{table}[ht]
 	\centering
 	\caption{Mapeo definitivo de entradas y salidas}
@@ -1762,7 +1761,7 @@ Esta decodificación no solo cuadriplica ($\times$4) la resolución del encoder,
 \end{figure}
 \FloatBarrier
 
-En la Tabla~\ref{tab:config_eqep} se detalla la configuración final asignada a los campos de bits de este módulo para conseguir la decodificación en cuadratura. Si se desea conocer en detalle el mapa de memoria y configuraciones alternativas consulte el Anexo \ref{ap:registros_eQEP}.
+En el Cuadro~\ref{tab:config_eqep} se detalla la configuración final asignada a los campos de bits de este módulo para conseguir la decodificación en cuadratura. Si se desea conocer en detalle el mapa de memoria y configuraciones alternativas consulte el Anexo \ref{ap:registros_eQEP}.
 
 \begin{table}[htbp]
 	\centering
@@ -1828,7 +1827,7 @@ Debido a esta combinación de eventos implementada en el firmware, el ciclo de t
 	\item \textbf{\texttt{CMPA} = \texttt{TBPRD}:} El umbral de comparación se sitúa en el vértice superior de la rampa triangular, maximizando el tiempo en que la señal permanece en nivel lógico alto. Esto se traduce en un \textbf{ciclo de trabajo del 100\,\%} (el motor opera a su máxima velocidad de giro al recibir el valor eficaz completo de la fuente).
 \end{itemize}
 
-En la Tabla~\ref{tab:config_epwm} se sintetiza la configuración definitiva cargada en los campos de bits de la instancia \texttt{EPwm1Regs} para establecer una frecuencia de conmutación de $1~\text{kHz}$ atendiendo a criterios de zona muerta en el actuador y no linealidades debidas a la fricción estática que se abordan en la Sección \ref{cap:zona_muerta}.
+En el Cuadro~\ref{tab:config_epwm} se sintetiza la configuración definitiva cargada en los campos de bits de la instancia \texttt{EPwm1Regs} para establecer una frecuencia de conmutación de $1~\text{kHz}$ atendiendo a criterios de zona muerta en el actuador y no linealidades debidas a la fricción estática que se abordan en la Sección \ref{cap:zona_muerta}.
 
 \begin{table}[htbp]
 	\centering
@@ -2125,7 +2124,7 @@ Como la transmisión  es un sistema de correa dentada y polea de radio efectivo 
 	F = \frac{\tau}{r} = \frac{K_t}{r \cdot R} \cdot u
 \end{equation}
 
-Sustituyendo con los parámetros del fabricante de la Tabla~\ref{tab:datos_motor} ($K_t = 0.068\,\text{Nm/A}$, $R = 5.5\,\Omega$ y un radio medido de la polea de $r = 0.025\,\text{m}$), se obtiene la siguiente relación:
+Sustituyendo con los parámetros del fabricante del Cuadro~\ref{tab:datos_motor} ($K_t = 0.068\,\text{Nm/A}$, $R = 5.5\,\Omega$ y un radio medido de la polea de $r = 0.025\,\text{m}$), se obtiene la siguiente relación:
 \begin{equation}
 	F_{\text{teórica}} = \frac{0.068}{0.025 \cdot 5.5} \cdot u \approx 0.5 \cdot u
 \end{equation}
@@ -2409,7 +2408,7 @@ Donde cada uno de los parámetros que intervienen en el cálculo se definen a co
 	\item $A_n$: Amplitud angular del pico situado $n$ períodos después del pico inicial ($\text{rad}$ o grados), la cual se ve atenuada debido a la pérdida de energía mecánica por fricción.
 \end{itemize}
 
-A partir del ensayo, se extrajeron las magnitudes numéricas correspondientes a una ventana de observación de dos minutos ($120\,\text{s}$), contabilizando un total de $n = 108$ oscilaciones completas ($n \approx 120/T$). Los valores experimentales junto con los datos del fabricante, quedan consolidados en la Tabla~\ref{tab:valores_pendulo}.
+A partir del ensayo, se extrajeron las magnitudes numéricas correspondientes a una ventana de observación de dos minutos ($120\,\text{s}$), contabilizando un total de $n = 108$ oscilaciones completas ($n \approx 120/T$). Los valores experimentales junto con los datos del fabricante, quedan consolidados en el Cuadro~\ref{tab:valores_pendulo}.
 
 \begin{table}[htbp]
 	\centering
@@ -2435,7 +2434,7 @@ Finalmente, sustituyendo este conjunto de valores en la expresión~(\ref{eq:deca
 
 \subsection{Validación y contraste con los parámetros del fabricante}
 
-Para evaluar la desviación entre las aproximaciones teóricas y la realidad física del laboratorio, la Tabla~\ref{tab:resumen_y_comparativa} consolida una comparativa directa entre los datos proporcionados por el fabricante y los valores obtenidos empíricamente.
+Para evaluar la desviación entre las aproximaciones teóricas y la realidad física del laboratorio, el Cuadro~\ref{tab:resumen_y_comparativa} consolida una comparativa directa entre los datos proporcionados por el fabricante y los valores obtenidos empíricamente.
 
 \begin{table}[htbp]
 	\centering
@@ -2458,7 +2457,7 @@ Para evaluar la desviación entre las aproximaciones teóricas y la realidad fí
 	\end{tabular}
 \end{table}
 
-El análisis comparativo de la Tabla~\ref{tab:resumen_y_comparativa} revela discrepancias de gran interés práctico, justificando plenamente la necesidad de realizar una identificación experimental antes de abordar el diseño del controlador:
+El análisis comparativo del Cuadro~\ref{tab:resumen_y_comparativa} revela discrepancias de gran interés práctico, justificando plenamente la necesidad de realizar una identificación experimental antes de abordar el diseño del controlador:
 \begin{itemize}
 	\item \textbf{Ajuste inercial del carro ($M$):} La masa efectiva obtenida experimentalmente ($1.0036\,\mathrm{kg}$) resulta muy próxima y del mismo orden de magnitud que la especificada por el fabricante ($1.12\,\mathrm{kg}$). Esta ligera reducción es habitual al haber estimado la dinámica en bucle cerrado, validando la consistencia del modelo.
 	
@@ -3040,7 +3039,7 @@ Al sustituir las Ecuaciones \ref{lagrange1} y \ref{lagrange2} en la estructura d
 
 \subsection{Análisis de la dinámica eléctrica del actuador}
 \label{ap:dinamica_electrica}
-Si se quiere determinar la frecuencia óptima de operación, se debe analizar en primer lugar la constante de tiempo eléctrica ($\tau_e$) del actuador a partir de su circuito equivalente R-L \cite{pm_ab022}, si atendemos a los parámetros del fabricante (Tabla \ref{tab:datos_motor}):
+Si se quiere determinar la frecuencia óptima de operación, se debe analizar en primer lugar la constante de tiempo eléctrica ($\tau_e$) del actuador a partir de su circuito equivalente R-L \cite{pm_ab022}, si atendemos a los parámetros del fabricante (Cuadro~\ref{tab:datos_motor}):
 
 \begin{equation}
 	\tau_e = \frac{L}{R} = \frac{7.2\,\text{mH}}{5.5\,\Omega} \approx 1.3\,\text{ms}
