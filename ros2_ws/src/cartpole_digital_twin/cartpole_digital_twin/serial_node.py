@@ -47,7 +47,7 @@ class SerialJointPublisher(Node):
                 # Trama esperada: x, ref_x, theta, ref_theta, x_dot, theta_dot, u (7 elementos)
                 parts = line.split(',')
 
-                if len(parts) == 7:
+                if len(parts) >= 7:
                     try:
                         # Extraemos estrictamente lo necesario para el Gemelo Digital
                         pos_carro = float(parts[0])     # x (m) -> Primera columna
