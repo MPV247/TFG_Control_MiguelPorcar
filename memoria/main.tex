@@ -1158,7 +1158,7 @@ Bajo esta configuración, la dinámica del sistema en bucle cerrado queda gobern
  
 \subsection{Lógica de conmutación}
 \label{cap:log_conmu}
-Finalmente, la lógica de conmutación atiende a un umbral angular. Este bloque de decisión monitoriza de forma continua la posición angular estimada del péndulo ($\hat{\theta}$). Si el péndulo ingresa dentro de una vecindad acotada en torno a la vertical absoluta (\textit{el punto de linealización del sistema}), la lógica conmuta al control por realimentación del estado En caso contrario, el sistema mantiene activo el controlador de swing-up para elevar el mecanismo. Este comportamiento híbrido se formaliza en el siguiente pseudocódigo:
+Finalmente, la lógica de conmutación atiende a un umbral angular. Este bloque de decisión monitoriza de forma continua la posición angular estimada del péndulo ($\hat{\theta}$). Si el péndulo ingresa dentro de una vecindad acotada en torno a la vertical absoluta (\textit{el punto de linealización del sistema}), la lógica conmuta al control por realimentación del estado. En caso contrario, el sistema mantiene activo el controlador de swing-up para elevar el mecanismo. Este comportamiento híbrido se formaliza en el siguiente pseudocódigo:
 
 \begin{algorithm}[H]
 	\caption{Lógica de Conmutación}
@@ -1385,7 +1385,7 @@ Los datos del fabricante expuestos en el Cuadro~\ref{tab:datos_motor} son vitale
 	\label{fig:grupo_motor}
 \end{figure}
 
-El sistema utiliza una transmisión por correa dentada (Figura \ref{fig:motor_real}) para convertir el movimiento rotativo del motor en el desplazamiento lineal del carro, minimizando las holguras mecánicas.
+El sistema utiliza una transmisión por correa dentada (Figura \ref{fig:motor_real}) para convertir el movimiento rotativo del motor en el desplazamiento lineal del carro, minimizando las holguras mecánicas. También destaca el desgaste de la correa original que provocaba un deslizamiento sobre la polea que impedía la transmisión eficaz de fuerza en todos los puntos del riel. 
 
 \chapter{Desarrollo}
 
@@ -2082,9 +2082,9 @@ __interrupt void ident_zona_muerta(void){
 
 \subsection{Influencia de la frecuencia de PWM y selección de diseño}
 
-Por cuestiones físicas intrínsecas al bobinado del motor DC, la frecuencia de la señal PWM modifica el umbral de la zona muerta. Un análisis detallado de la constante de tiempo eléctrica del motor ($\tau_e = L/R$) revela un límite teórico de conmutación de $153.84\,\text{Hz}$ para que la corriente se establezca plenamente en cada ciclo, tal y como se justifica analíticamente en el Anexo~\ref{ap:dinamica_electrica}. 
+Por cuestiones físicas intrínsecas al bobinado del motor DC, la frecuencia de la señal PWM modifica el umbral de la zona muerta y el comportamiento del actuador. Un análisis detallado de la constante de tiempo eléctrica del motor ($\tau_e = L/R$) así como de las limitaciones del puente H, revela el dominio de la frecuencia a analizar para determinar la frecuencia de la señal a utilizar en el bucle de control (Anexo~\ref{ap:dinamica_electrica}). 
 
-Para contrastar este principio y seleccionar la mejor configuración para el bucle de control, se ejecutó el protocolo de caracterización barriendo cinco frecuencias diferentes mediante la manipulación de los registros de pre-escalado del periférico \texttt{ePWM1} (ver Anexo~\ref{ap:registros_ePWM}). Las curvas experimentales resultantes se exponen en la Figura~\ref{fig:curvas_zona_muerta}.
+Se ejecutó el protocolo de caracterización barriendo cinco frecuencias diferentes mediante la manipulación de los registros de pre-escalado del periférico \texttt{ePWM1} (ver Anexo~\ref{ap:registros_ePWM}). Las curvas experimentales resultantes se exponen en la Figura~\ref{fig:curvas_zona_muerta}.
 
 \begin{figure}[htbp]
 	\centering
@@ -2457,7 +2457,7 @@ Para evaluar la desviación entre las aproximaciones teóricas y la realidad fí
 	\end{tabular}
 \end{table}
 
-El análisis comparativo del Cuadro~\ref{tab:resumen_y_comparativa} revela discrepancias de gran interés práctico, justificando plenamente la necesidad de realizar una identificación experimental antes de abordar el diseño del controlador:
+El análisis comparativo del Cuadro~\ref{tab:resumen_y_comparativa} revela discrepancias entre los valores experimentales y los valores del fabricante expuestos en el Cuadro~\ref{tab:parametros_fabricante}, justificando plenamente la necesidad de realizar una identificación experimental antes de abordar el diseño del controlador:
 \begin{itemize}
 	\item \textbf{Ajuste inercial del carro ($M$):} La masa efectiva obtenida experimentalmente ($1.0036\,\mathrm{kg}$) resulta muy próxima y del mismo orden de magnitud que la especificada por el fabricante ($1.12\,\mathrm{kg}$). Esta ligera reducción es habitual al haber estimado la dinámica en bucle cerrado, validando la consistencia del modelo.
 	
@@ -2844,7 +2844,7 @@ El enfoque del Diseño Basado en Modelos (MBD) ha demostrado una gran eficacia. 
 
 Por otra parte, la transición al hardware real puso de manifiesto los desafíos que quedan fuera del alcance de los modelos teóricos ideales. Fenómenos no lineales como la zona muerta del actuador o la elasticidad de la correa de transmisión generaban inicialmente un error estacionario en la posición horizontal del carro. La resolución de esta discrepancia mediante la adición de una acción integral integrada en el espacio de estados demostró la necesidad de diseñar controladores robustos ante perturbaciones externas y discrepancias en el modelado. 
 
-En definitiva, este proyecto entrega una infraestructura didáctica completamente operativa que permitirá a futuros estudiantes de robótica comprender y experimentar con las restricciones críticas de determinismo temporal, gestión de interrupciones periódicas e instrumentación que definen a la capa reactiva real. Dominar esta plataforma ofrece una transferencia directa de conocimiento hacia sistemas mecánicos más complejos, tales como los exoesqueletos de rehabilitación médica o los robots bípedos, donde la robustez de la electrónica y del control dictan, la estabilidad y la seguridad del sistema global en que se apoyan capas superiores para desarrollar algoritmos más complejos.
+En definitiva, este proyecto entrega una infraestructura didáctica completamente operativa que permitirá a futuros estudiantes de robótica comprender y experimentar con las restricciones críticas de determinismo temporal, gestión de interrupciones periódicas e instrumentación que definen a la capa reactiva real. Dominar esta plataforma ofrece una transferencia directa de conocimiento hacia sistemas mecánicos más complejos, tales como los exoesqueletos de rehabilitación médica o los robots bípedos.
 
 \section{Posible trabajo futuro}
 La arquitectura abierta y el firmware desarrollados en este proyecto sientan una base sólida sobre la cual se pueden plantear diferentes líneas de desarrollo para continuar expandiendo las capacidades de la plataforma en el futuro dentro del ámbito de la robótica:
@@ -3039,22 +3039,14 @@ Al sustituir las Ecuaciones \ref{lagrange1} y \ref{lagrange2} en la estructura d
 
 \subsection{Análisis de la dinámica eléctrica del actuador}
 \label{ap:dinamica_electrica}
-Si se quiere determinar la frecuencia óptima de operación, se debe analizar en primer lugar la constante de tiempo eléctrica ($\tau_e$) del actuador a partir de su circuito equivalente R-L \cite{pm_ab022}, si atendemos a los parámetros del fabricante (Cuadro~\ref{tab:datos_motor}):
+La selección de la frecuencia de conmutación del \textit{PWM} ($f_{\text{PWM}}$) es un compromiso de diseño que depende de la constante de tiempo eléctrica del motor ($\tau_e = L/R \approx 1.3\,\text{ms}$). 
 
-\begin{equation}
-	\tau_e = \frac{L}{R} = \frac{7.2\,\text{mH}}{5.5\,\Omega} \approx 1.3\,\text{ms}
-\end{equation}
+\begin{itemize}
+	\item \textbf{Frecuencias bajas ($f_{\text{PWM}} \le 153\,\text{Hz}$):} El periodo es suficientemente largo para que la corriente alcance el régimen permanente ($I \approx V/R$) y decaiga a cero en cada ciclo. Esto genera una corriente de rizado máximo, lo que provoca una alta disipación térmica por efecto Joule y un funcionamiento ineficiente.
+	
+	\item \textbf{Frecuencias altas ($f_{\text{PWM}} \gg 153\,\text{Hz}$):} La corriente no alcanza su valor máximo ni decae a cero, presentando un comportamiento tipo "diente de sierra" con un valor medio más constante. Sin embargo, elevar la frecuencia excesivamente ($> 5\,\text{kHz}$ para este hardware) no es viable debido al tiempo de conmutación mínimo que requieren los transistores del puente H para trabajar de forma eficaz.
+\end{itemize} 
 
-Considerando que se requiere un intervalo mínimo de $5\tau_e$ para que la variable eléctrica alcance el régimen permanente ante un escalón de tensión. El periodo mínimo teórico de la señal \textit{PWM} ($T_{\text{PWM}}$) para despreciar la inductancia de la bobina del motor es:
-
-\begin{equation}
-	\begin{cases}
-		T_{\text{PWM}} &\ge 5\tau_e = 6.5\,\text{ms} \\
-		f_{\text{PWM, límite}} &= \frac{1}{T_{\text{PWM}}} = \frac{1}{6.5 \cdot 10^{-3}\,\text{s}} \approx 153.84\,\text{Hz}
-	\end{cases}
-\end{equation}
-
-Desde el punto de vista del comportamiento estático del motor, trabajar a frecuencias bajas próximas a este límite ofrece la ventaja de reducir la zona muerta del actuador, ya que proporciona el tiempo necesario para que la corriente se establezca y venza la fricción estática. 
 \begin{figure}[ht]
 	\centering
 	\begin{subfigure}{0.48\textwidth}
@@ -3072,14 +3064,14 @@ Desde el punto de vista del comportamiento estático del motor, trabajar a frecu
 	\label{fig:equiv_motor}
 \end{figure}
 
-No obstante, operar el puente en H a frecuencias tan reducidas resulta complicado para el bucle de control debido a ciertas restricciones:
+Se establece un margen de operación seguro de $0.2\,\text{kHz} < f_{\text{PWM}} < 5\,\text{kHz}$. Considerando estas restricciones y el compromiso entre la suavidad de la corriente y la capacidad de conmutación del puente H, se ha seleccionado una frecuencia de trabajo de \textbf{1\,kHz}. Esta elección ofrece las siguientes ventajas:
 
 \begin{enumerate}
-	\item \textbf{Acoplamiento con la frecuencia de muestreo ($f_{\text{control}}$):} Para asegurar la estabilidad y el determinismo del bucle cerrado, la frecuencia del control debe ser significativamente menor que la frecuencia de conmutación del actuador. Estableciendo un periodo de muestreo para la rutina de control de $T_s = 10\,\text{ms}$ ($f_{\text{control}} = 100\,\text{Hz}$), una frecuencia de \textit{PWM} cercana a $100\,\text{Hz}$ se encuentra demasiado en el límite para interferir en el bucle de control.
+	\item \textbf{Gestión térmica:} Se minimiza el rizado de corriente en comparación con frecuencias próximas al límite inferior de $153\,\text{Hz}$, optimizando la eficiencia energética del actuador.
 	
-	\item \textbf{Sobrecalentamiento por rizado de corriente:} Las frecuencias bajas inducen un rizado de corriente severo incrementando las pérdidas óhmicas en el devanado ($\Delta P = I_{\text{rms}}^2 \cdot R$), derivando en una alta disipación térmica. Aunque para la plataforma experimental este factor no es destructivo (experimentos del orden de un par de minutos), degrada la eficiencia del sistema.
+	\item \textbf{Conmutación efectiva:} Al operar lejos del límite superior de $5\,\text{kHz}$, se asegura que los transistores conmuten la señal correctamente, evitando la disipación de potencia excesiva por operación en zona activa.
 	
-	\item \textbf{Contaminación acústica:} Las frecuencias del espectro audible humano se situan entre $20\,\text{Hz}$ y $20\,\text{kHz}$, con la banda de máxima sensibilidad entre $2\,\text{kHz}$ y $4\,\text{kHz}$ \cite{wiki_espectro_audible}.
+	\item \textbf{Estabilidad del bucle:} Se garantiza una frecuencia de señal considerablemente mayor a la frecuencia de la rutina de control ($f_{\text{control}} = 100\,\text{Hz}$), evitando interferencias que comprometerían el determinismo del sistema.
 \end{enumerate}
 
 \newpage

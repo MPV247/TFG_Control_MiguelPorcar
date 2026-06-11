@@ -36,6 +36,7 @@ tau_PI = m_PI * g * l;
 % Ajuste por mínimos cuadrados (Polinomio de grado 1: Recta)
 pol_PI = polyfit(u_PI, tau_PI, 1);
 tau_pred_PI = polyval(pol_PI, u_teoria);
+tau_pred_PI(tau_pred_PI < 0) = 0;
 
 % --- Gráfica Ensayo PI ---
 figure('Name', 'Caracterización PI', 'Units', 'centimeters', 'Position', [2, 2, 14, 10]);
@@ -63,6 +64,7 @@ tau_P = (m_P .* cos(theta)) * g * l;
 % Ajuste por mínimos cuadrados
 pol_P = polyfit(u_P, tau_P, 1);
 tau_pred_P = polyval(pol_P, u_teoria);
+tau_pred_P(tau_pred_P < 0) = 0;
 
 % --- Gráfica Ensayo P ---
 figure('Name', 'Caracterización P', 'Units', 'centimeters', 'Position', [4, 4, 14, 10]);
